@@ -45,6 +45,17 @@ Guidelines:
 
 This ensures a readable Git history and maintains traceability between Jira issues and code.
 
+## Signed Commits
+
+All commits must be [GPG-signed](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits) to verify authorship and maintain repository integrity.
+Unsigned commits will be rejected during code review as `main` is protected to only allow signed commits.
+
+To configure commit signing, follow the instructions for your Git provider and client. You can verify your setup with:
+
+```
+git commit -S -m "Your signed commit message"
+```
+
 ## Pull Requests
 * Every feature and release branch must be merged using a pull request. 
 * Each pull requests must:
