@@ -13,3 +13,6 @@ To ensure a smooth and productive collaboration, please follow the guidelines as
 ## Pruning local branches
 
 To prune and delete local branches please run `git fetch -p && for branch in $(git branch -vv | grep ': gone]' | awk '{print $1}'); do git branch -D $branch; done` in the project root directory
+
+## License
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
