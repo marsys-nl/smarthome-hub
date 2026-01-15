@@ -1,0 +1,11 @@
+[versions]
+smarthome-api = "2026.01-SNAPSHOT"
+smarthome-domain = "2026.01-SNAPSHOT"
+smarthome-hub = "2026.01-SNAPSHOT"
+
+jvm-toolchain = "21"
+
+kotlin = "2.3.0"
+
+[plugins]
+kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
