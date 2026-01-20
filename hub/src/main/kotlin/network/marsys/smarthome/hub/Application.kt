@@ -1,9 +1,11 @@
 package network.marsys.smarthome.hub
 
-import io.ktor.server.application.port
+import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.engine.CommandLineConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+
+private val logger = KotlinLogging.logger {}
 
 fun main(args: Array<String>) {
     val config = CommandLineConfig(args)
@@ -15,7 +17,17 @@ fun main(args: Array<String>) {
             takeFrom(config.engineConfig)
         },
         module = {
-            println("Application started at port ${environment.config.port}. Development mode: $developmentMode")
+            logger.info { ASCII_LOGO }
         },
     ).start(wait = true)
 }
+
+private const val ASCII_LOGO = """
+         _____                      _   _   _                        _           _     
+        /  ___|                    | | | | | |                      | |         | |    
+        \ `--. _ __ ___   __ _ _ __| |_| |_| | ___  _ __ ___   ___  | |__  _   _| |__  
+         `--. \ '_ ` _ \ / _` | '__| __|  _  |/ _ \| '_ ` _ \ / _ \ | '_ \| | | | '_ \ 
+        /\__/ / | | | | | (_| | |  | |_| | | | (_) | | | | | |  __/ | | | | |_| | |_) |
+        \____/|_| |_| |_|\__,_|_|   \__\_| |_/\___/|_| |_| |_|\___| |_| |_|\__,_|_.__/ 
+                                                                      v2026.01-SNAPSHOT
+"""
