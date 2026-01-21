@@ -1,0 +1,36 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{kt,kts}]
+indent_size = 4
+max_line_length = 140
+
+# Intellij IDEA Kotlin code style settings
+ij_kotlin_packages_to_use_import_on_demand = unset
+ij_kotlin_name_count_to_use_star_import = 999
+ij_kotlin_name_count_to_use_star_import_for_members = 999
+
+# Ktlint rules
+ktlint_code_style = intellij_idea
+
+# Backing property naming rule
+ktlint_standard_backing-property-naming = disabled
+
+# Blank line between when-conditions
+ij_kotlin_line_break_after_multiline_when_entry = true
+
+# Class signature rules
+ktlint_standard_class-signature = disabled
+
+# Function signature rules
+ktlint_standard_function-signature = disabled
+ktlint_function_signature_body_expression_wrapping = multiline
+
+ktlint_standard_string-template = disabled
+
+[*.{yml,yaml,json}]
+indent_size = 4
