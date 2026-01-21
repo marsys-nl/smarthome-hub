@@ -10,6 +10,8 @@ kotlin {
 }
 
 dependencies {
+    implementation(libs.bundles.kotlin.logging)
+
     implementation(libs.ktor.server.config.yaml)
     implementation(libs.ktor.server.core)
     implementation(libs.ktor.server.netty)
