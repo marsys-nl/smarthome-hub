@@ -32,5 +32,5 @@ ktlint_function_signature_body_expression_wrapping = multiline
 
 ktlint_standard_string-template = disabled
 
-[*.{yml,yaml,json}]
+[*.{yml,yaml,json,xml}]
 indent_size = 4
