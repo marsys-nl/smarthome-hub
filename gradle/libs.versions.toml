@@ -3,6 +3,8 @@ smarthome-api = "2026.01-SNAPSHOT"
 smarthome-domain = "2026.01-SNAPSHOT"
 smarthome-hub = "2026.01-SNAPSHOT"
 
+detekt = "2.0.0-alpha.1"
+
 jvm-toolchain = "21"
 
 logback = "1.5.25"
@@ -30,6 +32,8 @@ logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 
 [plugins]
+detekt = { id = "dev.detekt", version.ref = "detekt" }
+
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 
 [bundles]

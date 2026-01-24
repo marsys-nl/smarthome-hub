@@ -17,12 +17,12 @@ fun main(args: Array<String>) {
             takeFrom(config.engineConfig)
         },
         module = {
-            logger.info(::printAsciiLogo)
+            logger.info(::ASCII_LOGO)
         },
     ).start(wait = true)
 }
 
-private fun printAsciiLogo() = """
+private const val ASCII_LOGO = """
          _____                      _   _   _                        _           _
         /  ___|                    | | | | | |                      | |         | |
         \ `--. _ __ ___   __ _ _ __| |_| |_| | ___  _ __ ___   ___  | |__  _   _| |__

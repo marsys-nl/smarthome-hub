@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.detekt) apply true
     alias(libs.plugins.kotlin.jvm) apply false
 }
 
@@ -12,6 +13,16 @@ dependencies {
     }
 }
 
+detekt {
+    allRules = true
+    buildUponDefaultConfig = true
+    config.from("$rootDir/config/detekt/detekt.yml")
+
+    source.from(
+        "$rootDir/hub/src/main/kotlin",
+    )
+}
+
 tasks.register("ktlintCheck", JavaExec::class) {
     group = LifecycleBasePlugin.VERIFICATION_GROUP
     description = "Check Kotlin code style"
@@ -22,4 +33,14 @@ tasks.register("ktlintCheck", JavaExec::class) {
         "**.kts",
         "!**/build/**",
     )
+}
+
+tasks.withType<dev.detekt.gradle.Detekt>().configureEach {
+    reports {
+        html.required.set(true)
+
+        checkstyle.required.set(false)
+        markdown.required.set(false)
+        sarif.required.set(false)
+    }
 }
