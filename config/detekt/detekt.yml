@@ -1,0 +1,109 @@
+config:
+  validation: true
+  warningsAsErrors: true
+  checkExhaustiveness: false
+  # when writing own rules with new properties, exclude the property path e.g.: ['my_rule_set', '.*>.*>[my_property]']
+  excludes: []
+
+processors:
+  active: true
+  exclude:
+  #  - 'DetektProgressListener'
+  # - 'KtFileCountProcessor'
+  # - 'PackageCountProcessor'
+  # - 'ClassCountProcessor'
+  # - 'FunctionCountProcessor'
+  # - 'PropertyCountProcessor'
+  # - 'ProjectComplexityProcessor'
+  # - 'ProjectCognitiveComplexityProcessor'
+  # - 'ProjectLLOCProcessor'
+  # - 'ProjectCLOCProcessor'
+  # - 'ProjectLOCProcessor'
+  # - 'ProjectSLOCProcessor'
+  # - 'LicenseHeaderLoaderExtension'
+
+console-reports:
+  active: true
+  exclude:
+#     - 'ProjectStatisticsReport'
+#     - 'ComplexityReport'
+#     - 'NotificationReport'
+#     - 'IssuesReport'
+#     - 'FileBasedIssuesReport'
+#     - 'LiteIssuesReport'
+
+comments:
+    AbsentOrWrongFileLicense:
+        active: false
+    UndocumentedPublicClass:
+        active: false
+    UndocumentedPublicFunction:
+        active: false
+    UndocumentedPublicProperty:
+        active: false
+
+complexity:
+    ComplexCondition:
+        allowedConditions: 4
+    LongParameterList:
+        allowedFunctionParameters: 6
+        allowedConstructorParameters: 7
+    StringLiteralDuplication:
+        allowedDuplications: 3
+
+naming:
+    FunctionNameMaxLength:
+        excludes: ['**/test/**', '**/androidTest/**', '**/commonTest/**', '**/jvmTest/**', '**/androidUnitTest/**', '**/androidInstrumentedTest/**', '**/jsTest/**', '**/iosTest/**']
+    ObjectPropertyNaming:
+        privatePropertyPattern: '[A-Za-z][_A-Za-z0-9]*'
+    TopLevelPropertyNaming:
+        privatePropertyPattern: '[A-Za-z][_A-Za-z0-9]*'
+    VariableMinLength:
+        minimumVariableNameLength: 3
+    VariableNaming:
+        privateVariablePattern: '[a-z][A-Za-z0-9]*'
+
+performance:
+    CouldBeSequence:
+        allowedOperations: 2
+
+potential-bugs:
+    CastNullableToNonNullableType:
+        ignorePlatformTypes: true
+    LateinitUsage:
+        excludes: []
+    UnnamedParameterUse:
+        allowAdjacentDifferentTypeParams: false
+        allowSingleParamUse: false
+        ignoreArgumentsMatchingNames: false
+
+style:
+    AlsoCouldBeApply:
+        active: false
+    BracesOnIfStatements:
+        singleLine: 'always'
+        multiLine: 'always'
+    CascadingCallWrapping:
+        includeElvis: false
+    DataClassContainsFunctions:
+        active: false
+    EqualsOnSignatureLine:
+        active: false
+    ExpressionBodySyntax:
+        includeLineWrapping: true
+    ForbiddenComment:
+        comments:
+          - reason: 'Forbidden FIXME todo marker in comment, please fix the problem.'
+            value: 'FIXME:'
+          - reason: 'Forbidden STOPSHIP todo marker in comment, please address the problem before shipping the code.'
+            value: 'STOPSHIP:'
+          - reason: 'Forbidden TODO todo marker in comment, please do the changes.'
+            value: 'TODO:'
+          - reason: 'Use @VisibleForTesting(otherwise = VisibleForTesting.PRIVATE) instead.'
+            value: '^private$'
+    ForbiddenSuppress:
+        active: false
+    MagicNumber:
+        ignoreRanges: true
+    MaxChainedCallsOnSameLine:
+        maxChainedCalls: 3
