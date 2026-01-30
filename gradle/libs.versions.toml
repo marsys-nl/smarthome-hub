@@ -3,7 +3,7 @@ smarthome-api = "2026.01-SNAPSHOT"
 smarthome-domain = "2026.01-SNAPSHOT"
 smarthome-hub = "2026.01-SNAPSHOT"
 
-detekt = "2.0.0-alpha.1"
+detekt = "2.0.0-alpha.2"
 
 jvm-toolchain = "21"
 
