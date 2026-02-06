@@ -7,7 +7,7 @@ detekt = "2.0.0-alpha.2"
 
 jvm-toolchain = "21"
 
-logback = "1.5.26"
+logback = "1.5.28"
 
 kotlin = "2.3.0"
 kotlin-logging = "7.0.14"
