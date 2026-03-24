@@ -10,4 +10,3 @@ suspend fun Application.initializeSerialization() {
         json()
     }
 }
-

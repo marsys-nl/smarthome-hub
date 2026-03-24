@@ -12,12 +12,16 @@ fun Route.configRoutes() {
         val origin = call.request.origin
 
         val defaultPort = when (origin.scheme) {
-            URLProtocol.HTTP.name -> 80
-            URLProtocol.HTTPS.name -> 443
+            URLProtocol.HTTP.name -> URLProtocol.HTTP.defaultPort
+            URLProtocol.HTTPS.name -> URLProtocol.HTTPS.defaultPort
             else -> -1
         }
 
-        val portPart = if (origin.serverPort == defaultPort || origin.serverPort <= 0) "" else ":${origin.serverPort}"
+        val portPart = when {
+            origin.serverPort == defaultPort -> ""
+            origin.serverPort <= 0 -> ""
+            else -> ":${origin.serverPort}"
+        }
 
         val response = ConfigurationResponse(
             baseUri = "${origin.scheme}://${origin.serverHost}$portPart",
