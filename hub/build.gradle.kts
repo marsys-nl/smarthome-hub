@@ -1,12 +1,23 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.ktor)
 }
 
 group = "network.marsys.smarthome.hub"
 version = libs.versions.smarthome.hub.get()
 
+application {
+    mainClass.set("network.marsys.smarthome.hub.ApplicationKt")
+}
+
 kotlin {
     jvmToolchain(libs.versions.jvm.toolchain.get().toInt())
+}
+
+ktor {
+    fatJar {
+        archiveFileName.set("smarthome-hub-${libs.versions.smarthome.hub.get()}.jar")
+    }
 }
 
 dependencies {
