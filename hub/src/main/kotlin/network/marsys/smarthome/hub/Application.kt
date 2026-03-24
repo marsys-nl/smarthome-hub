@@ -4,6 +4,8 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.server.engine.CommandLineConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
+import network.marsys.smarthome.hub.plugin.initializeRouting
+import network.marsys.smarthome.hub.plugin.initializeSerialization
 
 private val logger = KotlinLogging.logger {}
 
@@ -18,6 +20,9 @@ fun main(args: Array<String>) {
         },
         module = {
             logger.info(::ASCII_LOGO)
+
+            initializeSerialization()
+            initializeRouting()
         },
     ).start(wait = true)
 }
