@@ -42,5 +42,7 @@ detekt = { id = "dev.detekt", version.ref = "detekt" }
 
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 
+ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
+
 [bundles]
 kotlin-logging = ["kotlin-logging", "slf4j-api", "logback-classic"]

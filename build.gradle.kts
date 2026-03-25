@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.detekt) apply true
     alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.ktor) apply false
 }
 
 val ktlint: Configuration by configurations.creating
