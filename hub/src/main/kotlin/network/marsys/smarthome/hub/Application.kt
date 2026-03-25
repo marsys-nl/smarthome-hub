@@ -5,6 +5,7 @@ import io.ktor.server.engine.CommandLineConfig
 import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import network.marsys.smarthome.hub.plugin.initializeAuthentication
+import network.marsys.smarthome.hub.plugin.initializeForwardedHeaders
 import network.marsys.smarthome.hub.plugin.initializeRouting
 import network.marsys.smarthome.hub.plugin.initializeSerialization
 
@@ -23,6 +24,7 @@ fun main(args: Array<String>) {
             logger.info(::ASCII_LOGO)
 
             initializeAuthentication()
+            initializeForwardedHeaders()
             initializeSerialization()
             initializeRouting()
         },
