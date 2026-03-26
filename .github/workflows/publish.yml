@@ -61,6 +61,8 @@ jobs:
               with:
                 context: .
                 push: true
+                platforms: |
+                    linux/arm64/v8
                 tags: |
                     nmarsman/smarthome-hub:${{ steps.versions.outputs.value }}
 
