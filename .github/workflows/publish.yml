@@ -32,9 +32,13 @@ jobs:
             - name: Resolve version from Gradle
               id: versions
               run: |
-                  VERSION=$(./gradlew -q :hub:properties --property version | tr -d '\r' | xargs)
-                  IS_SNAPSHOT=false
+                  VERSION=$(./gradlew -q :hub:properties --property version | awk -F': ' '/^version:/ {print $2; exit}' | tr -d '\r')
+                  if [[ -z "$VERSION" ]]; then
+                      echo "Failed to resolve project version from Gradle output"
+                      exit 1
+                  fi
 
+                  IS_SNAPSHOT=false
                   if [[ "$VERSION" == *-SNAPSHOT ]]; then
                       IS_SNAPSHOT=true
                   fi
