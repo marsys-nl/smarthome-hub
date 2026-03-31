@@ -37,6 +37,13 @@ kover {
     }
 
     reports {
+        filters {
+            excludes {
+                // Exclude main entry point — tested indirectly via integration tests
+                classes("network.marsys.smarthome.hub.ApplicationKt*")
+            }
+        }
+
         verify {
             rule {
                 groupBy.set(GroupingEntityType.CLASS)
