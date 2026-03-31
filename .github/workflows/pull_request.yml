@@ -1,4 +1,4 @@
-name: Smarthome hub pull request validation
+name: Smarthome Hub - Pull request validation
 
 on:
     pull_request:
@@ -12,6 +12,7 @@ concurrency:
 
 jobs:
     build:
+        name: Validate and build application
         runs-on: macos-latest
 
         steps:
