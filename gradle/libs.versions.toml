@@ -10,6 +10,7 @@ jvm-toolchain = "21"
 logback = "1.5.32"
 
 kotlin = "2.3.20"
+kotlin-kover = "0.9.8"
 kotlin-logging = "8.0.01"
 
 ktlint = "1.8.0"
@@ -42,6 +43,7 @@ smarthome-api = { group = "network.marsys.smarthome", name = "smarthome-api", ve
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+kotlin-kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kotlin-kover" }
 
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
 

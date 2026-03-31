@@ -1,6 +1,11 @@
+import kotlinx.kover.gradle.plugin.dsl.AggregationType
+import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
+import kotlinx.kover.gradle.plugin.dsl.GroupingEntityType
+
 plugins {
     alias(libs.plugins.detekt) apply true
     alias(libs.plugins.kotlin.jvm) apply false
+    alias(libs.plugins.kotlin.kover) apply true
     alias(libs.plugins.ktor) apply false
 }
 
@@ -22,6 +27,28 @@ detekt {
     source.from(
         "$rootDir/hub/src/main/kotlin",
     )
+}
+
+kover {
+    merge {
+        allProjects {
+            it.buildFile.exists()
+        }
+    }
+
+    reports {
+        verify {
+            rule {
+                groupBy.set(GroupingEntityType.CLASS)
+
+                minBound(
+                    minValue = 100,
+                    coverageUnits = CoverageUnit.BRANCH,
+                    aggregationForGroup = AggregationType.COVERED_PERCENTAGE,
+                )
+            }
+        }
+    }
 }
 
 tasks.register("ktlintCheck", JavaExec::class) {
