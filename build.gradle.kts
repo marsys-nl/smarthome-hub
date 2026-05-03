@@ -3,6 +3,7 @@ import kotlinx.kover.gradle.plugin.dsl.CoverageUnit
 import kotlinx.kover.gradle.plugin.dsl.GroupingEntityType
 
 plugins {
+    alias(libs.plugins.buildconfig) apply false
     alias(libs.plugins.detekt) apply true
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.kover) apply true

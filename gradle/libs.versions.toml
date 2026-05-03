@@ -1,7 +1,9 @@
 [versions]
 smarthome-api = "2026.03-SNAPSHOT"
 smarthome-domain = "2026.01-SNAPSHOT"
-smarthome-hub = "2026.03-SNAPSHOT"
+smarthome-hub = "2026.05-SNAPSHOT"
+
+buildconfig = "6.0.9"
 
 detekt = "2.0.0-alpha.2"
 
@@ -40,6 +42,8 @@ slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 smarthome-api = { group = "network.marsys.smarthome", name = "smarthome-api", version.ref = "smarthome-api" }
 
 [plugins]
+buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }
+
 detekt = { id = "dev.detekt", version.ref = "detekt" }
 
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
