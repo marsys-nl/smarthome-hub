@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.buildconfig)
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor)
 }
@@ -8,6 +9,12 @@ version = libs.versions.smarthome.hub.get()
 
 application {
     mainClass.set("network.marsys.smarthome.hub.ApplicationKt")
+}
+
+buildConfig {
+    packageName("network.marsys.smarthome.hub")
+
+    buildConfigField("VERSION", "${project.version}")
 }
 
 kotlin {
