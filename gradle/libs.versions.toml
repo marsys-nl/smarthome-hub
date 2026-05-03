@@ -5,7 +5,7 @@ smarthome-hub = "2026.05-SNAPSHOT"
 
 buildconfig = "6.0.9"
 
-detekt = "2.0.0-alpha.2"
+detekt = "2.0.0-alpha.3"
 
 jvm-toolchain = "21"
 
