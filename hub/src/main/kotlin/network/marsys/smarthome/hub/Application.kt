@@ -21,7 +21,7 @@ fun main(args: Array<String>) {
             takeFrom(config.engineConfig)
         },
         module = {
-            logger.info(::ASCII_LOGO)
+            logger.info(::asciiLogo)
 
             initializeAuthentication()
             initializeForwardedHeaders()
@@ -31,12 +31,18 @@ fun main(args: Array<String>) {
     ).start(wait = true)
 }
 
+private fun asciiLogo(): String {
+    val width = ASCII_LOGO.lines().maxOf { it.length }
+    return buildString {
+        appendLine(ASCII_LOGO)
+        appendLine("v${BuildConfig.VERSION}".padStart(width))
+    }
+}
+
 private const val ASCII_LOGO = """
          _____                      _   _   _                        _           _
         /  ___|                    | | | | | |                      | |         | |
         \ `--. _ __ ___   __ _ _ __| |_| |_| | ___  _ __ ___   ___  | |__  _   _| |__
          `--. \ '_ ` _ \ / _` | '__| __|  _  |/ _ \| '_ ` _ \ / _ \ | '_ \| | | | '_ \
         /\__/ / | | | | | (_| | |  | |_| | | | (_) | | | | | |  __/ | | | | |_| | |_) |
-        \____/|_| |_| |_|\__,_|_|   \__\_| |_/\___/|_| |_| |_|\___| |_| |_|\__,_|_.__/
-                                                                      v2026.01-SNAPSHOT
-"""
+        \____/|_| |_| |_|\__,_|_|   \__\_| |_/\___/|_| |_| |_|\___| |_| |_|\__,_|_.__/"""
