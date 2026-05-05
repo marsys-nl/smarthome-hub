@@ -1,3 +1,7 @@
 ktor:
-  deployment:
-    port: ${ENV_PORT:8080}
+    deployment:
+        port: ${ENV_PORT:8080}
+
+smarthome:
+    auth:
+        apiKey: ${ENV_AUTH_API_KEY:}
