@@ -1,0 +1,139 @@
+package network.marsys.smarthome.hub.plugin
+
+import de.infix.testBalloon.framework.core.testSuite
+import dev.nmarsman.expect.api.expectThat
+import dev.nmarsman.expect.api.expectThrows
+import dev.nmarsman.expect.assertions.hasMessage
+import dev.nmarsman.expect.assertions.isEqualTo
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.statement.HttpResponse
+import io.ktor.http.HttpStatusCode
+import io.ktor.server.auth.authenticate
+import io.ktor.server.config.ApplicationConfigurationException
+import io.ktor.server.config.MapApplicationConfig
+import io.ktor.server.response.respond
+import io.ktor.server.routing.get
+import io.ktor.server.testing.testApplication
+
+val ApiKeyAuthenticationTest by testSuite(
+    displayName = "test",
+) {
+    test(name = "When an api key is configured and provided, the request is allowed") {
+        testApplication {
+            environment {
+                config = MapApplicationConfig(
+                    "smarthome.auth.apiKey" to "api-key",
+                )
+            }
+
+            application {
+                initializeAuthentication()
+            }
+
+            routing {
+                authenticate(API_KEY_AUTH_NAME) {
+                    get("/test") {
+                        call.respond(HttpStatusCode.OK)
+                    }
+                }
+            }
+
+            val response = client.get("/test") {
+                header("X-Api-Key", "api-key")
+            }
+
+            expectThat(response)
+                .get(HttpResponse::status)
+                .isEqualTo(HttpStatusCode.OK)
+        }
+    }
+
+    test(name = "When an api key is configured but not provided, the request is disallowed") {
+        testApplication {
+            environment {
+                config = MapApplicationConfig(
+                    "smarthome.auth.apiKey" to "api-key",
+                )
+            }
+
+            application {
+                initializeAuthentication()
+            }
+
+            routing {
+                authenticate(API_KEY_AUTH_NAME) {
+                    get("/test") {
+                        call.respond(HttpStatusCode.OK)
+                    }
+                }
+            }
+
+            val response = client.get("/test")
+
+            expectThat(response)
+                .get(HttpResponse::status)
+                .isEqualTo(HttpStatusCode.Unauthorized)
+        }
+    }
+
+    test(name = "When an api key is configured but another is provided, the request is disallowed") {
+        testApplication {
+            environment {
+                config = MapApplicationConfig(
+                    "smarthome.auth.apiKey" to "api-key",
+                )
+            }
+
+            application {
+                initializeAuthentication()
+            }
+
+            routing {
+                authenticate(API_KEY_AUTH_NAME) {
+                    get("/test") {
+                        call.respond(HttpStatusCode.OK)
+                    }
+                }
+            }
+
+            val response = client.get("/test") {
+                header("X-Api-Key", "other-api-key")
+            }
+
+            expectThat(response)
+                .get(HttpResponse::status)
+                .isEqualTo(HttpStatusCode.Unauthorized)
+        }
+    }
+
+    test(name = "When no api key is configured an application configuration exception is thrown") {
+        expectThrows<ApplicationConfigurationException> {
+            testApplication {
+                application {
+                    initializeAuthentication()
+                }
+            }
+        }.hasMessage(
+            "Property $API_KEY_CONFIG_KEY not found.",
+        )
+    }
+
+    test(name = "When an empty api key is configured an application configuration exception is thrown") {
+        expectThrows<ApplicationConfigurationException> {
+            testApplication {
+                environment {
+                    config = MapApplicationConfig(
+                        "smarthome.auth.apiKey" to "",
+                    )
+                }
+
+                application {
+                    initializeAuthentication()
+                }
+            }
+        }.hasMessage(
+            "Valid API key must be configured via '$API_KEY_CONFIG_KEY'.",
+        )
+    }
+}

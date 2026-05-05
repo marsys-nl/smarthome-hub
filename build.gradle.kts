@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.kover) apply true
     alias(libs.plugins.ktor) apply false
+    alias(libs.plugins.test.balloon) apply false
 }
 
 val ktlint: Configuration by configurations.creating

@@ -12,6 +12,7 @@ jvm-toolchain = "21"
 logback = "1.5.32"
 
 kotlin = "2.3.21"
+kotlin-expect = "0.1"
 kotlin-kover = "0.9.8"
 kotlin-logging = "8.0.01"
 
@@ -19,9 +20,12 @@ ktlint = "1.8.0"
 
 ktor = "3.4.3"
 
+test-balloon = "0.8.4-K2.3.20"
+
 slf4j = "2.0.17"
 
 [libraries]
+kotlin-expect-core = { group = "dev.nmarsman.expect", name = "kotlin-expect-core", version.ref = "kotlin-expect" }
 kotlin-logging = { group = "io.github.oshai", name = "kotlin-logging", version.ref = "kotlin-logging" }
 
 ktlint = { group = "com.pinterest.ktlint", name = "ktlint-cli", version.ref = "ktlint" }
@@ -34,8 +38,11 @@ ktor-server-core = { group = "io.ktor", name = "ktor-server-core", version.ref =
 ktor-server-content-negotiation = { group = "io.ktor", name = "ktor-server-content-negotiation", version.ref = "ktor" }
 ktor-server-forwarded-header = { group = "io.ktor", name = "ktor-server-forwarded-header", version.ref = "ktor" }
 ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty", version.ref = "ktor" }
+ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", version.ref = "ktor" }
 
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
+
+test-balloon-core = { group = "de.infix.testBalloon", name = "testBalloon-framework-core", version.ref = "test-balloon" }
 
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 
@@ -50,6 +57,8 @@ kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 kotlin-kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kotlin-kover" }
 
 ktor = { id = "io.ktor.plugin", version.ref = "ktor" }
+
+test-balloon = { id = "de.infix.testBalloon", version.ref = "test-balloon" }
 
 [bundles]
 kotlin-logging = ["kotlin-logging", "slf4j-api", "logback-classic"]

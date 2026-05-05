@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.ktor)
+    alias(libs.plugins.test.balloon)
 }
 
 group = "network.marsys.smarthome.hub"
@@ -40,4 +41,10 @@ dependencies {
     implementation(libs.ktor.server.netty)
 
     implementation(libs.smarthome.api)
+
+    testImplementation(libs.kotlin.expect.core)
+
+    testImplementation(libs.ktor.server.test.host)
+
+    testImplementation(libs.test.balloon.core)
 }
