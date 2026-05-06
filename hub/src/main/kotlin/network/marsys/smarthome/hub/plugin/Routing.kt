@@ -8,11 +8,10 @@ import network.marsys.smarthome.hub.routes.healthRoutes
 
 fun Application.initializeRouting() {
     routing {
-        healthRoutes()
-
         authenticate(
             configurations = arrayOf(API_KEY_AUTH_NAME),
         ) {
+            healthRoutes()
             configRoutes()
         }
     }
