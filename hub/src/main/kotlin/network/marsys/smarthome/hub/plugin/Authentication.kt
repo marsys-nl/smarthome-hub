@@ -3,26 +3,21 @@ package network.marsys.smarthome.hub.plugin
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
 import io.ktor.server.auth.Authentication
-import io.ktor.server.auth.apikey.apiKey
+import network.marsys.smarthome.hub.plugin.auth.optionalApiKey
 
 internal const val API_KEY_AUTH_NAME = "ApiKeyAuth"
-private const val API_KEY_HEADER_NAME = "X-API-Key"
-private const val API_KEY_VALUE = "fbdf0cfb-d5a7-40ff-8464-5043a9ecea78"
-
-data object ApiKeyPrincipal
+internal const val API_KEY_CONFIG_KEY = "smarthome.auth.apiKey"
 
 fun Application.initializeAuthentication() {
-    install(Authentication) {
-        apiKey(
-            name = API_KEY_AUTH_NAME,
-        ) {
-            headerName = API_KEY_HEADER_NAME
+    val configuredApiKey = environment.config
+        .propertyOrNull(API_KEY_CONFIG_KEY)
+        ?.getString()
+        ?.takeIf { it.isNotBlank() }
 
-            validate { keyFromHeader ->
-                keyFromHeader
-                    .takeIf { it == API_KEY_VALUE }
-                    ?.let { ApiKeyPrincipal }
-            }
-        }
+    install(Authentication) {
+        optionalApiKey(
+            name = API_KEY_AUTH_NAME,
+            configuredApiKey = configuredApiKey,
+        )
     }
 }
