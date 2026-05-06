@@ -107,33 +107,77 @@ val ApiKeyAuthenticationTest by testSuite(
         }
     }
 
-    test(name = "When no api key is configured an application configuration exception is thrown") {
-        expectThrows<ApplicationConfigurationException> {
-            testApplication {
-                application {
-                    initializeAuthentication()
+    test(name = "When no api key is configured and none provided, the request is allowed") {
+        testApplication {
+            application {
+                initializeAuthentication()
+            }
+
+            routing {
+                authenticate(API_KEY_AUTH_NAME) {
+                    get("/test") {
+                        call.respond(HttpStatusCode.OK)
+                    }
                 }
             }
-        }.hasMessage(
-            "Property $API_KEY_CONFIG_KEY not found.",
-        )
+
+            val response = client.get("/test")
+
+            expectThat(response)
+                .get(HttpResponse::status)
+                .isEqualTo(HttpStatusCode.OK)
+        }
     }
 
-    test(name = "When an empty api key is configured an application configuration exception is thrown") {
-        expectThrows<ApplicationConfigurationException> {
-            testApplication {
-                environment {
-                    config = MapApplicationConfig(
-                        "smarthome.auth.apiKey" to "",
-                    )
-                }
+    test(name = "When no api key is configured but one is provided, the request is allowed") {
+        testApplication {
+            application {
+                initializeAuthentication()
+            }
 
-                application {
-                    initializeAuthentication()
+            routing {
+                authenticate(API_KEY_AUTH_NAME) {
+                    get("/test") {
+                        call.respond(HttpStatusCode.OK)
+                    }
                 }
             }
-        }.hasMessage(
-            "Valid API key must be configured via '$API_KEY_CONFIG_KEY'.",
-        )
+
+            val response = client.get("/test") {
+                header("X-Api-Key", "api-key")
+            }
+
+            expectThat(response)
+                .get(HttpResponse::status)
+                .isEqualTo(HttpStatusCode.OK)
+        }
+    }
+
+    test(name = "When an empty api key is configured, it is treated as not configured, the request is allowed") {
+        testApplication {
+            environment {
+                config = MapApplicationConfig(
+                    "smarthome.auth.apiKey" to "",
+                )
+            }
+
+            application {
+                initializeAuthentication()
+            }
+
+            routing {
+                authenticate(API_KEY_AUTH_NAME) {
+                    get("/test") {
+                        call.respond(HttpStatusCode.OK)
+                    }
+                }
+            }
+
+            val response = client.get("/test")
+
+            expectThat(response)
+                .get(HttpResponse::status)
+                .isEqualTo(HttpStatusCode.OK)
+        }
     }
 }
