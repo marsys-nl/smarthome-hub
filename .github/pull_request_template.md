@@ -22,14 +22,17 @@ Use full links or issue keys.
 
 <!--
 Does this change affect architecture or design decisions?
+
+There is either:
+- No architectural impact: the change is purely implementation detail and does not affect any architectural decisions.
+- Minor architectural impact: the change affects existing architectural decisions but does not introduce new ones.
+- Significant architectural impact: the change introduces new architectural decisions or significantly changes existing ones.
 -->
 
-- [ ] No architectural impact
-- [ ] Minor architectural impact (within existing decisions)
-- [ ] Significant architectural impact (new or changed decisions)
+- [ ] I have assessed the architectural impact. There is either no impact, or the impact is documented using ADRs.
 
 <!--
-ADR references should be included here if applicable.
+ADR references should be included here if applicable (e.g. if the change has architectural impact).
 Please note the ADR references in the following format:
 - [#0001 - Sample ADR](docs/adr/0001-sample-adr.md)
 -->
@@ -50,8 +53,10 @@ Please confirm the following:
 
 ### Domain & architecture
 - [ ] Domain code contains no infrastructure or framework dependencies
-- [ ] Changes respect existing architectural boundaries (DDD / Hexagonal)
-- [ ] No new coupling introduced between domain and adapters
+- [ ] Changes respect existing architectural boundaries
+
+### Documentation
+- [ ] All relevant documentation is up to date, or no documentation changes are needed.
 
 ### Git & workflow
 - [ ] Branch is up to date with `main`
@@ -65,21 +70,11 @@ Please confirm the following:
 Explain how this change is tested.
 -->
 
-- [ ] Unit tests added or updated
+- [ ] Unit tests added or updated **or** manual testing performed **or** code changes aren't testable
 - [ ] Existing tests still pass
 - [ ] Changes are testable without external infrastructure
-- [ ] Manual testing performed (if applicable)
 
 Details (optional): N/A
-
----
-
-## Documentation
-
-- [ ] README updated (if applicable)
-- [ ] ARCHITECTURE.md updated (if applicable)
-- [ ] ADRs added/updated (if applicable)
-- [ ] Public APIs or behavior changes are documented
 
 ---
 
@@ -92,13 +87,10 @@ Details (optional): N/A
 
 ### Architecture
 - [ ] Architectural boundaries are respected
-- [ ] Domain model remains consistent and expressive
 - [ ] No hidden architectural decisions introduced
 
 ### Risk & impact
-- [ ] Change is low-risk / well-isolated  
-  **or**
-- [ ] Risk is understood and acceptable
+- [ ] Change is low-risk / well-isolated **or** risk is understood and acceptable
 
 ---
 
