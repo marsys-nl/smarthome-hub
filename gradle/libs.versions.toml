@@ -22,7 +22,7 @@ ktor = "3.4.3"
 
 test-balloon = "0.8.4-K2.3.20"
 
-slf4j = "2.0.17"
+slf4j = "2.0.18"
 
 [libraries]
 kotlin-expect-core = { group = "dev.nmarsman.expect", name = "kotlin-expect-core", version.ref = "kotlin-expect" }
