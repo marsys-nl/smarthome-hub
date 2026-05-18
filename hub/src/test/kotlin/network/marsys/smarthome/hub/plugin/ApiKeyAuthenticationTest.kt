@@ -17,7 +17,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.testing.testApplication
 
 val ApiKeyAuthenticationTest by testSuite(
-    displayName = "test",
+    name = "test",
 ) {
     test(name = "When an api key is configured and provided, the request is allowed") {
         testApplication {
