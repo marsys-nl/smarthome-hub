@@ -3,7 +3,7 @@ smarthome-api = "2026.03-SNAPSHOT"
 smarthome-domain = "2026.01-SNAPSHOT"
 smarthome-hub = "2026.05-SNAPSHOT"
 
-buildconfig = "6.0.9"
+buildconfig = "6.0.10"
 
 detekt = "2.0.0-alpha.3"
 
