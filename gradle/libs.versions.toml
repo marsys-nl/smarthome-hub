@@ -13,7 +13,7 @@ logback = "1.5.37"
 
 kotlin = "2.4.0"
 kotlin-expect = "0.1"
-kotlin-kover = "0.9.8"
+kotlin-kover = "0.9.9"
 kotlin-logging = "8.0.4"
 
 ktlint = "1.8.0"
