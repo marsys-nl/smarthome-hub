@@ -5,3 +5,7 @@ ktor:
 smarthome:
     auth:
         apiKey: ${ENV_AUTH_API_KEY:}
+
+        keycloak:
+            issuer: ${ENV_AUTH_KEYCLOAK_ISSUER:}
+            jwk: ${ENV_AUTH_KEYCLOAK_JWK:}
