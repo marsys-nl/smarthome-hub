@@ -9,7 +9,7 @@ detekt = "2.0.0-alpha.5"
 
 jvm-toolchain = "21"
 
-logback = "1.5.37"
+logback = "1.6.1"
 
 kotlin = "2.4.10"
 kotlin-expect = "0.1"
