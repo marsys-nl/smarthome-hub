@@ -5,3 +5,8 @@ ktor:
 smarthome:
     auth:
         apiKey: ${ENV_AUTH_API_KEY:}
+
+        jwt:
+            realm: ${ENV_AUTH_JWT_REALM:smarthome-app}
+            issuer: ${ENV_AUTH_JWT_ISSUER:}
+            jwk-url: ${ENV_AUTH_JWT_JWK_URL:}

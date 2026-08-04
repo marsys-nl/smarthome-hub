@@ -9,6 +9,8 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.application.install
+import io.ktor.server.auth.Authentication
 import io.ktor.server.auth.authenticate
 import io.ktor.server.config.ApplicationConfigurationException
 import io.ktor.server.config.MapApplicationConfig
@@ -17,7 +19,7 @@ import io.ktor.server.routing.get
 import io.ktor.server.testing.testApplication
 
 val ApiKeyAuthenticationTest by testSuite(
-    name = "test",
+    name = "Api key authentication tests",
 ) {
     test(name = "When an api key is configured and provided, the request is allowed") {
         testApplication {
@@ -28,7 +30,11 @@ val ApiKeyAuthenticationTest by testSuite(
             }
 
             application {
-                initializeAuthentication()
+                with(environment.config) {
+                    install(Authentication) {
+                        initializeApiKeyAuthentication()
+                    }
+                }
             }
 
             routing {
@@ -58,7 +64,11 @@ val ApiKeyAuthenticationTest by testSuite(
             }
 
             application {
-                initializeAuthentication()
+                with(environment.config) {
+                    install(Authentication) {
+                        initializeApiKeyAuthentication()
+                    }
+                }
             }
 
             routing {
@@ -86,7 +96,11 @@ val ApiKeyAuthenticationTest by testSuite(
             }
 
             application {
-                initializeAuthentication()
+                with(environment.config) {
+                    install(Authentication) {
+                        initializeApiKeyAuthentication()
+                    }
+                }
             }
 
             routing {
@@ -110,7 +124,11 @@ val ApiKeyAuthenticationTest by testSuite(
     test(name = "When no api key is configured and none provided, the request is allowed") {
         testApplication {
             application {
-                initializeAuthentication()
+                with(environment.config) {
+                    install(Authentication) {
+                        initializeApiKeyAuthentication()
+                    }
+                }
             }
 
             routing {
@@ -132,7 +150,11 @@ val ApiKeyAuthenticationTest by testSuite(
     test(name = "When no api key is configured but one is provided, the request is allowed") {
         testApplication {
             application {
-                initializeAuthentication()
+                with(environment.config) {
+                    install(Authentication) {
+                        initializeApiKeyAuthentication()
+                    }
+                }
             }
 
             routing {
@@ -162,7 +184,11 @@ val ApiKeyAuthenticationTest by testSuite(
             }
 
             application {
-                initializeAuthentication()
+                with(environment.config) {
+                    install(Authentication) {
+                        initializeApiKeyAuthentication()
+                    }
+                }
             }
 
             routing {
