@@ -15,7 +15,7 @@ fun Application.initializeRouting() {
             configRoutes()
         }
 
-        authenticate(KEYCLOAK_AUTH_NAME) {
+        authenticate(BEARER_AUTH_NAME) {
             get("/auth-test") {
                 call.respondText {
                     "Authenticated"
