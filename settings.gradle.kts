@@ -33,9 +33,17 @@ dependencyResolutionManagement {
             content {
                 includeModule("network.marsys.smarthome", "smarthome-api")
                 includeModule("network.marsys.smarthome", "smarthome-api-jvm")
+
+                includeModule("network.marsys.smarthome", "smarthome-domain")
+                includeModule("network.marsys.smarthome", "smarthome-domain-jvm")
             }
         }
     }
 }
 
-include(":hub")
+include(
+    ":feature:integration:domain",
+    ":feature:integration:application",
+    ":feature:integration:infrastructure:fake",
+    ":hub",
+)

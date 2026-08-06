@@ -1,6 +1,6 @@
 [versions]
 smarthome-api = "2026.03-SNAPSHOT"
-smarthome-domain = "2026.06-SNAPSHOT"
+smarthome-domain = "2026.08-SNAPSHOT"
 smarthome-hub = "2026.08-SNAPSHOT"
 
 buildconfig = "6.0.10"
@@ -12,6 +12,7 @@ jvm-toolchain = "21"
 logback = "1.6.1"
 
 kotlin = "2.4.10"
+kotlin-coroutines = "1.11.0"
 kotlin-expect = "0.1"
 kotlin-kover = "0.9.9"
 kotlin-logging = "8.0.4"
@@ -25,6 +26,7 @@ test-balloon = "1.0.1-K2.4.0"
 slf4j = "2.0.18"
 
 [libraries]
+kotlin-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
 kotlin-expect-core = { group = "dev.nmarsman.expect", name = "kotlin-expect-core", version.ref = "kotlin-expect" }
 kotlin-logging = { group = "io.github.oshai", name = "kotlin-logging", version.ref = "kotlin-logging" }
 
@@ -49,6 +51,7 @@ test-balloon-core = { group = "de.infix.testBalloon", name = "testBalloon-framew
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 
 smarthome-api = { group = "network.marsys.smarthome", name = "smarthome-api", version.ref = "smarthome-api" }
+smarthome-domain = { group = "network.marsys.smarthome", name = "smarthome-domain", version.ref = "smarthome-domain" }
 
 [plugins]
 buildconfig = { id = "com.github.gmazzo.buildconfig", version.ref = "buildconfig" }

@@ -29,6 +29,10 @@ ktor {
 }
 
 dependencies {
+    implementation(projects.feature.integration.application)
+    implementation(projects.feature.integration.domain)
+    implementation(projects.feature.integration.infrastructure.fake)
+
     implementation(libs.bundles.kotlin.logging)
 
     implementation(libs.ktor.serialization.kotlinx.json)
