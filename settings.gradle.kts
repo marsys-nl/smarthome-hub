@@ -31,11 +31,8 @@ dependencyResolutionManagement {
             }
 
             content {
-                includeModule("network.marsys.smarthome", "smarthome-api")
-                includeModule("network.marsys.smarthome", "smarthome-api-jvm")
-
-                includeModule("network.marsys.smarthome", "smarthome-domain")
-                includeModule("network.marsys.smarthome", "smarthome-domain-jvm")
+                includeModuleByRegex("dev\\.nmarsman\\.expect", "kotlin-expect-core.*")
+                includeModuleByRegex("network\\.marsys\\.smarthome", "smarthome-.*")
             }
         }
     }
