@@ -7,17 +7,13 @@ import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.ApplicationStopping
 import kotlinx.coroutines.runBlocking
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationLifecycleManager
-import network.marsys.smarthome.hub.feature.integration.infrastructure.fake.FakeIntegrationAdapter
+import org.koin.ktor.ext.inject
 
 private val logger = KotlinLogging.logger { }
 
 @Suppress("FunctionNameMaxLength")
 fun Application.initializeIntegrationLifecycleManager() {
-    val integrationLifecycleManager = IntegrationLifecycleManager(
-        integrations = listOf(
-            FakeIntegrationAdapter(),
-        ),
-    )
+    val integrationLifecycleManager by inject<IntegrationLifecycleManager>()
 
     val applicationStartedHandler = monitor.subscribe(ApplicationStarted) {
         logger.info { "Starting integration lifecycle manager..." }
