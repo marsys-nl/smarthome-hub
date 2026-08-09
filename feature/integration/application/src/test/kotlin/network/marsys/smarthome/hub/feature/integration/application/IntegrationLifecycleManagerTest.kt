@@ -11,6 +11,7 @@ import dev.nmarsman.expect.assertions.map
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
+import network.marsys.smarthome.hub.feature.integration.application.exception.IntegrationNotFoundException
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 
 val IntegrationLifecycleManagerTest by testSuite(
@@ -24,22 +25,22 @@ val IntegrationLifecycleManagerTest by testSuite(
     test(name = "Starting integration with an unknown identifier should throw an exception") {
         val integration = FakeIntegration()
         val manager = IntegrationLifecycleManager(listOf(integration))
-        expectThrows<IllegalStateException> { manager.start(IntegrationIdentifier("unknown")) }
-            .hasMessage("No integration found called 'unknown'.")
+        expectThrows<IntegrationNotFoundException> { manager.start(IntegrationIdentifier("unknown")) }
+            .hasMessage("Integration 'unknown' was not found.")
     }
 
     test(name = "Stopping integration with an unknown identifier should throw an exception") {
         val integration = FakeIntegration()
         val manager = IntegrationLifecycleManager(listOf(integration))
-        expectThrows<IllegalStateException> { manager.stop(IntegrationIdentifier("unknown")) }
-            .hasMessage("No integration found called 'unknown'.")
+        expectThrows<IntegrationNotFoundException> { manager.stop(IntegrationIdentifier("unknown")) }
+            .hasMessage("Integration 'unknown' was not found.")
     }
 
     test(name = "Restarting integration with an unknown identifier should throw an exception") {
         val integration = FakeIntegration()
         val manager = IntegrationLifecycleManager(listOf(integration))
-        expectThrows<IllegalStateException> { manager.restart(IntegrationIdentifier("unknown")) }
-            .hasMessage("No integration found called 'unknown'.")
+        expectThrows<IntegrationNotFoundException> { manager.restart(IntegrationIdentifier("unknown")) }
+            .hasMessage("Integration 'unknown' was not found.")
     }
 
     test(name = "Starting an integration by its identifier succeeds if the integration isn't running") {
