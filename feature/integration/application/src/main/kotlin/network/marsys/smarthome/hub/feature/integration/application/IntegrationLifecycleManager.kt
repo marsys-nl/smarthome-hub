@@ -6,6 +6,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
+import network.marsys.smarthome.hub.feature.integration.application.exception.IntegrationNotFoundException
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.ManageIntegrationLifecycle
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import kotlin.time.Duration.Companion.seconds
@@ -16,9 +17,8 @@ class IntegrationLifecycleManager(
     private val integrations: List<IntegrationAdapter>,
 ) : ManageIntegrationLifecycle {
     override suspend fun restart(identifier: IntegrationIdentifier) {
-        val integration = checkNotNull(integrations.find { it.identifier == identifier }) {
-            "No integration found called '$identifier'."
-        }
+        val integration = integrations.find { it.identifier == identifier }
+            ?: throw IntegrationNotFoundException(identifier)
 
         if (integration.status.value == Integration.Status.Running) {
             stop(integration = integration)
@@ -36,9 +36,8 @@ class IntegrationLifecycleManager(
     }
 
     override fun start(identifier: IntegrationIdentifier) {
-        val integration = checkNotNull(integrations.find { it.identifier == identifier }) {
-            "No integration found called '$identifier'."
-        }
+        val integration = integrations.find { it.identifier == identifier }
+            ?: throw IntegrationNotFoundException(identifier)
 
         start(integration = integration)
     }
@@ -57,9 +56,8 @@ class IntegrationLifecycleManager(
     }
 
     override suspend fun stop(identifier: IntegrationIdentifier) {
-        val integration = checkNotNull(integrations.find { it.identifier == identifier }) {
-            "No integration found called '$identifier'."
-        }
+        val integration = integrations.find { it.identifier == identifier }
+            ?: throw IntegrationNotFoundException(identifier)
 
         if (integration.status.value == Integration.Status.Running) {
             stop(integration = integration)

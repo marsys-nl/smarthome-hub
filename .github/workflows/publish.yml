@@ -1,9 +1,8 @@
 name: Smarthome Hub - Publish on merged pull request to main
 
 on:
-    pull_request:
-        types: [closed]
-        branches: [main]
+    push:
+        branches: [ main ]
         paths:
             - '**/src/main/**'
             - 'Dockerfile'
@@ -12,7 +11,6 @@ on:
 jobs:
     publish:
         name: Publish to docker registry
-        if: github.event_name == 'workflow_dispatch' || github.event.pull_request.merged == true
         runs-on: ubuntu-latest
 
         permissions:
