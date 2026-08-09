@@ -4,23 +4,14 @@ import de.infix.testBalloon.framework.core.testSuite
 import dev.nmarsman.expect.api.expectDoesNotThrow
 import dev.nmarsman.expect.api.expectThat
 import dev.nmarsman.expect.api.expectThrows
+import dev.nmarsman.expect.assertions.all
+import dev.nmarsman.expect.assertions.hasMessage
 import dev.nmarsman.expect.assertions.isEqualTo
-import dev.nmarsman.expect.assertions.isNotA
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
+import dev.nmarsman.expect.assertions.map
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
-import kotlin.time.Duration.Companion.seconds
-
-private class FakeIntegration(
-    private val start: () -> Unit = {},
-    private val stop: suspend () -> Unit = {},
-    override val identifier: IntegrationIdentifier =
-        IntegrationIdentifier("integration.fake"),
-) : IntegrationAdapter {
-    override fun start() = start.invoke()
-    override suspend fun stop() = stop.invoke()
-}
+import network.marsys.smarthome.hub.feature.integration.domain.Integration
 
 val IntegrationLifecycleManagerTest by testSuite(
     name = "Integration lifecycle manager tests",
@@ -30,16 +21,120 @@ val IntegrationLifecycleManagerTest by testSuite(
         expectDoesNotThrow { manager.start() }
     }
 
-    test(name = "Starting integration works") {
+    test(name = "Starting integration with an unknown identifier should throw an exception") {
         val integration = FakeIntegration()
+        val manager = IntegrationLifecycleManager(listOf(integration))
+        expectThrows<IllegalStateException> { manager.start(IntegrationIdentifier("unknown")) }
+            .hasMessage("No integration found called 'unknown'.")
+    }
+
+    test(name = "Stopping integration with an unknown identifier should throw an exception") {
+        val integration = FakeIntegration()
+        val manager = IntegrationLifecycleManager(listOf(integration))
+        expectThrows<IllegalStateException> { manager.stop(IntegrationIdentifier("unknown")) }
+            .hasMessage("No integration found called 'unknown'.")
+    }
+
+    test(name = "Restarting integration with an unknown identifier should throw an exception") {
+        val integration = FakeIntegration()
+        val manager = IntegrationLifecycleManager(listOf(integration))
+        expectThrows<IllegalStateException> { manager.restart(IntegrationIdentifier("unknown")) }
+            .hasMessage("No integration found called 'unknown'.")
+    }
+
+    test(name = "Starting an integration by its identifier succeeds if the integration isn't running") {
+        var counter = 0
+        val integration = FakeIntegration(
+            start = { counter++ },
+            initialStatus = Integration.Status.Stopped,
+        )
+
+        val manager = IntegrationLifecycleManager(listOf(integration))
+
+        expectThat(integration.status.value)
+            .isEqualTo(Integration.Status.Stopped)
+
+        expectDoesNotThrow { manager.start(integration.identifier) }
+
+        expectThat(integration.status.value)
+            .isEqualTo(Integration.Status.Running)
+
+        expectThat(counter)
+            .isEqualTo(1)
+    }
+
+    test(name = "Starting an integration by its identifier fails if the integration is already running") {
+        var counter = 0
+        val integration = FakeIntegration(
+            start = { counter++ },
+            initialStatus = Integration.Status.Running,
+        )
+
+        val manager = IntegrationLifecycleManager(listOf(integration))
+
+        expectThat(integration.status.value)
+            .isEqualTo(Integration.Status.Running)
+
+        expectDoesNotThrow { manager.start(integration.identifier) }
+
+        expectThat(integration.status.value)
+            .isEqualTo(Integration.Status.Running)
+
+        expectThat(counter)
+            .isEqualTo(0)
+    }
+
+    test(name = "Starting an integration that throws an exception should not throw an exception") {
+        val integration = FakeIntegration(
+            start = {
+                throw RuntimeException("Some exception")
+            },
+        )
+
         val manager = IntegrationLifecycleManager(listOf(integration))
         expectDoesNotThrow { manager.start() }
     }
 
-    test(name = "Stopping an integration succeeds") {
-        val integration = FakeIntegration()
+    test(name = "Stopping an integration by its identifier succeeds if the integration is running") {
+        var counter = 0
+        val integration = FakeIntegration(
+            stop = { counter++ },
+            initialStatus = Integration.Status.Running,
+        )
+
         val manager = IntegrationLifecycleManager(listOf(integration))
-        expectDoesNotThrow { manager.stop() }
+
+        expectThat(integration.status.value)
+            .isEqualTo(Integration.Status.Running)
+
+        expectDoesNotThrow { manager.stop(integration.identifier) }
+
+        expectThat(integration.status.value)
+            .isEqualTo(Integration.Status.Stopped)
+
+        expectThat(counter)
+            .isEqualTo(1)
+    }
+
+    test(name = "Stopping an integration by its identifier fails if the integration is already stopped") {
+        var counter = 0
+        val integration = FakeIntegration(
+            stop = { counter++ },
+            initialStatus = Integration.Status.Stopped,
+        )
+
+        val manager = IntegrationLifecycleManager(listOf(integration))
+
+        expectThat(integration.status.value)
+            .isEqualTo(Integration.Status.Stopped)
+
+        expectDoesNotThrow { manager.stop(integration.identifier) }
+
+        expectThat(integration.status.value)
+            .isEqualTo(Integration.Status.Stopped)
+
+        expectThat(counter)
+            .isEqualTo(0)
     }
 
     test(name = "Stopping an integration that throws an exception should not throw an exception") {
@@ -53,28 +148,101 @@ val IntegrationLifecycleManagerTest by testSuite(
         expectDoesNotThrow { manager.stop() }
     }
 
-    test(name = "Stopping an integration that cancels the coroutine throws an exception") {
+    test(name = "Restarting an integration by its identifier succeeds if the integration is running") {
+        var counter = 0
         val integration = FakeIntegration(
-            stop = {
-                throw CancellationException("Cancelled the coroutine")
-            },
+            stop = { counter++ },
+            initialStatus = Integration.Status.Running,
         )
 
         val manager = IntegrationLifecycleManager(listOf(integration))
 
-        expectThrows<CancellationException> { manager.stop() }
-            .isNotA<TimeoutCancellationException>()
+        expectThat(integration.status.value)
+            .isEqualTo(Integration.Status.Running)
+
+        expectDoesNotThrow { manager.restart(integration.identifier) }
+
+        expectThat(integration.status.value)
+            .isEqualTo(Integration.Status.Running)
+
+        expectThat(counter)
+            .isEqualTo(1)
     }
 
-    test(name = "Stopping an integration that takes to long throws an exception") {
+    test(name = "Restarting an integration by its identifier succeeds if the integration is already stopped") {
+        var counter = 0
         val integration = FakeIntegration(
-            stop = {
-                delay(10.seconds)
-            },
+            stop = { counter++ },
+            initialStatus = Integration.Status.Stopped,
         )
 
         val manager = IntegrationLifecycleManager(listOf(integration))
 
-        expectThrows<TimeoutCancellationException> { manager.stop() }
+        expectThat(integration.status.value)
+            .isEqualTo(Integration.Status.Stopped)
+
+        expectDoesNotThrow { manager.restart(integration.identifier) }
+
+        expectThat(integration.status.value)
+            .isEqualTo(Integration.Status.Running)
+
+        expectThat(counter)
+            .isEqualTo(0)
+    }
+
+    test(name = "Starting integrations should succeed") {
+        val integration = FakeIntegration(
+            initialStatus = Integration.Status.Stopped,
+        )
+
+        val integrations = listOf(integration, integration, integration)
+        val manager = IntegrationLifecycleManager(integrations)
+
+        expectThat(integrations)
+            .map { it.status.value }
+            .all { isEqualTo(Integration.Status.Stopped) }
+
+        expectDoesNotThrow { manager.start() }
+
+        expectThat(integrations)
+            .map { it.status.value }
+            .all { isEqualTo(Integration.Status.Running) }
+    }
+
+    test(name = "Stopping integrations should succeed") {
+        val integration = FakeIntegration(
+            initialStatus = Integration.Status.Running,
+        )
+
+        val integrations = listOf(integration, integration, integration)
+        val manager = IntegrationLifecycleManager(integrations)
+
+        expectThat(integrations)
+            .map { it.status.value }
+            .all { isEqualTo(Integration.Status.Running) }
+
+        expectDoesNotThrow { manager.stop() }
+
+        expectThat(integrations)
+            .map { it.status.value }
+            .all { isEqualTo(Integration.Status.Stopped) }
+    }
+}
+
+private class FakeIntegration(
+    private val start: () -> Unit = {},
+    private val stop: suspend () -> Unit = {},
+    override val identifier: IntegrationIdentifier =
+        IntegrationIdentifier("integration.fake"),
+    initialStatus: Integration.Status = Integration.Status.Stopped,
+) : IntegrationAdapter {
+    private val statusStateFlow = MutableStateFlow(initialStatus)
+    override val status: StateFlow<Integration.Status> = statusStateFlow
+
+    override fun start() = start.invoke().also {
+        statusStateFlow.value = Integration.Status.Running
+    }
+    override suspend fun stop() = stop.invoke().also {
+        statusStateFlow.value = Integration.Status.Stopped
     }
 }

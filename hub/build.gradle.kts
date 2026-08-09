@@ -35,6 +35,9 @@ dependencies {
 
     implementation(libs.bundles.kotlin.logging)
 
+    implementation(project.dependencies.platform(libs.koin.bom))
+    implementation(libs.koin.ktor)
+
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.ktor.server.auth)
     implementation(libs.ktor.server.auth.api.key)
@@ -46,6 +49,7 @@ dependencies {
     implementation(libs.ktor.server.netty)
 
     implementation(libs.smarthome.api)
+    implementation(libs.smarthome.domain)
 
     testImplementation(libs.kotlin.expect.core)
 

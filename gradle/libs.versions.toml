@@ -11,6 +11,8 @@ jvm-toolchain = "21"
 
 logback = "1.6.1"
 
+koin = "4.2.2"
+
 kotlin = "2.4.10"
 kotlin-coroutines = "1.11.0"
 kotlin-expect = "0.2"
@@ -26,6 +28,9 @@ test-balloon = "1.0.1-K2.4.0"
 slf4j = "2.0.18"
 
 [libraries]
+koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koin" }
+koin-ktor = { group = "io.insert-koin", name = "koin-ktor" }
+
 kotlin-coroutines = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-core", version.ref = "kotlin-coroutines" }
 kotlin-expect-core = { group = "dev.nmarsman.expect", name = "kotlin-expect-core", version.ref = "kotlin-expect" }
 kotlin-logging = { group = "io.github.oshai", name = "kotlin-logging", version.ref = "kotlin-logging" }
