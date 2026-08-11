@@ -7,6 +7,7 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 import network.marsys.smarthome.hub.feature.integration.application.exception.IntegrationNotFoundException
+import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationQueries
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.ManageIntegrationLifecycle
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import kotlin.time.Duration.Companion.seconds
@@ -15,7 +16,9 @@ private val logger = KotlinLogging.logger {}
 
 class IntegrationLifecycleManager(
     private val integrations: List<IntegrationAdapter>,
-) : ManageIntegrationLifecycle {
+) : IntegrationQueries, ManageIntegrationLifecycle {
+    override fun all(): Collection<Integration> = integrations
+
     override suspend fun restart(identifier: IntegrationIdentifier) {
         val integration = integrations.find { it.identifier == identifier }
             ?: throw IntegrationNotFoundException(identifier)
