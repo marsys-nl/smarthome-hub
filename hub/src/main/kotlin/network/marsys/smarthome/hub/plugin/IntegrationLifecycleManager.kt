@@ -5,6 +5,7 @@ import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStarted
 import io.ktor.server.application.ApplicationStopped
 import io.ktor.server.application.ApplicationStopping
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationLifecycleManager
 import org.koin.ktor.ext.inject
@@ -16,8 +17,10 @@ fun Application.initializeIntegrationLifecycleManager() {
     val integrationLifecycleManager by inject<IntegrationLifecycleManager>()
 
     val applicationStartedHandler = monitor.subscribe(ApplicationStarted) {
-        logger.info { "Starting integration lifecycle manager..." }
-        integrationLifecycleManager.start()
+        launch {
+            logger.info { "Starting integration lifecycle manager..." }
+            integrationLifecycleManager.start()
+        }
     }
 
     val applicationStoppingHandler = monitor.subscribe(ApplicationStopping) {

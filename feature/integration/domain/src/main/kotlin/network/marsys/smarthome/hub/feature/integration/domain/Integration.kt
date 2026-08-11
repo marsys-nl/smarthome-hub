@@ -8,7 +8,10 @@ interface Integration {
     val status: StateFlow<Status>
 
     sealed interface Status {
-        object Running : Status
-        object Stopped : Status
+        data object Starting : Status
+        data object Running : Status
+        data object Degraded : Status
+        data object Stopping : Status
+        data object Stopped : Status
     }
 }
