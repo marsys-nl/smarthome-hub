@@ -27,15 +27,17 @@ class IntegrationLifecycleManager(
         start(integration = integration)
     }
 
-    fun start() {
+    suspend fun start() {
         val startableIntegrations = integrations
             .filter { it.status.value == Integration.Status.Stopped }
 
         logger.info { "Starting ${startableIntegrations.size} integrations." }
-        startableIntegrations.forEach(::start)
+        startableIntegrations.forEach { integration ->
+            start(integration = integration)
+        }
     }
 
-    override fun start(identifier: IntegrationIdentifier) {
+    override suspend fun start(identifier: IntegrationIdentifier) {
         val integration = integrations.find { it.identifier == identifier }
             ?: throw IntegrationNotFoundException(identifier)
 
@@ -64,7 +66,7 @@ class IntegrationLifecycleManager(
         }
     }
 
-    private fun start(integration: IntegrationAdapter) = try {
+    private suspend fun start(integration: IntegrationAdapter) = try {
         check(integration.status.value == Integration.Status.Stopped) {
             "Can't start integration '${integration.identifier}', as it is already running."
         }

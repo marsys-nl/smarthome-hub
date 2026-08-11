@@ -281,7 +281,7 @@ private fun integrationLifecycleManager(
     stop: (IntegrationIdentifier) -> Unit = {},
     restart: (IntegrationIdentifier) -> Unit = {},
 ) = object : ManageIntegrationLifecycle {
-    override fun start(identifier: IntegrationIdentifier) = start.invoke(identifier)
+    override suspend fun start(identifier: IntegrationIdentifier) = start.invoke(identifier)
     override suspend fun stop(identifier: IntegrationIdentifier) = stop.invoke(identifier)
     override suspend fun restart(identifier: IntegrationIdentifier) = restart.invoke(identifier)
 }

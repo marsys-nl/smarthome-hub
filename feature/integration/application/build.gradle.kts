@@ -22,4 +22,6 @@ dependencies {
     testImplementation(libs.kotlin.expect.core)
 
     testImplementation(libs.test.balloon.core)
+
+    testImplementation(libs.turbine)
 }

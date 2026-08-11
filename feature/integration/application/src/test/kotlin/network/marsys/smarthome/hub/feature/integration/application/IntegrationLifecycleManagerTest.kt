@@ -231,7 +231,7 @@ val IntegrationLifecycleManagerTest by testSuite(
 }
 
 private class FakeIntegration(
-    private val start: () -> Unit = {},
+    private val start: suspend () -> Unit = {},
     private val stop: suspend () -> Unit = {},
     override val identifier: IntegrationIdentifier =
         IntegrationIdentifier("integration.fake"),
@@ -240,7 +240,7 @@ private class FakeIntegration(
     private val statusStateFlow = MutableStateFlow(initialStatus)
     override val status: StateFlow<Integration.Status> = statusStateFlow
 
-    override fun start() = start.invoke().also {
+    override suspend fun start() = start.invoke().also {
         statusStateFlow.value = Integration.Status.Running
     }
     override suspend fun stop() = stop.invoke().also {
