@@ -8,10 +8,12 @@ import network.marsys.smarthome.hub.feature.integration.application.IntegrationL
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import kotlin.time.Duration.Companion.seconds
 
-class FakeIntegrationAdapter : IntegrationAdapter {
-    override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.fake")
-
+class FakeIntegrationAdapter(
+    override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.fake"),
+    initialStatus: Integration.Status = Integration.Status.Stopped,
+) : IntegrationAdapter {
     private val lifecycle = IntegrationLifecycleController(
+        initialStatus = initialStatus,
         onStart = {
             delay(2.seconds)
         },

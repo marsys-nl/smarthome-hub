@@ -6,11 +6,15 @@ import io.ktor.server.response.respond
 import io.ktor.server.routing.Route
 import io.ktor.server.routing.RoutingCall
 import io.ktor.server.routing.RoutingContext
+import io.ktor.server.routing.get
 import io.ktor.server.routing.post
 import io.ktor.server.routing.route
+import network.marsys.smarthome.api.models.integration.IntegrationResponse
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 import network.marsys.smarthome.hub.feature.integration.application.exception.IntegrationNotFoundException
+import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationQueries
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.ManageIntegrationLifecycle
+import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import org.koin.ktor.ext.inject
 
 private val logger = KotlinLogging.logger { }
@@ -18,7 +22,15 @@ private val logger = KotlinLogging.logger { }
 @Suppress("LabeledExpression")
 fun Route.integrationRoutes() {
     route("/api/integrations") {
+        val queries by inject<IntegrationQueries>()
         val manager by inject<ManageIntegrationLifecycle>()
+
+        get {
+            val integrations = queries.all()
+                .map(Integration::map)
+
+            call.respond<Collection<IntegrationResponse>>(integrations)
+        }
 
         route("/{integrationIdentifier}") {
             post("/restart") {
@@ -74,4 +86,17 @@ private fun extractIntegrationIdentifier(
 } catch (exception: IllegalArgumentException) {
     logger.debug(exception) { "Error when trying to extract integration identifier." }
     null
+}
+
+private fun Integration.map(): IntegrationResponse = IntegrationResponse(
+    identifier = identifier,
+    status = status.value.map(),
+)
+
+private fun Integration.Status.map(): IntegrationResponse.Status = when (this) {
+    is Integration.Status.Starting -> IntegrationResponse.Status.Starting
+    is Integration.Status.Running -> IntegrationResponse.Status.Running
+    is Integration.Status.Degraded -> IntegrationResponse.Status.Degraded
+    is Integration.Status.Stopping -> IntegrationResponse.Status.Stopping
+    is Integration.Status.Stopped -> IntegrationResponse.Status.Stopped
 }
