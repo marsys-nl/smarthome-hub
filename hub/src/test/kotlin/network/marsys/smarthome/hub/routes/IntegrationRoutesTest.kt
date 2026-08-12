@@ -63,6 +63,7 @@ val IntegrationRoutesTest by testSuite(
             Integration.Status.Degraded to IntegrationResponse.Status.Degraded,
             Integration.Status.Stopping to IntegrationResponse.Status.Stopping,
             Integration.Status.Stopped to IntegrationResponse.Status.Stopped,
+            Integration.Status.Failed(RuntimeException()) to IntegrationResponse.Status.Failed,
         ).forEach { status, expected ->
             test(name = "When a integration is known with a '$status' status, the request returns a list containing that integration") {
                 testApplication {

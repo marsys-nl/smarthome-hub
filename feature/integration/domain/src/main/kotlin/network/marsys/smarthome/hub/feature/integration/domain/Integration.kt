@@ -13,5 +13,9 @@ interface Integration {
         data object Degraded : Status
         data object Stopping : Status
         data object Stopped : Status
+
+        data class Failed(
+            val throwable: Throwable,
+        ) : Status
     }
 }

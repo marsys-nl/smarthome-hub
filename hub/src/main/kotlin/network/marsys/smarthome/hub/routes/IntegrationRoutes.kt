@@ -99,4 +99,5 @@ private fun Integration.Status.map(): IntegrationResponse.Status = when (this) {
     is Integration.Status.Degraded -> IntegrationResponse.Status.Degraded
     is Integration.Status.Stopping -> IntegrationResponse.Status.Stopping
     is Integration.Status.Stopped -> IntegrationResponse.Status.Stopped
+    is Integration.Status.Failed -> IntegrationResponse.Status.Failed
 }
