@@ -3,6 +3,7 @@ package network.marsys.smarthome.hub.feature.integration.application
 import app.cash.turbine.test
 import de.infix.testBalloon.framework.core.testSuite
 import dev.nmarsman.expect.api.expectThat
+import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEqualTo
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.launch
@@ -51,7 +52,7 @@ val IntegrationLifecycleControllerTest by testSuite(
             }
         }
 
-        test(name = "Starting an integration lifecycle controller that throws an error sets the status to stopped") {
+        test(name = "Starting an integration lifecycle controller that throws an error sets the status to failed") {
             val controller = IntegrationLifecycleController(
                 onStart = { error("Some error") },
             )
@@ -68,7 +69,7 @@ val IntegrationLifecycleControllerTest by testSuite(
                     .isEqualTo(Integration.Status.Starting)
 
                 expectThat(awaitItem())
-                    .isEqualTo(Integration.Status.Stopped)
+                    .isA<Integration.Status.Failed>()
             }
         }
     }
@@ -112,7 +113,37 @@ val IntegrationLifecycleControllerTest by testSuite(
             }
         }
 
-        test(name = "Stopping an integration lifecycle controller that throws an error sets the status to stopped") {
+        test(name = "Stopping an integration lifecycle controller returns if the integration has the stopping status") {
+            val controller = IntegrationLifecycleController(
+                initialStatus = Integration.Status.Stopping,
+            )
+
+            controller.status.test {
+                expectThat(awaitItem())
+                    .isEqualTo(Integration.Status.Stopping)
+
+                controller.stop()
+
+                expectNoEvents()
+            }
+        }
+
+        test(name = "Stopping an integration lifecycle controller returns if the integration has the failed status") {
+            val controller = IntegrationLifecycleController(
+                initialStatus = Integration.Status.Failed(RuntimeException("Some error")),
+            )
+
+            controller.status.test {
+                expectThat(awaitItem())
+                    .isA<Integration.Status.Failed>()
+
+                controller.stop()
+
+                expectNoEvents()
+            }
+        }
+
+        test(name = "Stopping an integration lifecycle controller that throws an error sets the status to failed") {
             val controller = IntegrationLifecycleController(
                 initialStatus = Integration.Status.Running,
                 onStop = { error("Some error") },
@@ -130,13 +161,13 @@ val IntegrationLifecycleControllerTest by testSuite(
                     .isEqualTo(Integration.Status.Stopping)
 
                 expectThat(awaitItem())
-                    .isEqualTo(Integration.Status.Stopped)
+                    .isA<Integration.Status.Failed>()
 
                 expectNoEvents()
             }
         }
 
-        test(name = "Stopping an integration lifecycle controller that throws an error on preparation sets the status to stopped") {
+        test(name = "Stopping an integration lifecycle controller that throws an error on preparation sets the status to failed") {
             val controller = IntegrationLifecycleController(
                 initialStatus = Integration.Status.Running,
                 onPrepareStop = { error("Some error") },
@@ -154,7 +185,7 @@ val IntegrationLifecycleControllerTest by testSuite(
                     .isEqualTo(Integration.Status.Stopping)
 
                 expectThat(awaitItem())
-                    .isEqualTo(Integration.Status.Stopped)
+                    .isA<Integration.Status.Failed>()
 
                 expectNoEvents()
             }
