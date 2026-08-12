@@ -25,6 +25,6 @@ private val integrationLifecycleManagerModule = module {
     )
 
     single<IntegrationLifecycleManager> { integrationLifecycleManager }
-    single<IntegrationQueries> { integrationLifecycleManager}
+    single<IntegrationQueries> { integrationLifecycleManager }
     single<ManageIntegrationLifecycle> { integrationLifecycleManager }
 }
