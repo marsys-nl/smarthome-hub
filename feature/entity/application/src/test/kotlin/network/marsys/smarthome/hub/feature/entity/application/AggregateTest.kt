@@ -52,7 +52,7 @@ val AggregateTest by testSuite(
         val aggregate = EntityAggregate(history)
 
         expectThat(aggregate.entity)
-            .isEqualTo(Light.create(identifier))
+            .isEqualTo(Light.createWithUnknown(identifier))
 
         expectThat(aggregate.entity)
             .with(Entity<*, *>::identifier) { isEqualTo(identifier) }

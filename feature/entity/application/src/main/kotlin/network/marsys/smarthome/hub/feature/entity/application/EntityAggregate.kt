@@ -19,7 +19,7 @@ internal class EntityAggregate(
                     "Entity has already been provisioned."
                 }
 
-                event.type.create(event.identifier)
+                event.type.createWithUnknown(event.identifier)
             }
         }
 }
