@@ -26,7 +26,7 @@ data class Light(
     }
 
     companion object : Entity.Type<Light, Capabilities> {
-        override fun create(identifier: EntityIdentifier): Light =
+        override fun createWithUnknown(identifier: EntityIdentifier): Light =
             Light(identifier, State.Unknown())
     }
 }
