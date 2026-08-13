@@ -39,6 +39,8 @@ dependencyResolutionManagement {
 }
 
 include(
+    ":feature:entity:domain",
+    ":feature:entity:application",
     ":feature:integration:domain",
     ":feature:integration:application",
     ":feature:integration:infrastructure:fake",
