@@ -19,4 +19,12 @@ sealed interface Capability<T> {
     data class Available<C : Capability<*>>(
         override val value: C,
     ) : Optional<C>, Present<C>
+
+    companion object {
+        fun <T : Capability<*>> required(value: T) = Required(value)
+        fun <T : Capability<*>> optional(value: T?) = when (value) {
+            null -> Unsupported
+            else -> Available(value)
+        }
+    }
 }

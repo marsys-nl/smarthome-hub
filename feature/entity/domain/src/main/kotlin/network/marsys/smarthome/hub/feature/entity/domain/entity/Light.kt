@@ -4,6 +4,7 @@ import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
+import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
 data class Light(
     override val identifier: EntityIdentifier,
@@ -28,5 +29,14 @@ data class Light(
     companion object : Entity.Type<Light, Capabilities> {
         override fun createWithUnknown(identifier: EntityIdentifier): Light =
             Light(identifier, State.Unknown())
+
+        override fun createWithKnown(identifier: EntityIdentifier, capabilities: Capabilities): Light =
+            Light(
+                identifier = identifier,
+                state = State.Known(
+                    onOff = capabilities.onOff,
+                    brightness = capabilities.brightness,
+                ),
+            )
     }
 }
