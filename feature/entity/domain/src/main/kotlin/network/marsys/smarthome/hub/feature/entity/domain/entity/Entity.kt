@@ -18,5 +18,6 @@ sealed interface Entity<S : Entity.State<C>, C : Entity.Capabilities> {
 
     sealed interface Type<E : Entity<*, C>, C : Capabilities> {
         fun createWithUnknown(identifier: EntityIdentifier): E
+        fun createWithKnown(identifier: EntityIdentifier, capabilities: C): E
     }
 }
