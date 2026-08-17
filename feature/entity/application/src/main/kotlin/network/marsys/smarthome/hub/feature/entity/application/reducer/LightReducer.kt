@@ -2,6 +2,7 @@ package network.marsys.smarthome.hub.feature.entity.application.reducer
 
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
@@ -25,11 +26,24 @@ internal object LightReducer : EntityReducer<Light, Light.State, Light.Capabilit
 
         return entity.copy(
             state = when (event) {
+                is EntityBecameUnavailable -> context(with = entity.state) {
+                    handleEntityBecameUnavailable()
+                }
+
                 is EntityDiscovered<*> -> handleEntityDiscovered(event = event)
                 // else -> throwUnsupportedEventError(event = event)
             },
         )
     }
+
+    context(state: Light.State)
+    private fun handleEntityBecameUnavailable(): Light.State.Unknown =
+        Light.State.Unknown(
+            lastKnown = when (state) {
+                is Light.State.Known -> state
+                is Light.State.Unknown -> state.lastKnown
+            },
+        )
 
     private fun handleEntityDiscovered(event: EntityDiscovered<*>): Light.State.Known =
         checkNotNull(event.capabilities as? Light.State.Known) {
