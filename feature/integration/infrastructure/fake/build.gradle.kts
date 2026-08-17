@@ -11,6 +11,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(projects.feature.entity.domain)
     implementation(projects.feature.integration.application)
     implementation(projects.feature.integration.domain)
 

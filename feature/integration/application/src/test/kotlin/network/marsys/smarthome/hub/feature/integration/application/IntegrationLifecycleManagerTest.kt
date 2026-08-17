@@ -8,9 +8,12 @@ import dev.nmarsman.expect.assertions.all
 import dev.nmarsman.expect.assertions.hasMessage
 import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.map
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flowOf
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
+import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import network.marsys.smarthome.hub.feature.integration.application.exception.IntegrationNotFoundException
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 
@@ -237,6 +240,8 @@ private class FakeIntegration(
         IntegrationIdentifier("integration.fake"),
     initialStatus: Integration.Status = Integration.Status.Stopped,
 ) : IntegrationAdapter {
+    override val events: Flow<Event> = flowOf()
+
     private val statusStateFlow = MutableStateFlow(initialStatus)
     override val status: StateFlow<Integration.Status> = statusStateFlow
 
