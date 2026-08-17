@@ -11,6 +11,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(projects.feature.entity.domain)
     implementation(projects.feature.integration.domain)
 
     implementation(libs.bundles.kotlin.logging)

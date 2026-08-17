@@ -28,6 +28,14 @@ ktor {
     }
 }
 
+tasks.withType(Tar::class).all {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.withType(Zip::class).all {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
 dependencies {
     implementation(projects.feature.integration.application)
     implementation(projects.feature.integration.domain)
