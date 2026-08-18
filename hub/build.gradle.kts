@@ -39,7 +39,7 @@ tasks.withType(Zip::class).all {
 dependencies {
     implementation(projects.feature.integration.application)
     implementation(projects.feature.integration.domain)
-    implementation(projects.feature.integration.infrastructure.fake)
+    implementation(projects.feature.integration.infrastructure)
 
     implementation(libs.bundles.kotlin.logging)
 

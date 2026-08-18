@@ -23,7 +23,7 @@ import network.marsys.smarthome.hub.feature.integration.application.exception.In
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationQueries
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.ManageIntegrationLifecycle
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
-import network.marsys.smarthome.hub.feature.integration.infrastructure.fake.FakeIntegrationAdapter
+import network.marsys.smarthome.hub.feature.integration.infrastructure.FakeIntegrationAdapter
 import network.marsys.smarthome.hub.plugin.initializeSerialization
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin

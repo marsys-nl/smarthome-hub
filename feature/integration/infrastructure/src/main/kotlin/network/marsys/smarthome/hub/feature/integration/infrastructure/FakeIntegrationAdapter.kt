@@ -1,4 +1,4 @@
-package network.marsys.smarthome.hub.feature.integration.infrastructure.fake
+package network.marsys.smarthome.hub.feature.integration.infrastructure
 
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
@@ -29,7 +29,7 @@ class FakeIntegrationAdapter(
             eventChannel.trySend(
                 EntityProvisioned(
                     identifier = entityIdentifier,
-                    type = Light,
+                    type = Light.Companion,
                 ),
             )
         },

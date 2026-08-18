@@ -43,6 +43,6 @@ include(
     ":feature:entity:application",
     ":feature:integration:domain",
     ":feature:integration:application",
-    ":feature:integration:infrastructure:fake",
+    ":feature:integration:infrastructure",
     ":hub",
 )
