@@ -17,7 +17,7 @@ private val logger = KotlinLogging.logger {}
 class IntegrationLifecycleManager(
     private val integrations: List<IntegrationAdapter>,
 ) : IntegrationQueries, ManageIntegrationLifecycle {
-    override fun all(): Collection<Integration> = integrations
+    override fun all(): Collection<IntegrationAdapter> = integrations
 
     override suspend fun restart(identifier: IntegrationIdentifier) {
         val integration = integrations.find { it.identifier == identifier }
