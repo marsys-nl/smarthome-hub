@@ -7,7 +7,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
-internal object LightReducer : EntityReducer<Light, Light.State, Light.Capabilities> {
+internal object LightReducer : EntityReducer<Light> {
     override fun createWithUnknownState(
         identifier: EntityIdentifier,
     ) = Light(
@@ -30,7 +30,7 @@ internal object LightReducer : EntityReducer<Light, Light.State, Light.Capabilit
                     handleEntityBecameUnavailable()
                 }
 
-                is EntityDiscovered<*> -> handleEntityDiscovered(event = event)
+                is EntityDiscovered -> handleEntityDiscovered(event = event)
                 // else -> throwUnsupportedEventError(event = event)
             },
         )
@@ -45,9 +45,9 @@ internal object LightReducer : EntityReducer<Light, Light.State, Light.Capabilit
             },
         )
 
-    private fun handleEntityDiscovered(event: EntityDiscovered<*>): Light.State.Known =
-        checkNotNull(event.capabilities as? Light.State.Known) {
-            "Entity capabilities of type '${event.capabilities::class.simpleName}' supplied " +
+    private fun handleEntityDiscovered(event: EntityDiscovered): Light.State.Known =
+        checkNotNull(event.state as? Light.State.Known) {
+            "Entity state of type '${event.state::class.simpleName}' supplied " +
                 "while 'Light.State.Known' is expected."
         }
 }

@@ -7,6 +7,6 @@ import kotlin.time.Instant
 
 data class EntityProvisioned(
     override val identifier: EntityIdentifier,
-    val type: Entity.Type<*, *>,
+    val type: Entity.Type<*>,
     override val occurredAt: Instant = Clock.System.now(),
 ) : Event

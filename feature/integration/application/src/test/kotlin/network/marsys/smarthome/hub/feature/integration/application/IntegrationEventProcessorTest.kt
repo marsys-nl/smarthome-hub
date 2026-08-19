@@ -31,7 +31,7 @@ val IntegrationEventProcessorTest by testSuite(
 
     val discovered = EntityDiscovered(
         identifier = identifier,
-        capabilities = Light.State.Known(
+        state = Light.State.Known(
             onOff = required(OnOff(current = true)),
             brightness = optional(null),
         ),

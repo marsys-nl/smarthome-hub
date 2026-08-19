@@ -7,5 +7,5 @@ import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 internal class EntityAggregate(
     history: Collection<Event>,
 ) {
-    val entity: Entity<*, *> = EntityReducer.reduce(history = history)
+    val entity: Entity = EntityReducer.reduce(history = history)
 }

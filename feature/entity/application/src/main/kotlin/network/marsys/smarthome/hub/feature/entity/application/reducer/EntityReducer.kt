@@ -6,7 +6,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
-internal interface EntityReducer<E : Entity<S, C>, S : Entity.State<C>, C : Entity.Capabilities> {
+internal interface EntityReducer<E : Entity> {
     fun createWithUnknownState(
         identifier: EntityIdentifier,
     ): E
@@ -19,7 +19,7 @@ internal interface EntityReducer<E : Entity<S, C>, S : Entity.State<C>, C : Enti
     companion object {
         fun reduce(
             history: Collection<Event>,
-        ): Entity<*, *> {
+        ): Entity {
             val provisioned = checkNotNull(history.firstOrNull() as? EntityProvisioned) {
                 "Entity event history must start with entity provisioned event."
             }
