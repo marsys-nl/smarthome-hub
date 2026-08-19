@@ -9,34 +9,17 @@ import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 data class Light(
     override val identifier: EntityIdentifier,
     override val state: State,
-) : Entity<Light.State, Light.Capabilities> {
-    sealed interface Capabilities : Entity.Capabilities {
-        val onOff: Capability.Required<OnOff>
-        val brightness: Capability.Optional<Brightness>
-    }
-
-    sealed interface State : Entity.State<Capabilities> {
+) : Entity {
+    sealed interface State : Entity.State {
         data class Known(
-            override val onOff: Capability.Required<OnOff>,
-            override val brightness: Capability.Optional<Brightness>,
-        ) : Capabilities, State
+            val onOff: Capability.Required<OnOff>,
+            val brightness: Capability.Optional<Brightness>,
+        ) : State, Entity.State.Known
 
         data class Unknown(
-            override val lastKnown: Capabilities? = null,
-        ) : State, Entity.State.Unknown<Capabilities>
+            override val lastKnown: Known? = null,
+        ) : State, Entity.State.Unknown
     }
 
-    companion object : Entity.Type<Light, Capabilities> {
-        override fun createWithUnknown(identifier: EntityIdentifier): Light =
-            Light(identifier, State.Unknown())
-
-        override fun createWithKnown(identifier: EntityIdentifier, capabilities: Capabilities): Light =
-            Light(
-                identifier = identifier,
-                state = State.Known(
-                    onOff = capabilities.onOff,
-                    brightness = capabilities.brightness,
-                ),
-            )
-    }
+    companion object : Entity.Type<Light>
 }

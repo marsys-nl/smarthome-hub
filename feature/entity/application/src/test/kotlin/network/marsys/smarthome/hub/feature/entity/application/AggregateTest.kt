@@ -4,8 +4,6 @@ import de.infix.testBalloon.framework.core.testSuite
 import dev.nmarsman.expect.api.expectThat
 import dev.nmarsman.expect.api.expectThrows
 import dev.nmarsman.expect.assertions.hasMessage
-import dev.nmarsman.expect.assertions.hasMessageEndingWith
-import dev.nmarsman.expect.assertions.hasMessageStartingWith
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.isNotNull
@@ -16,6 +14,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
+import network.marsys.smarthome.hub.feature.entity.domain.entity.FakeEntity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
@@ -37,11 +36,16 @@ val AggregateTest by testSuite(
         val aggregate = EntityAggregate(history)
 
         expectThat(aggregate.entity)
-            .isEqualTo(Light.createWithUnknown(identifier))
+            .isEqualTo(
+                expected = Light(
+                    identifier = identifier,
+                    state = Light.State.Unknown(),
+                ),
+            )
 
         expectThat(aggregate.entity)
-            .with(Entity<*, *>::identifier) { isEqualTo(identifier) }
-            .get(Entity<*, *>::state)
+            .with(Entity::identifier) { isEqualTo(identifier) }
+            .get(Entity::state)
             .isA<Light.State.Unknown>()
     }
 
@@ -74,7 +78,7 @@ val AggregateTest by testSuite(
         expectThrows<IllegalStateException> {
             val identifier = EntityIdentifier("light.living-room")
 
-            val capabilities: Light.Capabilities = Light.State.Known(
+            val state = Light.State.Known(
                 onOff = required(OnOff(current = true)),
                 brightness = Capability.Unsupported,
             )
@@ -82,7 +86,7 @@ val AggregateTest by testSuite(
             val history = listOf(
                 EntityDiscovered(
                     identifier = identifier,
-                    capabilities = capabilities,
+                    state = state,
                 ),
                 EntityProvisioned(
                     identifier = identifier,
@@ -97,7 +101,7 @@ val AggregateTest by testSuite(
     test(name = "Creating aggregate succeeds when provisioned and discovered entity events are supplied") {
         val identifier = EntityIdentifier("light.living-room")
 
-        val capabilities: Light.Capabilities = Light.State.Known(
+        val state = Light.State.Known(
             onOff = required(OnOff(current = true)),
             brightness = Capability.Unsupported,
         )
@@ -109,20 +113,25 @@ val AggregateTest by testSuite(
             ),
             EntityDiscovered(
                 identifier = identifier,
-                capabilities = capabilities,
+                state = state,
             ),
         )
 
         val aggregate = EntityAggregate(history)
 
         expectThat(aggregate.entity)
-            .isEqualTo(Light.createWithKnown(identifier, capabilities))
+            .isEqualTo(
+                expected = Light(
+                    identifier = identifier,
+                    state = state,
+                ),
+            )
     }
 
     test(name = "Creating aggregate fails when provisioned and discovered entity have different identifiers") {
         val identifier = EntityIdentifier("light.living-room")
 
-        val capabilities: Light.Capabilities = Light.State.Known(
+        val state = Light.State.Known(
             onOff = required(OnOff(current = true)),
             brightness = Capability.Unsupported,
         )
@@ -134,7 +143,7 @@ val AggregateTest by testSuite(
             ),
             EntityDiscovered(
                 identifier = EntityIdentifier("light.kitchen"),
-                capabilities = capabilities,
+                state = state,
             ),
         )
 
@@ -143,10 +152,10 @@ val AggregateTest by testSuite(
         }.hasMessage("Mismatched entity identifier 'light.kitchen' supplied while 'light.living-room' is expected.")
     }
 
-    test(name = "Creating aggregate fails when discovered entity has unsupported capabilities") {
+    test(name = "Creating aggregate fails when discovered entity has unsupported state") {
         val identifier = EntityIdentifier("light.living-room")
 
-        val capabilities: Entity.Capabilities = object : Entity.Capabilities {}
+        val state: Entity.State = FakeEntity.State.Known()
 
         val history = listOf(
             EntityProvisioned(
@@ -155,19 +164,19 @@ val AggregateTest by testSuite(
             ),
             EntityDiscovered(
                 identifier = identifier,
-                capabilities = capabilities,
+                state = state,
             ),
         )
 
         expectThrows<IllegalStateException> {
             EntityAggregate(history)
-        }.hasMessage("Entity capabilities of type 'null' supplied while 'Light.State.Known' is expected.")
+        }.hasMessage("Entity state of type 'Known' supplied while 'Light.State.Known' is expected.")
     }
 
     test(name = "Initializing aggregate with entity became unavailable event after discovery sets state to unknown") {
         val identifier = EntityIdentifier("light.living-room")
 
-        val capabilities: Light.Capabilities = Light.State.Known(
+        val state = Light.State.Known(
             onOff = required(OnOff(current = true)),
             brightness = Capability.Unsupported,
         )
@@ -179,7 +188,7 @@ val AggregateTest by testSuite(
             ),
             EntityDiscovered(
                 identifier = identifier,
-                capabilities = capabilities,
+                state = state,
             ),
             EntityBecameUnavailable(
                 identifier = identifier,
@@ -191,13 +200,13 @@ val AggregateTest by testSuite(
         expectThat(aggregate.entity.state)
             .isA<Light.State.Unknown>()
             .get(Light.State.Unknown::lastKnown)
-            .isSameInstanceAs(capabilities)
+            .isSameInstanceAs(state)
     }
 
     test(name = "Initializing aggregate with multiple entity became unavailable events after discovery keeps the last known state") {
         val identifier = EntityIdentifier("light.living-room")
 
-        val capabilities: Light.Capabilities = Light.State.Known(
+        val state = Light.State.Known(
             onOff = required(OnOff(current = true)),
             brightness = Capability.Unsupported,
         )
@@ -209,7 +218,7 @@ val AggregateTest by testSuite(
             ),
             EntityDiscovered(
                 identifier = identifier,
-                capabilities = capabilities,
+                state = state,
             ),
             EntityBecameUnavailable(
                 identifier = identifier,
@@ -225,7 +234,7 @@ val AggregateTest by testSuite(
             .isA<Light.State.Unknown>()
             .get(Light.State.Unknown::lastKnown)
             .isNotNull()
-            .isSameInstanceAs(capabilities)
+            .isSameInstanceAs(state)
     }
 
     test(name = "Initializing aggregate with entity became unavailable event without discovery sets state to unknown") {
