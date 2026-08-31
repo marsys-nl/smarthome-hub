@@ -3,6 +3,7 @@ package network.marsys.smarthome.hub.feature.entity.application.reducer
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
+import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 import network.marsys.smarthome.hub.feature.entity.domain.entity.formattedName
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
@@ -65,6 +66,7 @@ internal abstract class EntityReducer<E : Entity, S : Entity.State, K, U>
 
             val reducer = when (provisioned.type) {
                 Light -> LightReducer
+                System -> SystemReducer
             }
 
             return reducer.reduce(

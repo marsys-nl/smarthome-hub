@@ -10,12 +10,14 @@ import dev.nmarsman.expect.assertions.isNotNull
 import dev.nmarsman.expect.assertions.isNull
 import dev.nmarsman.expect.assertions.isSameInstanceAs
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
+import network.marsys.smarthome.domain.unit.minutes
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
+import network.marsys.smarthome.hub.feature.entity.domain.capability.Duration
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
-import network.marsys.smarthome.hub.feature.entity.domain.entity.FakeEntity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
+import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
@@ -128,6 +130,38 @@ val AggregateTest by testSuite(
             )
     }
 
+    test(name = "Creating aggregate succeeds when provisioned and discovered entity events are supplied - system") {
+        val identifier = EntityIdentifier("system.smarthome")
+
+        val state = System.State.Known(
+            uptime = System.Uptime(
+                host = required(Duration(current = 90.minutes)),
+                application = required(Duration(current = 77.minutes)),
+            ),
+        )
+
+        val history = listOf(
+            EntityProvisioned(
+                identifier = identifier,
+                type = System,
+            ),
+            EntityDiscovered(
+                identifier = identifier,
+                state = state,
+            ),
+        )
+
+        val aggregate = EntityAggregate(history)
+
+        expectThat(aggregate.entity)
+            .isEqualTo(
+                expected = System(
+                    identifier = identifier,
+                    state = state,
+                ),
+            )
+    }
+
     test(name = "Creating aggregate fails when provisioned and discovered entity have different identifiers") {
         val identifier = EntityIdentifier("light.living-room")
 
@@ -155,7 +189,12 @@ val AggregateTest by testSuite(
     test(name = "Creating aggregate fails when discovered entity has unsupported state") {
         val identifier = EntityIdentifier("light.living-room")
 
-        val state: Entity.State = FakeEntity.State.Known()
+        val state: Entity.State = System.State.Known(
+            uptime = System.Uptime(
+                host = required(Duration(current = 90.minutes)),
+                application = required(Duration(current = 77.minutes)),
+            ),
+        )
 
         val history = listOf(
             EntityProvisioned(
@@ -170,7 +209,7 @@ val AggregateTest by testSuite(
 
         expectThrows<IllegalStateException> {
             EntityAggregate(history)
-        }.hasMessage("Entity state of type 'FakeEntity.State.Known' supplied while 'Light.State.Known' is expected.")
+        }.hasMessage("Entity state of type 'System.State.Known' supplied while 'Light.State.Known' is expected.")
     }
 
     test(name = "Initializing aggregate with entity became unavailable event after discovery sets state to unknown") {
