@@ -170,7 +170,7 @@ val AggregateTest by testSuite(
 
         expectThrows<IllegalStateException> {
             EntityAggregate(history)
-        }.hasMessage("Entity state of type 'Known' supplied while 'Light.State.Known' is expected.")
+        }.hasMessage("Entity state of type 'FakeEntity.State.Known' supplied while 'Light.State.Known' is expected.")
     }
 
     test(name = "Initializing aggregate with entity became unavailable event after discovery sets state to unknown") {

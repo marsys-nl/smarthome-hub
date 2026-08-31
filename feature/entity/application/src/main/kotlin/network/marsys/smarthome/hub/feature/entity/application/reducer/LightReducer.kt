@@ -2,52 +2,26 @@ package network.marsys.smarthome.hub.feature.entity.application.reducer
 
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
-import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
-import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
-import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
-internal object LightReducer : EntityReducer<Light> {
-    override fun createWithUnknownState(
+internal object LightReducer : EntityReducer<Light, Light.State, Light.State.Known, Light.State.Unknown>() {
+    override fun createUnknownState(lastKnown: Light.State.Known?) =
+        Light.State.Unknown(lastKnown = lastKnown)
+
+    override fun reduce(
         identifier: EntityIdentifier,
-    ) = Light(
-        identifier = identifier,
-        state = Light.State.Unknown(),
-    )
-
-    override fun reduce(entity: Light, event: Event): Light {
-        check(event !is EntityProvisioned) {
-            "Entity has already been provisioned."
-        }
-
-        check(event.identifier == entity.identifier) {
-            "Mismatched entity identifier '${event.identifier}' supplied while '${entity.identifier}' is expected."
-        }
-
-        return entity.copy(
-            state = when (event) {
-                is EntityBecameUnavailable -> context(with = entity.state) {
-                    handleEntityBecameUnavailable()
-                }
-
-                is EntityDiscovered -> handleEntityDiscovered(event = event)
-                // else -> throwUnsupportedEventError(event = event)
-            },
-        )
-    }
-
-    context(state: Light.State)
-    private fun handleEntityBecameUnavailable(): Light.State.Unknown =
-        Light.State.Unknown(
-            lastKnown = when (state) {
-                is Light.State.Known -> state
-                is Light.State.Unknown -> state.lastKnown
+        history: Collection<Event>,
+    ): Light = history
+        .fold(
+            initial = Light(
+                identifier = identifier,
+                state = createUnknownState(),
+            ),
+            operation = { entity, event ->
+                reduce<Light.State.Known>(entity = entity, event = event)
             },
         )
 
-    private fun handleEntityDiscovered(event: EntityDiscovered): Light.State.Known =
-        checkNotNull(event.state as? Light.State.Known) {
-            "Entity state of type '${event.state::class.simpleName}' supplied " +
-                "while 'Light.State.Known' is expected."
-        }
+    override fun Light.update(state: Light.State): Light =
+        copy(state = state)
 }
