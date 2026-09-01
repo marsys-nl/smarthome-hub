@@ -5,4 +5,7 @@ import network.marsys.smarthome.domain.unit.Quantity
 
 data class Duration(
     override val current: Quantity<Dimension.Time>,
-) : Capability<Quantity<Dimension.Time>>
+) : Capability<Quantity<Dimension.Time>> {
+    override fun updateWith(value: Quantity<Dimension.Time>): Capability<Quantity<Dimension.Time>> =
+        copy(current = value)
+}
