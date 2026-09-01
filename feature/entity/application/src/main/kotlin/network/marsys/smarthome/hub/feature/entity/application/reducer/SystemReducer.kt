@@ -1,27 +1,27 @@
 package network.marsys.smarthome.hub.feature.entity.application.reducer
 
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
-import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
+import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
-internal object LightReducer : EntityReducer<Light, Light.State, Light.State.Known, Light.State.Unknown>() {
-    override fun createUnknownState(lastKnown: Light.State.Known?) =
-        Light.State.Unknown(lastKnown = lastKnown)
+internal object SystemReducer : EntityReducer<System, System.State, System.State.Known, System.State.Unknown>() {
+    override fun createUnknownState(lastKnown: System.State.Known?) =
+        System.State.Unknown(lastKnown = lastKnown)
 
     override fun reduce(
         identifier: EntityIdentifier,
         history: Collection<Event>,
-    ): Light = history
+    ): System = history
         .fold(
-            initial = Light(
+            initial = System(
                 identifier = identifier,
                 state = createUnknownState(),
             ),
             operation = { entity, event ->
-                reduce<Light.State.Known>(entity = entity, event = event)
+                reduce<System.State.Known>(entity = entity, event = event)
             },
         )
 
-    override fun Light.update(state: Light.State): Light =
+    override fun System.update(state: System.State): System =
         copy(state = state)
 }
