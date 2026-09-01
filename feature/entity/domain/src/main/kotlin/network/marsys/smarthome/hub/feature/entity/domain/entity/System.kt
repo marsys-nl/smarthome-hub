@@ -11,7 +11,11 @@ data class System(
     sealed interface State : Entity.State {
         data class Known(
             val uptime: Uptime,
-        ) : State, Entity.State.Known
+        ) : State, Entity.State.Known {
+            override fun updateWith(
+                capability: Capability<*>,
+            ): Entity.State = this
+        }
 
         data class Unknown(
             override val lastKnown: Known? = null,
