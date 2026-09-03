@@ -13,13 +13,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
+import network.marsys.smarthome.domain.unit.bytes
 import network.marsys.smarthome.domain.unit.celsius
-import network.marsys.smarthome.domain.unit.gibibytes
 import network.marsys.smarthome.domain.unit.percent
-import network.marsys.smarthome.domain.unit.seconds
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Duration
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
@@ -34,7 +32,9 @@ import oshi.SystemInfo
 import oshi.hardware.HardwareAbstractionLayer
 import oshi.software.os.OperatingSystem
 import java.lang.management.ManagementFactory
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class SystemInfoIntegrationAdapter(
     override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.system"),
@@ -85,7 +85,8 @@ class SystemInfoIntegrationAdapter(
     }
 
     private suspend fun systemState(): System.State = withContext(Dispatchers.IO) {
-        val applicationUptime = (java.lang.System.currentTimeMillis() - applicationStartedAt).seconds
+        val applicationUptimeInSeconds = (java.lang.System.currentTimeMillis() - applicationStartedAt).seconds
+        val operatingSystemUptimeInSeconds = systemInfo.operatingSystem.systemUptime.seconds
 
         return@withContext context(with = systemInfo.hardware) {
             System.State.Known(
@@ -95,8 +96,10 @@ class SystemInfoIntegrationAdapter(
                 processor = constructProcessorInfo(),
                 memory = constructMemoryInfo(),
                 uptime = System.Uptime(
-                    host = required(Duration(current = systemInfo.operatingSystem.systemUptime.seconds)),
-                    application = required(Duration(current = applicationUptime)),
+                    host = Clock.System.now()
+                        .minus(operatingSystemUptimeInSeconds),
+                    application = Clock.System.now()
+                        .minus(applicationUptimeInSeconds),
                 ),
             )
         }
@@ -128,12 +131,12 @@ class SystemInfoIntegrationAdapter(
             ?.let { MeasuredTemperature(current = it.celsius) }
 
     context(hardware: HardwareAbstractionLayer)
-    private suspend fun constructMemoryInfo(): System.Memory = System.Memory(
-        total = required(MeasuredDataSize(hardware.memory.total.gibibytes)),
-        available = required(MeasuredDataSize(hardware.memory.available.gibibytes)),
+    private fun constructMemoryInfo(): System.Memory = System.Memory(
+        total = required(MeasuredDataSize(hardware.memory.total.bytes)),
+        available = required(MeasuredDataSize(hardware.memory.available.bytes)),
         swap = System.Memory.Swap(
-            total = required(MeasuredDataSize(hardware.memory.virtualMemory.swapTotal.gibibytes)),
-            used = required(MeasuredDataSize(hardware.memory.virtualMemory.swapUsed.gibibytes)),
+            total = required(MeasuredDataSize(hardware.memory.virtualMemory.swapTotal.bytes)),
+            used = required(MeasuredDataSize(hardware.memory.virtualMemory.swapUsed.bytes)),
         ),
     )
 

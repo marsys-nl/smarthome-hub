@@ -1,15 +1,11 @@
 package network.marsys.smarthome.hub.feature.entity.domain.entity
 
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Duration
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
-import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
-import network.marsys.smarthome.hub.feature.entity.domain.capability.context.Application
-import network.marsys.smarthome.hub.feature.entity.domain.capability.context.Host
+import kotlin.time.Instant
 
 data class System(
     override val identifier: EntityIdentifier,
@@ -25,12 +21,6 @@ data class System(
             override fun updateWith(
                 capability: Capability<*>,
             ): Entity.State = when (capability) {
-                is Duration if Application in capability.context ->
-                    copy(uptime = uptime.copy(application = uptime.application.updateWith(capability)))
-
-                is Duration if Host in capability.context ->
-                    copy(uptime = uptime.copy(host = uptime.host.updateWith(capability)))
-
                 is MeasuredDataSize if MemoryType.Total in capability.context ->
                     copy(memory = memory.copy(total = memory.total.updateWith(capability)))
 
@@ -79,8 +69,8 @@ data class System(
     }
 
     data class Uptime(
-        val host: Capability.Required<Duration>,
-        val application: Capability.Required<Duration>,
+        val host: Instant,
+        val application: Instant,
     )
 
     data class Processor(

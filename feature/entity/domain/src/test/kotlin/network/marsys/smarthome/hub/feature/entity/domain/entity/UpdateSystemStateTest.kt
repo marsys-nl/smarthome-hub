@@ -10,19 +10,17 @@ import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.gibibytes
-import network.marsys.smarthome.domain.unit.gigabytes
 import network.marsys.smarthome.domain.unit.percent
-import network.marsys.smarthome.domain.unit.seconds
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Duration
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
-import network.marsys.smarthome.hub.feature.entity.domain.capability.context.Application
-import network.marsys.smarthome.hub.feature.entity.domain.capability.context.Host
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 val UpdateSystemStateTest by testSuite(
     name = "Update system state tests",
@@ -159,97 +157,6 @@ val UpdateSystemStateTest by testSuite(
             .isEqualTo(75.celsius)
     }
 
-    test("Updating a known state with a valid required capability succeeds when context matches Application") {
-        val state: Entity.State = System.State.Known(
-            info = host(),
-            processor = processor(),
-            memory = memory(),
-            uptime = uptime(),
-        )
-
-        val update = Duration(current = 10.seconds) with Application
-
-        expectThat(state.updateWith(update))
-            .isA<System.State.Known>()
-            .get(System.State.Known::uptime)
-            .get(System.Uptime::application)
-            .get(Capability.Present<Duration>::value)
-            .get(Duration::current)
-            .isEqualTo(10.seconds)
-    }
-
-    test("Updating a known state with a valid capability only updates capability with matching context Application") {
-        val state: Entity.State = System.State.Known(
-            info = host(),
-            processor = processor(),
-            memory = memory(),
-            uptime = uptime(),
-        )
-
-        val update = Duration(current = 10.seconds) with Application
-
-        expectThat(state.updateWith(update))
-            .isA<System.State.Known>()
-            .get(System.State.Known::uptime)
-            .get(System.Uptime::host)
-            .get(Capability.Present<Duration>::value)
-            .get(Duration::current)
-            .isEqualTo(15.seconds)
-    }
-
-    test("Updating a known state with a valid required capability succeeds when context matches Host") {
-        val state: Entity.State = System.State.Known(
-            info = host(),
-            processor = processor(),
-            memory = memory(),
-            uptime = uptime(),
-        )
-
-        val update = Duration(current = 10.seconds) with Host
-
-        expectThat(state.updateWith(update))
-            .isA<System.State.Known>()
-            .get(System.State.Known::uptime)
-            .get(System.Uptime::host)
-            .get(Capability.Present<Duration>::value)
-            .get(Duration::current)
-            .isEqualTo(10.seconds)
-    }
-
-    test("Updating a known state with a valid capability only updates capability with matching context Host") {
-        val state: Entity.State = System.State.Known(
-            info = host(),
-            processor = processor(),
-            memory = memory(),
-            uptime = uptime(),
-        )
-
-        val update = Duration(current = 10.seconds) with Host
-
-        expectThat(state.updateWith(update))
-            .isA<System.State.Known>()
-            .get(System.State.Known::uptime)
-            .get(System.Uptime::application)
-            .get(Capability.Present<Duration>::value)
-            .get(Duration::current)
-            .isEqualTo(5.seconds)
-    }
-
-    test("Updating a known state with an unknown context fails") {
-        val state: Entity.State = System.State.Known(
-            info = host(),
-            processor = processor(),
-            memory = memory(),
-            uptime = uptime(),
-        )
-
-        val update = Duration(current = 10.seconds) with Unsupported
-
-        expectThrows<IllegalStateException> {
-            state.updateWith(update)
-        }.hasMessage("Unsupported 'Duration' capability provided for 'System.State.Known'")
-    }
-
     test("Updating a known state with an unknown capability fails") {
         val state: Entity.State = System.State.Known(
             info = host(),
@@ -305,11 +212,11 @@ private fun memory(
 )
 
 private fun uptime(
-    host: Quantity<Dimension.Time> = 15.seconds,
-    application: Quantity<Dimension.Time> = 5.seconds,
+    host: Instant = Clock.System.now().minus(15.seconds),
+    application: Instant = Clock.System.now().minus(5.seconds),
 ) = System.Uptime(
-    host = required(Duration(current = host)),
-    application = required(Duration(current = application)),
+    host = host,
+    application = application,
 )
 
 private data object Unsupported : Capability.Context.Element {

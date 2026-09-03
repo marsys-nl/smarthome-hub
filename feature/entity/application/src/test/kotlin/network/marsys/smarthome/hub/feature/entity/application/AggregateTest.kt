@@ -10,14 +10,16 @@ import dev.nmarsman.expect.assertions.isNotNull
 import dev.nmarsman.expect.assertions.isNull
 import dev.nmarsman.expect.assertions.isSameInstanceAs
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
+import network.marsys.smarthome.domain.unit.Dimension
+import network.marsys.smarthome.domain.unit.Quantity
 import network.marsys.smarthome.domain.unit.celsius
+import network.marsys.smarthome.domain.unit.gibibytes
 import network.marsys.smarthome.domain.unit.gigabytes
 import network.marsys.smarthome.domain.unit.minutes
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Duration
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
@@ -28,6 +30,9 @@ import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Instant
 
 val AggregateTest by testSuite(
     name = "Aggregate tests",
@@ -141,23 +146,10 @@ val AggregateTest by testSuite(
         val identifier = EntityIdentifier("system.smarthome")
 
         val state = System.State.Known(
-            info = hostInfo,
-            processor = System.Processor(
-                load = required(MeasuredLoad(current = 0.5.percent)),
-                temperature = optional(MeasuredTemperature(current = 45.celsius)),
-            ),
-            memory = System.Memory(
-                total = required(MeasuredDataSize(current = 8.gigabytes)),
-                available = required(MeasuredDataSize(current = 4.gigabytes)),
-                swap = System.Memory.Swap(
-                    total = required(MeasuredDataSize(current = 2.gigabytes)),
-                    used = required(MeasuredDataSize(current = 1.gigabytes)),
-                ),
-            ),
-            uptime = System.Uptime(
-                host = required(Duration(current = 90.minutes)),
-                application = required(Duration(current = 77.minutes)),
-            ),
+            info = host(),
+            processor = processor(),
+            memory = memory(),
+            uptime = uptime(),
         )
 
         val history = listOf(
@@ -209,24 +201,11 @@ val AggregateTest by testSuite(
     test(name = "Creating aggregate fails when discovered entity has unsupported state") {
         val identifier = EntityIdentifier("light.living-room")
 
-        val state: Entity.State = System.State.Known(
-            info = hostInfo,
-            processor = System.Processor(
-                load = required(MeasuredLoad(current = 0.5.percent)),
-                temperature = optional(MeasuredTemperature(current = 45.celsius)),
-            ),
-            memory = System.Memory(
-                total = required(MeasuredDataSize(current = 8.gigabytes)),
-                available = required(MeasuredDataSize(current = 4.gigabytes)),
-                swap = System.Memory.Swap(
-                    total = required(MeasuredDataSize(current = 2.gigabytes)),
-                    used = required(MeasuredDataSize(current = 1.gigabytes)),
-                ),
-            ),
-            uptime = System.Uptime(
-                host = required(Duration(current = 90.minutes)),
-                application = required(Duration(current = 77.minutes)),
-            ),
+        val state = System.State.Known(
+            info = host(),
+            processor = processor(),
+            memory = memory(),
+            uptime = uptime(),
         )
 
         val history = listOf(
@@ -355,7 +334,7 @@ val AggregateTest by testSuite(
     }
 }
 
-private val hostInfo = System.HostInfo(
+private fun host() = System.HostInfo(
     device = System.HostInfo.Device(
         manufacturer = "Test Manufacturer",
         model = "Test Model",
@@ -369,4 +348,34 @@ private val hostInfo = System.HostInfo(
         version = "1.0.0",
         bitness = 64,
     ),
+)
+
+private fun processor(
+    load: Quantity<Dimension.Ratio> = 0.5.percent,
+    temperature: Quantity<Dimension.Temperature> = 45.celsius,
+) = System.Processor(
+    load = required(MeasuredLoad(current = load)),
+    temperature = optional(MeasuredTemperature(current = temperature)),
+)
+
+private fun memory(
+    total: Quantity<Dimension.DigitalInformation> = 8.gibibytes,
+    available: Quantity<Dimension.DigitalInformation> = 4.gibibytes,
+    swapTotal: Quantity<Dimension.DigitalInformation> = 2.gibibytes,
+    swapUsed: Quantity<Dimension.DigitalInformation> = 1.gibibytes,
+) = System.Memory(
+    total = required(MeasuredDataSize(current = total)),
+    available = required(MeasuredDataSize(current = available)),
+    swap = System.Memory.Swap(
+        total = required(MeasuredDataSize(current = swapTotal)),
+        used = required(MeasuredDataSize(current = swapUsed)),
+    ),
+)
+
+private fun uptime(
+    host: Instant = Clock.System.now().minus(15.seconds),
+    application: Instant = Clock.System.now().minus(5.seconds),
+) = System.Uptime(
+    host = host,
+    application = application,
 )

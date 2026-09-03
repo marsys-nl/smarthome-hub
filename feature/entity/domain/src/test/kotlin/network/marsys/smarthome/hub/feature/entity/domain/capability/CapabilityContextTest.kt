@@ -8,8 +8,7 @@ import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isFalse
 import dev.nmarsman.expect.assertions.isTrue
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Context.Empty
-import network.marsys.smarthome.hub.feature.entity.domain.capability.context.Application
-import network.marsys.smarthome.hub.feature.entity.domain.capability.context.Host
+import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 
 val CapabilityContextTest by testSuite(
     name = "Capbility context tests",
@@ -17,17 +16,17 @@ val CapabilityContextTest by testSuite(
     test(name = "Setting context for capability succeeds if there was no context set") {
         val capability = OnOff(current = true)
 
-        expectThat(capability with Host)
+        expectThat(capability with System.MemoryType.Total)
             .get(Capability<*>::context)
-            .isA<Host>()
+            .isA<System.MemoryType.Total>()
     }
 
     test(name = "Setting context for capability fails if there was already some context set") {
         val capability = OnOff(current = true)
 
         expectThrows<IllegalStateException> {
-            capability with Host with Application
-        }.hasMessage("Unsupported addition of context 'Application'")
+            capability with System.MemoryType.Total with System.MemoryType.Available
+        }.hasMessage("Unsupported addition of context 'Available'")
     }
 
     test(name = "Setting Empty context for capability succeeds if there was no context set") {
@@ -41,29 +40,29 @@ val CapabilityContextTest by testSuite(
     test(name = "Setting Empty context for capability keeps current set context") {
         val capability = OnOff(current = true)
 
-        expectThat(capability with Host with Empty)
+        expectThat(capability with System.MemoryType.Total with Empty)
             .get(Capability<*>::context)
-            .isA<Host>()
+            .isA<System.MemoryType.Total>()
     }
 
     test(name = "Checking if a capability has some context without setting returns false") {
         val capability = OnOff(current = true)
 
-        expectThat(Host in capability.context)
+        expectThat(System.MemoryType.Total in capability.context)
             .isFalse()
     }
 
     test(name = "Checking if a capability has some context while the context is set returns true") {
-        val capability = OnOff(current = true) with Host
+        val capability = OnOff(current = true) with System.MemoryType.Total
 
-        expectThat(Host in capability.context)
+        expectThat(System.MemoryType.Total in capability.context)
             .isTrue()
     }
 
     test(name = "Checking if a capability has some context while some other context is set returns false") {
-        val capability = OnOff(current = true) with Application
+        val capability = OnOff(current = true) with System.MemoryType.Available
 
-        expectThat(Host in capability.context)
+        expectThat(System.MemoryType.Total in capability.context)
             .isFalse()
     }
 }
