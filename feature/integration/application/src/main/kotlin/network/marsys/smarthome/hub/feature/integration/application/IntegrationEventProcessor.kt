@@ -27,6 +27,10 @@ class IntegrationEventProcessor(
             .also { processingResult ->
                 if (processingResult is ProcessingResult.Accepted) {
                     eventStore.append(event)
+
+                    logger.info {
+                        "Event '${event::class.simpleName}' for entity '${event.identifier}' appended: $event"
+                    }
                 } else {
                     logger.warn {
                         "Event '${event::class.simpleName}' for entity '${event.identifier}' " +
