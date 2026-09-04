@@ -9,6 +9,7 @@ import network.marsys.smarthome.hub.feature.integration.application.ports.inboun
 import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EventStore
 import network.marsys.smarthome.hub.feature.integration.infrastructure.FakeIntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.infrastructure.InMemoryEventStore
+import network.marsys.smarthome.hub.feature.integration.infrastructure.SystemInfoIntegrationAdapter
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
@@ -23,6 +24,7 @@ fun Application.initializeDependencyInjection() {
 private val integrationLifecycleManagerModule = module {
     val integrationLifecycleManager = IntegrationLifecycleManager(
         integrations = listOf(
+            SystemInfoIntegrationAdapter(),
             FakeIntegrationAdapter(),
         ),
     )

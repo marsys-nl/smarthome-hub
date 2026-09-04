@@ -13,10 +13,8 @@ import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Duration
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
-import network.marsys.smarthome.hub.feature.entity.domain.capability.context.Application
-import network.marsys.smarthome.hub.feature.entity.domain.capability.context.Host
 
 val UpdateLightStateTest by testSuite(
     name = "Update light state tests",
@@ -87,10 +85,10 @@ val UpdateLightStateTest by testSuite(
             brightness = optional(Brightness(current = 25.percent)),
         )
 
-        val update = Duration(current = 2.seconds)
+        val update = MeasuredLoad(current = 50.percent)
 
         expectThrows<IllegalStateException> {
             state.updateWith(update)
-        }.hasMessage("Unsupported 'Duration' capability provided for 'Light.State.Known'")
+        }.hasMessage("Unsupported 'MeasuredLoad' capability provided for 'Light.State.Known'")
     }
 }

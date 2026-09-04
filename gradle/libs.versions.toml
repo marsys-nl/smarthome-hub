@@ -1,7 +1,7 @@
 [versions]
 smarthome-api = "2026.08-SNAPSHOT"
-smarthome-domain = "2026.08-SNAPSHOT"
-smarthome-hub = "2026.08-SNAPSHOT"
+smarthome-domain = "2026.09-SNAPSHOT"
+smarthome-hub = "2026.09-SNAPSHOT"
 
 buildconfig = "6.0.10"
 
@@ -22,6 +22,8 @@ kotlin-logging = "8.0.4"
 ktlint = "1.8.0"
 
 ktor = "3.5.2"
+
+oshi = "6.9.0"
 
 slf4j = "2.0.18"
 
@@ -52,6 +54,8 @@ ktor-server-netty = { group = "io.ktor", name = "ktor-server-netty", version.ref
 ktor-server-test-host = { group = "io.ktor", name = "ktor-server-test-host", version.ref = "ktor" }
 
 logback-classic = { group = "ch.qos.logback", name = "logback-classic", version.ref = "logback" }
+
+oshi-core = { group = "com.github.oshi", name = "oshi-core", version.ref = "oshi" }
 
 slf4j-api = { group = "org.slf4j", name = "slf4j-api", version.ref = "slf4j" }
 

@@ -3,14 +3,14 @@ package network.marsys.smarthome.hub.feature.entity.domain.capability
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
 
-data class Duration(
-    override val current: Quantity<Dimension.Time>,
+data class MeasuredDataSize(
+    override val current: Quantity<Dimension.DigitalInformation>,
     override val context: Context = Context.Empty,
-) : Capability<Quantity<Dimension.Time>>() {
+) : Capability<Quantity<Dimension.DigitalInformation>>() {
     override fun create(
-        current: Quantity<Dimension.Time>,
+        current: Quantity<Dimension.DigitalInformation>,
         context: Context,
-    ): Duration = copy(
+    ): MeasuredDataSize = copy(
         current = current,
         context = context,
     )

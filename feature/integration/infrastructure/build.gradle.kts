@@ -17,9 +17,13 @@ dependencies {
 
     implementation(libs.kotlin.coroutines)
 
+    implementation(libs.oshi.core)
+
     implementation(libs.smarthome.domain)
 
     testImplementation(libs.kotlin.expect.core)
 
     testImplementation(libs.test.balloon.core)
+
+    testImplementation(libs.turbine)
 }
