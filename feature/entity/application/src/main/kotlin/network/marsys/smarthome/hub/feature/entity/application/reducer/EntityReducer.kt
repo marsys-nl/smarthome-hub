@@ -5,6 +5,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 import network.marsys.smarthome.hub.feature.entity.domain.entity.formattedName
+import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
@@ -14,6 +15,14 @@ internal abstract class EntityReducer<E : Entity, S : Entity.State, K, U>
     where K : Entity.State.Known, K : Entity.State, U : Entity.State.Unknown, U : Entity.State {
 
     abstract fun createUnknownState(lastKnown: K? = null): U
+
+    @Suppress("UNCHECKED_CAST")
+    context(entity: E)
+    protected fun handle(event: CapabilityUpdated): S =
+        when (val state = entity.state) {
+            is Entity.State.Known -> state.updateWith(event.capability)
+            else -> error("Can't handle '${event::class.formattedName}' when state is '${state::class.formattedName}'")
+        } as S
 
     context(_: E)
     protected inline fun <reified T : K> handle(event: EntityDiscovered): K =
@@ -47,6 +56,7 @@ internal abstract class EntityReducer<E : Entity, S : Entity.State, K, U>
         return entity.update(
             state = context(with = entity) {
                 when (event) {
+                    is CapabilityUpdated -> handle(event = event)
                     is EntityDiscovered -> handle<T>(event = event)
                     is EntityBecameUnavailable -> handle(event = event)
                 } as S

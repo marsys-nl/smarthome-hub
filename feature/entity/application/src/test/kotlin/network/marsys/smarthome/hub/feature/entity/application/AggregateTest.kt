@@ -27,6 +27,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.entity.System
+import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
@@ -332,6 +333,74 @@ val AggregateTest by testSuite(
             .get(Light.State.Unknown::lastKnown)
             .isNull()
     }
+
+    test(name = "Creating aggregate succeeds when discovered entity also has capability update events") {
+        val identifier = EntityIdentifier("system.smarthome")
+
+        val state = System.State.Known(
+            info = host(),
+            processor = processor(),
+            memory = memory(),
+            uptime = uptime(),
+        )
+
+        val updatedCapability = MeasuredLoad(current = 75.percent)
+
+        val history = listOf(
+            EntityProvisioned(
+                identifier = identifier,
+                type = System,
+            ),
+            EntityDiscovered(
+                identifier = identifier,
+                state = state,
+            ),
+            CapabilityUpdated(
+                identifier = identifier,
+                capability = updatedCapability,
+            ),
+        )
+
+        val aggregate = EntityAggregate(history)
+
+        expectThat(aggregate.entity)
+            .isA<System>()
+            .get(System::state)
+            .isA<System.State.Known>()
+            .get(System.State.Known::processor)
+            .get(System.Processor::load)
+            .isA<Capability.Present<MeasuredLoad>>()
+            .get(Capability.Present<MeasuredLoad>::value)
+            .isEqualTo(updatedCapability)
+    }
+
+    test(name = "Creating aggregate fails when entity with unknown state has capability update events") {
+        val identifier = EntityIdentifier("system.smarthome")
+
+        val state = System.State.Known(
+            info = host(),
+            processor = processor(),
+            memory = memory(),
+            uptime = uptime(),
+        )
+
+        val updatedCapability = MeasuredLoad(current = 75.percent)
+
+        val history = listOf(
+            EntityProvisioned(
+                identifier = identifier,
+                type = System,
+            ),
+            CapabilityUpdated(
+                identifier = identifier,
+                capability = updatedCapability,
+            ),
+        )
+
+        expectThrows<IllegalStateException> {
+            EntityAggregate(history)
+        }.hasMessage("Can't handle 'CapabilityUpdated' when state is 'System.State.Unknown'")
+    }
 }
 
 private fun host() = System.HostInfo(
@@ -351,7 +420,7 @@ private fun host() = System.HostInfo(
 )
 
 private fun processor(
-    load: Quantity<Dimension.Ratio> = 0.5.percent,
+    load: Quantity<Dimension.Ratio> = 5.percent,
     temperature: Quantity<Dimension.Temperature> = 45.celsius,
 ) = System.Processor(
     load = required(MeasuredLoad(current = load)),
