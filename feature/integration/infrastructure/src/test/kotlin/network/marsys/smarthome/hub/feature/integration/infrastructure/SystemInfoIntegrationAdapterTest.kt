@@ -23,6 +23,7 @@ import oshi.SystemInfo
 import oshi.hardware.Baseboard
 import oshi.hardware.CentralProcessor
 import oshi.hardware.ComputerSystem
+import oshi.hardware.Display
 import oshi.hardware.Firmware
 import oshi.hardware.GlobalMemory
 import oshi.hardware.GraphicsCard
@@ -32,10 +33,13 @@ import oshi.hardware.NetworkIF
 import oshi.hardware.PhysicalMemory
 import oshi.hardware.PowerSource
 import oshi.hardware.Sensors
+import oshi.hardware.SoundCard
+import oshi.hardware.UsbDevice
 import oshi.hardware.VirtualMemory
 import oshi.software.os.FileSystem
 import oshi.software.os.InternetProtocolStats
 import oshi.software.os.NetworkParams
+import oshi.software.os.OSFileStore
 import oshi.software.os.OSProcess
 import oshi.software.os.OSThread
 import oshi.software.os.OperatingSystem
@@ -329,34 +333,52 @@ private class FakeSystemInfo(
 }
 
 private class FakeHardwareAbstractionLayer(
-    private val computerSystem: ComputerSystem? = FakeComputerSystem(),
-    private val processor: CentralProcessor? = FakeCentralProcessor(),
-    private val globalMemory: GlobalMemory? = FakeGlobalMemory(),
-    private val sensors: Sensors? = FakeSensors(),
+    private val computerSystem: ComputerSystem = FakeComputerSystem(),
+    private val processor: CentralProcessor = FakeCentralProcessor(),
+    private val globalMemory: GlobalMemory = FakeGlobalMemory(),
+    private val sensors: Sensors = FakeSensors(),
 ) : HardwareAbstractionLayer {
-    override fun getComputerSystem(): ComputerSystem? = computerSystem
-    override fun getProcessor(): CentralProcessor? = processor
-    override fun getMemory(): GlobalMemory? = globalMemory
-    override fun getSensors(): Sensors? = sensors
+    override fun getComputerSystem(): ComputerSystem = computerSystem
+    override fun getProcessor(): CentralProcessor = processor
+    override fun getMemory(): GlobalMemory = globalMemory
+    override fun getSensors(): Sensors = sensors
 
-    override fun getPowerSources(): List<PowerSource?>? = null
-    override fun getDiskStores(): List<HWDiskStore?>? = null
-    override fun getNetworkIFs(): List<NetworkIF?>? = null
-    override fun getNetworkIFs(includeLocalInterfaces: Boolean) = null
-    override fun getDisplays() = null
-    override fun getUsbDevices(tree: Boolean) = null
-    override fun getSoundCards() = null
-    override fun getGraphicsCards() = emptyList<GraphicsCard?>()
+    override fun getPowerSources(): List<PowerSource> = emptyList()
+    override fun getDiskStores(): List<HWDiskStore> = emptyList()
+    override fun getNetworkIFs(): List<NetworkIF> = emptyList()
+    override fun getNetworkIFs(includeLocalInterfaces: Boolean): List<NetworkIF> = emptyList()
+    override fun getDisplays(): List<Display> = emptyList()
+    override fun getUsbDevices(tree: Boolean): List<UsbDevice> = emptyList()
+    override fun getSoundCards(): List<SoundCard> = emptyList()
+    override fun getGraphicsCards(): List<GraphicsCard> = emptyList()
 }
 
-private class FakeComputerSystem : ComputerSystem {
+private class FakeComputerSystem(
+    private val firmware: Firmware = FakeFirmware(),
+    private val baseboard: Baseboard = FakeBaseboard(),
+) : ComputerSystem {
     override fun getManufacturer(): String = "Manufacturer"
     override fun getModel(): String = "Model"
 
-    override fun getSerialNumber(): String? = null
-    override fun getHardwareUUID(): String? = null
-    override fun getFirmware(): Firmware? = null
-    override fun getBaseboard(): Baseboard? = null
+    override fun getSerialNumber(): String = "serial-number"
+    override fun getHardwareUUID(): String = "hardware-uuid"
+    override fun getFirmware(): Firmware = firmware
+    override fun getBaseboard(): Baseboard = baseboard
+}
+
+private class FakeFirmware() : Firmware {
+    override fun getManufacturer(): String = "Manufacturer"
+    override fun getName(): String = "Firmware name"
+    override fun getDescription(): String = "Firmware description"
+    override fun getVersion(): String = "1.0.0"
+    override fun getReleaseDate(): String = "2024-01-01"
+}
+
+private class FakeBaseboard : Baseboard {
+    override fun getManufacturer(): String = "Manufacturer"
+    override fun getModel(): String = "Model"
+    override fun getVersion(): String = "1.0.0"
+    override fun getSerialNumber(): String = "serial-number"
 }
 
 private class FakeCentralProcessor(
@@ -368,16 +390,24 @@ private class FakeCentralProcessor(
     override fun getMaxFreq(): Long = 2600
     override fun getCurrentFreq(): LongArray = longArrayOf()
 
-    override fun getLogicalProcessors(): List<CentralProcessor.LogicalProcessor?>? = null
-    override fun getPhysicalProcessors(): List<CentralProcessor.PhysicalProcessor?>? = null
-    override fun getProcessorCaches(): List<CentralProcessor.ProcessorCache?>? = null
-    override fun getFeatureFlags(): List<String?>? = null
+    override fun getLogicalProcessors(): List<CentralProcessor.LogicalProcessor> = emptyList()
+    override fun getPhysicalProcessors(): List<CentralProcessor.PhysicalProcessor> = emptyList()
+    override fun getProcessorCaches(): List<CentralProcessor.ProcessorCache> = emptyList()
+    override fun getFeatureFlags(): List<String> = emptyList()
 
-    override fun getSystemCpuLoadBetweenTicks(oldTicks: LongArray?): Double = load
+    override fun getSystemCpuLoadBetweenTicks(oldTicks: LongArray): Double = load
+    override fun getSystemCpuLoadBetweenTicks(oldTicks: LongArray, newTicks: LongArray): Double = load
+
     override fun getSystemCpuLoadTicks(): LongArray = longArrayOf()
-    override fun getSystemLoadAverage(nelem: Int): DoubleArray? = null
-    override fun getProcessorCpuLoadBetweenTicks(oldTicks: Array<out LongArray?>?): DoubleArray? = null
-    override fun getProcessorCpuLoadTicks(): Array<out LongArray?>? = null
+    override fun getSystemLoadAverage(nelem: Int): DoubleArray = doubleArrayOf()
+
+    override fun getProcessorCpuLoadBetweenTicks(oldTicks: Array<out LongArray>): DoubleArray = doubleArrayOf()
+    override fun getProcessorCpuLoadBetweenTicks(
+        oldTicks: Array<out LongArray>,
+        newTicks: Array<out LongArray>,
+    ): DoubleArray = doubleArrayOf()
+
+    override fun getProcessorCpuLoadTicks(): Array<out LongArray> = arrayOf()
 
     override fun getLogicalProcessorCount(): Int = 32
     override fun getPhysicalProcessorCount(): Int = 8
@@ -389,14 +419,14 @@ private class FakeCentralProcessor(
 private class FakeGlobalMemory(
     private val total: Long = 1024,
     private val available: Long = 256,
-    private val virtualMemory: VirtualMemory? = FakeVirtualMemory(),
+    private val virtualMemory: VirtualMemory = FakeVirtualMemory(),
 ) : GlobalMemory {
     override fun getTotal(): Long = total
     override fun getAvailable(): Long = available
     override fun getPageSize(): Long = 16
 
-    override fun getVirtualMemory(): VirtualMemory? = virtualMemory
-    override fun getPhysicalMemory(): List<PhysicalMemory?>? = null
+    override fun getVirtualMemory(): VirtualMemory = virtualMemory
+    override fun getPhysicalMemory(): List<PhysicalMemory> = emptyList()
 }
 
 private class FakeVirtualMemory(
@@ -414,51 +444,107 @@ private class FakeVirtualMemory(
 }
 
 private class FakeSensors(
-    val temperature: Double = 56.0,
+    private val temperature: Double = 56.0,
+    private val fanSpeeds: IntArray = intArrayOf(10000),
+    private val cpuVoltage: Double = 9.0,
 ) : Sensors {
     override fun getCpuTemperature(): Double = temperature
-    override fun getFanSpeeds(): IntArray? = null
-    override fun getCpuVoltage(): Double = 0.0
+    override fun getFanSpeeds(): IntArray = fanSpeeds
+    override fun getCpuVoltage(): Double = cpuVoltage
 }
 
-private class FakeOperatingSystem : OperatingSystem {
+private class FakeOperatingSystem(
+    private val fileSystem: FileSystem = FakeFileSystem(),
+    private val internetProtocolStats: InternetProtocolStats = FakeInternetProtocolStats(),
+    private val thread: OSThread = FakeOperatingSystemThread(),
+    private val networkParams: NetworkParams = FakeNetworkParams(),
+) : OperatingSystem {
     override fun getFamily(): String = "Family"
     override fun getManufacturer(): String = "Manufacturer"
     override fun getVersionInfo(): OperatingSystem.OSVersionInfo =
         OperatingSystem.OSVersionInfo("1.0.0", "code", "build")
 
-    override fun getFileSystem(): FileSystem? = null
+    override fun getCurrentThread(): OSThread = thread
+    override fun getFileSystem(): FileSystem = fileSystem
+    override fun getInternetProtocolStats(): InternetProtocolStats = internetProtocolStats
+    override fun getNetworkParams(): NetworkParams = networkParams
 
-    override fun getInternetProtocolStats(): InternetProtocolStats? = null
-
-    override fun getProcesses(filter: Predicate<OSProcess?>?, sort: Comparator<OSProcess?>?, limit: Int): List<OSProcess?>? = null
+    override fun getProcesses(filter: Predicate<OSProcess>?, sort: Comparator<OSProcess>?, limit: Int): List<OSProcess> = emptyList()
     override fun getProcess(pid: Int): OSProcess? = null
 
     override fun getChildProcesses(
         parentPid: Int,
-        filter: Predicate<OSProcess?>?,
-        sort: Comparator<OSProcess?>?,
+        filter: Predicate<OSProcess>?,
+        sort: Comparator<OSProcess>?,
         limit: Int,
-    ): List<OSProcess?>? = null
+    ): List<OSProcess> = emptyList()
 
     override fun getDescendantProcesses(
         parentPid: Int,
-        filter: Predicate<OSProcess?>?,
-        sort: Comparator<OSProcess?>?,
+        filter: Predicate<OSProcess>?,
+        sort: Comparator<OSProcess>?,
         limit: Int,
-    ): List<OSProcess?>? = null
+    ): List<OSProcess> = emptyList()
 
     override fun getProcessId(): Int = 655354
     override fun getProcessCount(): Int = 14
     override fun getThreadId(): Int = 1337
-
-    override fun getCurrentThread(): OSThread? = null
 
     override fun getThreadCount(): Int = 8
     override fun getBitness(): Int = 64
 
     override fun getSystemUptime(): Long = 124124
     override fun getSystemBootTime(): Long = 124124
+}
 
-    override fun getNetworkParams(): NetworkParams? = null
+private class FakeFileSystem : FileSystem {
+    override fun getFileStores(): List<OSFileStore> = emptyList()
+    override fun getFileStores(localOnly: Boolean): List<OSFileStore> = emptyList()
+
+    override fun getOpenFileDescriptors(): Long = 0
+    override fun getMaxFileDescriptors(): Long = 0
+    override fun getMaxFileDescriptorsPerProcess(): Long = 0
+}
+
+private class FakeInternetProtocolStats : InternetProtocolStats {
+    override fun getTCPv4Stats() =
+        InternetProtocolStats.TcpStats(1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+
+    override fun getTCPv6Stats() =
+        InternetProtocolStats.TcpStats(1, 1, 0, 0, 0, 0, 0, 0, 0, 0)
+
+    override fun getUDPv4Stats() =
+        InternetProtocolStats.UdpStats(1, 1, 0, 0)
+
+    override fun getUDPv6Stats() =
+        InternetProtocolStats.UdpStats(1, 1, 0, 0)
+
+    override fun getConnections(): List<InternetProtocolStats.IPConnection> = emptyList()
+}
+
+private class FakeOperatingSystemThread : OSThread {
+    override fun getThreadId(): Int = 1
+    override fun getName(): String = "Thread name"
+    override fun getState(): OSProcess.State = OSProcess.State.RUNNING
+
+    override fun getThreadCpuLoadCumulative(): Double = .5
+    override fun getThreadCpuLoadBetweenTicks(thread: OSThread?): Double = .5
+
+    override fun getOwningProcessId(): Int = 1
+
+    override fun getStartTime(): Long = 0
+    override fun getPriority(): Int = 1
+
+    override fun getUserTime(): Long = 0
+    override fun getKernelTime(): Long = 0
+    override fun getUpTime(): Long = 0
+    override fun getContextSwitches(): Long = 0
+}
+
+private class FakeNetworkParams : NetworkParams {
+    override fun getHostName(): String = "hostname"
+    override fun getDomainName(): String = "domain"
+    override fun getDnsServers(): Array<out String> = arrayOf()
+    override fun getIpv4DefaultGateway(): String = "192.168.1.254"
+    override fun getIpv6DefaultGateway(): String = "2001:db8::1"
 }

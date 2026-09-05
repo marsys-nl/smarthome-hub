@@ -63,7 +63,7 @@ data class System(
         data class OperatingSystem(
             val description: String,
             val family: String,
-            val version: String,
+            val version: String?,
             val bitness: Int,
         )
     }
