@@ -5,10 +5,17 @@ import de.infix.testBalloon.framework.core.testSuite
 import dev.nmarsman.expect.api.expectThat
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEqualTo
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.runTest
+import network.marsys.smarthome.domain.unit.bytes
 import network.marsys.smarthome.domain.unit.celsius
+import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
 import network.marsys.smarthome.hub.feature.entity.domain.entity.System
+import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
@@ -34,132 +41,281 @@ import oshi.software.os.OSThread
 import oshi.software.os.OperatingSystem
 import java.util.function.Predicate
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.seconds
 
+@OptIn(ExperimentalCoroutinesApi::class)
 val SystemInfoIntegrationAdapterTest by testSuite(
     name = "SystemInfoIntegrationAdapter tests",
 ) {
     test("SystemInfoIntegrationAdapter should be able to start") {
-        val adapter = SystemInfoIntegrationAdapter()
+        runTest {
+            val adapter = SystemInfoIntegrationAdapter(
+                scope = backgroundScope,
+            )
 
-        adapter.events.test {
-            adapter.start()
+            adapter.events.test {
+                adapter.start()
 
-            expectThat(awaitItem())
-                .isA<EntityProvisioned>()
-                .get(EntityProvisioned::type)
-                .isEqualTo(System)
+                expectThat(awaitItem())
+                    .isA<EntityProvisioned>()
+                    .get(EntityProvisioned::type)
+                    .isEqualTo(System)
 
-            expectThat(awaitItem())
-                .isA<EntityDiscovered>()
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+            }
         }
     }
 
     test("SystemInfoIntegrationAdapter should be able to stop when started") {
-        val adapter = SystemInfoIntegrationAdapter()
+        runTest {
+            val adapter = SystemInfoIntegrationAdapter(
+                scope = backgroundScope,
+            )
 
-        adapter.events.test {
-            adapter.start()
+            adapter.events.test {
+                adapter.start()
 
-            expectThat(awaitItem())
-                .isA<EntityProvisioned>()
-                .get(EntityProvisioned::type)
-                .isEqualTo(System)
+                expectThat(awaitItem())
+                    .isA<EntityProvisioned>()
+                    .get(EntityProvisioned::type)
+                    .isEqualTo(System)
 
-            expectThat(awaitItem())
-                .isA<EntityDiscovered>()
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
 
-            adapter.stop()
+                adapter.stop()
 
-            expectNoEvents()
+                expectNoEvents()
+            }
         }
     }
 
     test("SystemInfoIntegrationAdapter should be able to stop when not started") {
-        val adapter = SystemInfoIntegrationAdapter()
+        runTest {
+            val adapter = SystemInfoIntegrationAdapter(
+                scope = backgroundScope,
+            )
 
-        adapter.events.test {
-            adapter.stop()
+            adapter.events.test {
+                adapter.stop()
 
-            expectNoEvents()
+                expectNoEvents()
+            }
         }
     }
 
     test("SystemInfoIntegrationAdapter should be able to stop when running") {
-        val adapter = SystemInfoIntegrationAdapter(
-            initialStatus = Integration.Status.Running,
-        )
+        runTest {
+            val adapter = SystemInfoIntegrationAdapter(
+                initialStatus = Integration.Status.Running,
+                scope = backgroundScope,
+            )
 
-        adapter.events.test {
-            adapter.stop()
+            adapter.events.test {
+                adapter.stop()
 
-            expectNoEvents()
+                expectNoEvents()
+            }
         }
     }
 
     test("SystemInfoIntegrationAdapter sets cpu temperature correctly") {
-        val adapter = SystemInfoIntegrationAdapter(
-            applicationStartedAt = Clock.System.now().epochSeconds,
-            systemInfo = FakeSystemInfo(
-                hardware = FakeHardwareAbstractionLayer(
-                    sensors = FakeSensors(
-                        temperature = 56.0,
+        runTest {
+            val adapter = SystemInfoIntegrationAdapter(
+                applicationStartedAt = Clock.System.now().epochSeconds,
+                systemInfo = FakeSystemInfo(
+                    hardware = FakeHardwareAbstractionLayer(
+                        sensors = FakeSensors(
+                            temperature = 56.0,
+                        ),
                     ),
                 ),
-            ),
-        )
+                scope = backgroundScope,
+            )
 
-        adapter.events.test {
-            adapter.start()
+            adapter.events.test {
+                adapter.start()
 
-            expectThat(awaitItem())
-                .isA<EntityProvisioned>()
-                .get(EntityProvisioned::type)
-                .isEqualTo(System)
+                expectThat(awaitItem())
+                    .isA<EntityProvisioned>()
+                    .get(EntityProvisioned::type)
+                    .isEqualTo(System)
 
-            expectThat(awaitItem())
-                .isA<EntityDiscovered>()
-                .get(EntityDiscovered::state)
-                .isA<System.State.Known>()
-                .get(System.State.Known::processor)
-                .get(System.Processor::temperature)
-                .isA<Capability.Available<MeasuredTemperature>>()
-                .get(Capability.Available<MeasuredTemperature>::value)
-                .get(MeasuredTemperature::current)
-                .isEqualTo(56.celsius)
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+                    .get(EntityDiscovered::state)
+                    .isA<System.State.Known>()
+                    .get(System.State.Known::processor)
+                    .get(System.Processor::temperature)
+                    .isA<Capability.Available<MeasuredTemperature>>()
+                    .get(Capability.Available<MeasuredTemperature>::value)
+                    .get(MeasuredTemperature::current)
+                    .isEqualTo(56.celsius)
 
-            expectNoEvents()
+                expectNoEvents()
+            }
         }
     }
 
     test("SystemInfoIntegrationAdapter sets cpu temperature as unsupported if no temperature is provided") {
-        val adapter = SystemInfoIntegrationAdapter(
-            applicationStartedAt = Clock.System.now().epochSeconds,
-            systemInfo = FakeSystemInfo(
-                hardware = FakeHardwareAbstractionLayer(
-                    sensors = FakeSensors(
-                        temperature = 0.0,
+        runTest {
+            val adapter = SystemInfoIntegrationAdapter(
+                applicationStartedAt = Clock.System.now().epochSeconds,
+                systemInfo = FakeSystemInfo(
+                    hardware = FakeHardwareAbstractionLayer(
+                        sensors = FakeSensors(
+                            temperature = 0.0,
+                        ),
                     ),
                 ),
-            ),
-        )
+                scope = backgroundScope,
+            )
 
-        adapter.events.test {
-            adapter.start()
+            adapter.events.test {
+                adapter.start()
 
-            expectThat(awaitItem())
-                .isA<EntityProvisioned>()
-                .get(EntityProvisioned::type)
-                .isEqualTo(System)
+                expectThat(awaitItem())
+                    .isA<EntityProvisioned>()
+                    .get(EntityProvisioned::type)
+                    .isEqualTo(System)
 
-            expectThat(awaitItem())
-                .isA<EntityDiscovered>()
-                .get(EntityDiscovered::state)
-                .isA<System.State.Known>()
-                .get(System.State.Known::processor)
-                .get(System.Processor::temperature)
-                .isEqualTo(Capability.Unsupported)
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+                    .get(EntityDiscovered::state)
+                    .isA<System.State.Known>()
+                    .get(System.State.Known::processor)
+                    .get(System.Processor::temperature)
+                    .isEqualTo(Capability.Unsupported)
 
-            expectNoEvents()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test("SystemInfoIntegrationAdapter sends processor updates") {
+        runTest {
+            val adapter = SystemInfoIntegrationAdapter(
+                applicationStartedAt = Clock.System.now().epochSeconds,
+                systemInfo = FakeSystemInfo(
+                    hardware = FakeHardwareAbstractionLayer(
+                        processor = FakeCentralProcessor(
+                            load = .5,
+                        ),
+                        sensors = FakeSensors(
+                            temperature = 56.0,
+                        ),
+                    ),
+                ),
+                scope = backgroundScope,
+            )
+
+            adapter.events.test(timeout = 10.seconds) {
+                adapter.start()
+
+                expectThat(awaitItem()).isA<EntityProvisioned>()
+                expectThat(awaitItem()).isA<EntityDiscovered>()
+
+                expectThat(awaitItem())
+                    .isA<CapabilityUpdated>()
+                    .get(CapabilityUpdated::capability)
+                    .isA<MeasuredLoad>()
+                    .get(MeasuredLoad::current)
+                    .isEqualTo(50.percent)
+
+                expectThat(awaitItem())
+                    .isA<CapabilityUpdated>()
+                    .get(CapabilityUpdated::capability)
+                    .isA<MeasuredTemperature>()
+                    .get(MeasuredTemperature::current)
+                    .isEqualTo(56.celsius)
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    test("SystemInfoIntegrationAdapter doesnt send processor temperature if it doesn't have one") {
+        runTest {
+            val adapter = SystemInfoIntegrationAdapter(
+                applicationStartedAt = Clock.System.now().epochSeconds,
+                systemInfo = FakeSystemInfo(
+                    hardware = FakeHardwareAbstractionLayer(
+                        processor = FakeCentralProcessor(
+                            load = .5,
+                        ),
+                        sensors = FakeSensors(
+                            temperature = 0.0,
+                        ),
+                    ),
+                ),
+                scope = backgroundScope,
+            )
+
+            adapter.events.test(timeout = 10.seconds) {
+                adapter.start()
+
+                expectThat(awaitItem()).isA<EntityProvisioned>()
+                expectThat(awaitItem()).isA<EntityDiscovered>()
+
+                expectThat(awaitItem())
+                    .isA<CapabilityUpdated>()
+                    .get(CapabilityUpdated::capability)
+                    .isA<MeasuredLoad>()
+                    .get(MeasuredLoad::current)
+                    .isEqualTo(50.percent)
+
+                expectThat(awaitItem())
+                    .isA<CapabilityUpdated>()
+                    .get(CapabilityUpdated::capability)
+                    .isA<MeasuredDataSize>()
+
+                cancelAndIgnoreRemainingEvents()
+            }
+        }
+    }
+
+    test("SystemInfoIntegrationAdapter sends memory updates") {
+        runTest {
+            val adapter = SystemInfoIntegrationAdapter(
+                applicationStartedAt = Clock.System.now().epochSeconds,
+                systemInfo = FakeSystemInfo(
+                    hardware = FakeHardwareAbstractionLayer(
+                        globalMemory = FakeGlobalMemory(
+                            available = 512,
+                            virtualMemory = FakeVirtualMemory(
+                                used = 1536,
+                            ),
+                        ),
+                    ),
+                ),
+                scope = backgroundScope,
+            )
+
+            adapter.events.test(timeout = 10.seconds) {
+                adapter.start()
+
+                expectThat(awaitItem()).isA<EntityProvisioned>()
+                expectThat(awaitItem()).isA<EntityDiscovered>()
+
+                skipItems(2)
+
+                expectThat(awaitItem())
+                    .isA<CapabilityUpdated>()
+                    .get(CapabilityUpdated::capability)
+                    .isA<MeasuredDataSize>()
+                    .get(MeasuredDataSize::current)
+                    .isEqualTo(512.bytes)
+
+                expectThat(awaitItem())
+                    .isA<CapabilityUpdated>()
+                    .get(CapabilityUpdated::capability)
+                    .isA<MeasuredDataSize>()
+                    .get(MeasuredDataSize::current)
+                    .isEqualTo(1536.bytes)
+
+                cancelAndIgnoreRemainingEvents()
+            }
         }
     }
 }
@@ -203,7 +359,9 @@ private class FakeComputerSystem : ComputerSystem {
     override fun getBaseboard(): Baseboard? = null
 }
 
-private class FakeCentralProcessor : CentralProcessor {
+private class FakeCentralProcessor(
+    private val load: Double = 1.0,
+) : CentralProcessor {
     override fun getProcessorIdentifier(): CentralProcessor.ProcessorIdentifier =
         CentralProcessor.ProcessorIdentifier("Vendor", "Name", "Family", "Model", "Stepping", "Identifier", true)
 
@@ -215,7 +373,7 @@ private class FakeCentralProcessor : CentralProcessor {
     override fun getProcessorCaches(): List<CentralProcessor.ProcessorCache?>? = null
     override fun getFeatureFlags(): List<String?>? = null
 
-    override fun getSystemCpuLoadBetweenTicks(oldTicks: LongArray?): Double = 100.0
+    override fun getSystemCpuLoadBetweenTicks(oldTicks: LongArray?): Double = load
     override fun getSystemCpuLoadTicks(): LongArray = longArrayOf()
     override fun getSystemLoadAverage(nelem: Int): DoubleArray? = null
     override fun getProcessorCpuLoadBetweenTicks(oldTicks: Array<out LongArray?>?): DoubleArray? = null
@@ -229,19 +387,24 @@ private class FakeCentralProcessor : CentralProcessor {
 }
 
 private class FakeGlobalMemory(
+    private val total: Long = 1024,
+    private val available: Long = 256,
     private val virtualMemory: VirtualMemory? = FakeVirtualMemory(),
 ) : GlobalMemory {
-    override fun getTotal(): Long = 1024
-    override fun getAvailable(): Long = 256
+    override fun getTotal(): Long = total
+    override fun getAvailable(): Long = available
     override fun getPageSize(): Long = 16
 
     override fun getVirtualMemory(): VirtualMemory? = virtualMemory
     override fun getPhysicalMemory(): List<PhysicalMemory?>? = null
 }
 
-private class FakeVirtualMemory : VirtualMemory {
-    override fun getSwapTotal(): Long = 2048
-    override fun getSwapUsed(): Long = 1024
+private class FakeVirtualMemory(
+    private val total: Long = 2048,
+    private val used: Long = 1024,
+) : VirtualMemory {
+    override fun getSwapTotal(): Long = total
+    override fun getSwapUsed(): Long = used
 
     override fun getVirtualMax(): Long = 1000
     override fun getVirtualInUse(): Long = 500

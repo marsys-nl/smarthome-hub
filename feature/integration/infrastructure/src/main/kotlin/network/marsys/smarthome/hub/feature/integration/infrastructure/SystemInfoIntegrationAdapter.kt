@@ -1,7 +1,6 @@
 package network.marsys.smarthome.hub.feature.integration.infrastructure
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.channels.Channel
@@ -10,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 import network.marsys.smarthome.domain.unit.bytes
@@ -22,6 +20,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDat
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
 import network.marsys.smarthome.hub.feature.entity.domain.entity.System
+import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
@@ -41,10 +40,10 @@ class SystemInfoIntegrationAdapter(
     initialStatus: Integration.Status = Integration.Status.Stopped,
     private val applicationStartedAt: Long = ManagementFactory.getRuntimeMXBean().startTime,
     private val systemInfo: SystemInfo = SystemInfo(),
+    private val scope: CoroutineScope = CoroutineScope(SupervisorJob()),
 ) : IntegrationAdapter {
     private val entityIdentifier = EntityIdentifier("smarthome.system")
 
-    private val scope = CoroutineScope(SupervisorJob())
     private var job: Job? = null
 
     private val lifecycle = IntegrationLifecycleController(
@@ -52,6 +51,7 @@ class SystemInfoIntegrationAdapter(
         onStart = {
             job = scope.launch {
                 initialize()
+                loop()
             }
         },
         onStop = {
@@ -84,11 +84,23 @@ class SystemInfoIntegrationAdapter(
         )
     }
 
-    private suspend fun systemState(): System.State = withContext(Dispatchers.IO) {
+    private suspend fun loop() {
+        while (true) {
+            delay(interval)
+
+            context(with = systemInfo.hardware) {
+                sendProcessorLoadUpdatedEvent()
+                sendProcessorTemperatureUpdatedEvent()
+                sendMemoryUsageUpdateEvents()
+            }
+        }
+    }
+
+    private suspend fun systemState(): System.State {
         val applicationUptimeInSeconds = (java.lang.System.currentTimeMillis() - applicationStartedAt).seconds
         val operatingSystemUptimeInSeconds = systemInfo.operatingSystem.systemUptime.seconds
 
-        return@withContext context(with = systemInfo.hardware) {
+        return context(with = systemInfo.hardware) {
             System.State.Known(
                 info = context(with = systemInfo.operatingSystem) {
                     constructHostInfo()
@@ -106,6 +118,45 @@ class SystemInfoIntegrationAdapter(
     }
 
     context(hardware: HardwareAbstractionLayer)
+    private suspend fun sendProcessorLoadUpdatedEvent() {
+        eventChannel.trySend(
+            CapabilityUpdated(
+                identifier = entityIdentifier,
+                capability = measureProcessorLoad(),
+            ),
+        )
+    }
+
+    context(hardware: HardwareAbstractionLayer)
+    private fun sendProcessorTemperatureUpdatedEvent() {
+        val updatedTemperature = measureProcessorTemperature() ?: return
+
+        eventChannel.trySend(
+            CapabilityUpdated(
+                identifier = entityIdentifier,
+                capability = updatedTemperature,
+            ),
+        )
+    }
+
+    context(hardware: HardwareAbstractionLayer)
+    private fun sendMemoryUsageUpdateEvents() {
+        eventChannel.trySend(
+            CapabilityUpdated(
+                identifier = entityIdentifier,
+                capability = MeasuredDataSize(hardware.memory.available.bytes) with System.MemoryType.Available,
+            ),
+        )
+
+        eventChannel.trySend(
+            CapabilityUpdated(
+                identifier = entityIdentifier,
+                capability = MeasuredDataSize(hardware.memory.virtualMemory.swapUsed.bytes) with System.MemoryType.SwapUsed,
+            ),
+        )
+    }
+
+    context(hardware: HardwareAbstractionLayer)
     private suspend fun constructProcessorInfo(): System.Processor = System.Processor(
         load = required(measureProcessorLoad()),
         temperature = optional(measureProcessorTemperature()),
@@ -114,10 +165,10 @@ class SystemInfoIntegrationAdapter(
     context(hardware: HardwareAbstractionLayer)
     private suspend fun measureProcessorLoad(
         interval: kotlin.time.Duration = 1000.milliseconds,
-    ): MeasuredLoad = withContext(Dispatchers.IO) {
+    ): MeasuredLoad {
         val previousTicks = hardware.processor.systemCpuLoadTicks
         delay(interval)
-        MeasuredLoad(
+        return MeasuredLoad(
             current = hardware.processor
                 .getSystemCpuLoadBetweenTicks(previousTicks)
                 .let { (it * 100).percent },
