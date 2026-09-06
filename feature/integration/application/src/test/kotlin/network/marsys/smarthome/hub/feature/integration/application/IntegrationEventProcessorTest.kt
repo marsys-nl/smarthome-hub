@@ -13,6 +13,8 @@ import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
+import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
@@ -35,6 +37,15 @@ val IntegrationEventProcessorTest by testSuite(
             onOff = required(OnOff(current = true)),
             brightness = optional(null),
         ),
+    )
+
+    val becameUnavailable = EntityBecameUnavailable(
+        identifier = identifier,
+    )
+
+    val capabilityUpdated = CapabilityUpdated(
+        identifier = identifier,
+        capability = OnOff(current = false),
     )
 
     test(name = "Processing an entity provisioned event is accepted if the entity has no provisioned event processed yet.") {
@@ -69,10 +80,10 @@ val IntegrationEventProcessorTest by testSuite(
     }
 
     test(name = "Processing an entity discovered event is accepted if the entity has already processed a provisioned event.") {
-        val store = FakeEventStore()
+        val store = FakeEventStore(
+            history = listOf(provisioned),
+        )
         val processor = IntegrationEventProcessor(eventStore = store)
-
-        processor.process(provisioned)
         val result = processor.process(discovered)
 
         expectThat(result)
@@ -96,10 +107,101 @@ val IntegrationEventProcessorTest by testSuite(
         expectThat(store.load(entity = identifier))
             .isEmpty()
     }
+
+    test("Processing an entity became unavailable event is accepted if the entity has a known state.") {
+        val store = FakeEventStore(
+            history = listOf(provisioned, discovered),
+        )
+        val processor = IntegrationEventProcessor(eventStore = store)
+        val result = processor.process(becameUnavailable)
+
+        expectThat(result)
+            .isA<IntegrationEventProcessor.ProcessingResult.Accepted>()
+
+        expectThat(store.load(entity = identifier))
+            .contains(provisioned, discovered, becameUnavailable)
+    }
+
+    test("Processing an entity became unavailable event is ignored if the entity is not discovered yet.") {
+        val store = FakeEventStore(
+            history = listOf(provisioned),
+        )
+        val processor = IntegrationEventProcessor(eventStore = store)
+        val result = processor.process(becameUnavailable)
+
+        expectThat(result)
+            .isA<IntegrationEventProcessor.ProcessingResult.Ignored>()
+
+        expectThat(store.load(entity = identifier))
+            .contains(provisioned)
+    }
+
+    test("Processing an entity became unavailable event is ignored if the entity already has an unknown state.") {
+        val store = FakeEventStore(
+            history = listOf(provisioned, discovered, becameUnavailable),
+        )
+        val processor = IntegrationEventProcessor(eventStore = store)
+        val result = processor.process(becameUnavailable)
+
+        expectThat(result)
+            .isA<IntegrationEventProcessor.ProcessingResult.Ignored>()
+
+        expectThat(store.load(entity = identifier))
+            .contains(provisioned, discovered, becameUnavailable)
+    }
+
+    test("Processing a capability changed event is accepted if the entity has a known state and the state is actually different.") {
+        val store = FakeEventStore(
+            history = listOf(provisioned, discovered),
+        )
+        val processor = IntegrationEventProcessor(eventStore = store)
+        val result = processor.process(capabilityUpdated)
+
+        expectThat(result)
+            .isA<IntegrationEventProcessor.ProcessingResult.Accepted>()
+
+        expectThat(store.load(entity = identifier))
+            .contains(provisioned, discovered, capabilityUpdated)
+    }
+
+    test("Processing a capability changed event is ignored if the entity has an unknown state.") {
+        val store = FakeEventStore(
+            history = listOf(provisioned),
+        )
+        val processor = IntegrationEventProcessor(eventStore = store)
+        val result = processor.process(capabilityUpdated)
+
+        expectThat(result)
+            .isA<IntegrationEventProcessor.ProcessingResult.Rejected>()
+            .get(IntegrationEventProcessor.ProcessingResult.Rejected::reason)
+            .isA<IntegrationEventProcessor.RejectionReason.NotDiscovered>()
+
+        expectThat(store.load(entity = identifier))
+            .contains(provisioned)
+    }
+
+    test("Processing an entity with events out of order saved ignores new events.") {
+        val store = FakeEventStore(
+            history = listOf(discovered, provisioned),
+        )
+        val processor = IntegrationEventProcessor(eventStore = store)
+        val result = processor.process(becameUnavailable)
+
+        expectThat(result)
+            .isA<IntegrationEventProcessor.ProcessingResult.Ignored>()
+
+        expectThat(store.load(entity = identifier))
+            .contains(discovered, provisioned)
+    }
 }
 
-class FakeEventStore : EventStore {
-    private val events = mutableMapOf<EntityIdentifier, MutableList<Event>>()
+class FakeEventStore(
+    history: Collection<Event> = emptyList(),
+) : EventStore {
+    private val events: MutableMap<EntityIdentifier, MutableList<Event>> = history
+        .groupBy { it.identifier }
+        .mapValues { (_, events) -> events.toMutableList() }
+        .toMutableMap()
 
     override suspend fun append(vararg events: Event) {
         events.forEach { event ->
