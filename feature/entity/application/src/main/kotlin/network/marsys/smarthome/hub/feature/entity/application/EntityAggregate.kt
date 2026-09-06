@@ -4,7 +4,7 @@ import network.marsys.smarthome.hub.feature.entity.application.reducer.EntityRed
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
-internal class EntityAggregate(
+class EntityAggregate(
     history: Collection<Event>,
 ) {
     val entity: Entity = EntityReducer.reduce(history = history)
