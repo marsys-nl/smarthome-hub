@@ -9,6 +9,7 @@ sealed interface Entity {
     val state: State
 
     sealed interface State {
+        fun get(capability: Capability<*>): Capability<*>?
         fun updateWith(capability: Capability<*>): State
 
         sealed interface Known : State
@@ -16,6 +17,7 @@ sealed interface Entity {
             val lastKnown: Known?
                 get() = null
 
+            override fun get(capability: Capability<*>): Capability<*>? = null
             override fun updateWith(capability: Capability<*>): State = this
         }
     }

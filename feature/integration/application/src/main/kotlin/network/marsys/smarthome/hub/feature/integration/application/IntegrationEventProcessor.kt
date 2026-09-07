@@ -24,7 +24,13 @@ class IntegrationEventProcessor(
                     is ProcessingResult.Accepted ->
                         eventStore.append(event)
 
-                    is ProcessingResult.Ignored, is ProcessingResult.Rejected ->
+                    is ProcessingResult.Ignored ->
+                        logger.debug {
+                            "Event '${event::class.simpleName}' for entity '${event.identifier}' " +
+                                "was ${result::class.simpleName}."
+                        }
+
+                    is ProcessingResult.Rejected ->
                         logger.warn {
                             "Event '${event::class.simpleName}' for entity '${event.identifier}' " +
                                 "was ${result::class.simpleName}."
@@ -54,8 +60,9 @@ class IntegrationEventProcessor(
                 is EntityBecameUnavailable ->
                     processEntityBecameUnavailable()
 
-                is CapabilityUpdated ->
+                is CapabilityUpdated -> context(with = event) {
                     processCapabilityUpdated()
+                }
             }
         }
     } catch (_: IllegalStateException) {
@@ -72,10 +79,20 @@ class IntegrationEventProcessor(
         is Entity.State.Known -> ProcessingResult.Accepted
     }
 
-    context(aggregate: EntityAggregate)
+    context(aggregate: EntityAggregate, event: CapabilityUpdated)
     private fun processCapabilityUpdated(): ProcessingResult = when (aggregate.entity.state) {
         is Entity.State.Unknown -> ProcessingResult.Rejected(reason = RejectionReason.NotDiscovered)
-        is Entity.State.Known -> ProcessingResult.Accepted
+
+        is Entity.State.Known -> {
+            val capability = aggregate.entity.state.get(event.capability) ?: return ProcessingResult.Rejected(
+                reason = RejectionReason.CapabilityFailure,
+            )
+
+            return when {
+                capability.current == event.capability.current -> ProcessingResult.Ignored
+                else -> ProcessingResult.Accepted
+            }
+        }
     }
 
     sealed interface ProcessingResult {
@@ -88,7 +105,8 @@ class IntegrationEventProcessor(
 
     sealed interface RejectionReason {
         data object AlreadyProvisioned : RejectionReason
-        data object NotProvisioned : RejectionReason
+        data object CapabilityFailure : RejectionReason
         data object NotDiscovered : RejectionReason
+        data object NotProvisioned : RejectionReason
     }
 }

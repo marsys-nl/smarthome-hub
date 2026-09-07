@@ -1,10 +1,12 @@
 package network.marsys.smarthome.hub.feature.entity.domain.entity
 
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
+import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
+import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import kotlin.time.Instant
 
 data class System(
@@ -18,6 +20,28 @@ data class System(
             val memory: Memory,
             val uptime: Uptime,
         ) : State, Entity.State.Known {
+            override fun get(capability: Capability<*>): Capability<*>? = when (capability) {
+                is MeasuredDataSize if MemoryType.Total in capability.context ->
+                    memory.total.value
+
+                is MeasuredDataSize if MemoryType.Available in capability.context ->
+                    memory.available.value
+
+                is MeasuredDataSize if MemoryType.SwapTotal in capability.context ->
+                    memory.swap.total.value
+
+                is MeasuredDataSize if MemoryType.SwapUsed in capability.context ->
+                    memory.swap.used.value
+
+                is MeasuredLoad ->
+                    processor.load.value
+
+                is MeasuredTemperature if processor.temperature is Capability.Available<*> ->
+                    processor.temperature.value
+
+                else -> null
+            }
+
             override fun updateWith(
                 capability: Capability<*>,
             ): Entity.State = when (capability) {
