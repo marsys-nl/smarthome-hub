@@ -7,6 +7,7 @@ import dev.nmarsman.expect.assertions.hasMessage
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.isFalse
+import dev.nmarsman.expect.assertions.isNull
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.domain.unit.seconds
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
@@ -90,5 +91,49 @@ val UpdateLightStateTest by testSuite(
         expectThrows<IllegalStateException> {
             state.updateWith(update)
         }.hasMessage("Unsupported 'MeasuredLoad' capability provided for 'Light.State.Known'")
+    }
+
+    test("Getting a capability that is required by the entity results in said capability") {
+        val capability = OnOff(current = false)
+        val state = Light.State.Known(
+            onOff = required(OnOff(current = true)),
+            brightness = optional(null),
+        )
+
+        expectThat(state.get(capability))
+            .isA<OnOff>()
+    }
+
+    test("Getting a capability that is optional by the entity results in said capability if present") {
+        val capability = Brightness(current = 50.percent)
+        val state = Light.State.Known(
+            onOff = required(OnOff(current = true)),
+            brightness = optional(Brightness(current = 25.percent)),
+        )
+
+        expectThat(state.get(capability))
+            .isA<Brightness>()
+    }
+
+    test("Getting a capability that is optional by the entity results in null if not present") {
+        val capability = Brightness(current = 50.percent)
+        val state = Light.State.Known(
+            onOff = required(OnOff(current = true)),
+            brightness = optional(null),
+        )
+
+        expectThat(state.get(capability))
+            .isNull()
+    }
+
+    test("Getting a capability that is not known by the entity results in null") {
+        val capability = MeasuredLoad(current = 50.percent)
+        val state = Light.State.Known(
+            onOff = required(OnOff(current = true)),
+            brightness = optional(null),
+        )
+
+        expectThat(state.get(capability))
+            .isNull()
     }
 }

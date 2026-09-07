@@ -6,11 +6,14 @@ import dev.nmarsman.expect.api.expectThrows
 import dev.nmarsman.expect.assertions.hasMessage
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEqualTo
+import dev.nmarsman.expect.assertions.isNotNull
+import dev.nmarsman.expect.assertions.isNull
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.gibibytes
 import network.marsys.smarthome.domain.unit.percent
+import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
@@ -171,6 +174,82 @@ val UpdateSystemStateTest by testSuite(
             state.updateWith(update)
         }.hasMessage("Unsupported 'OnOff' capability provided for 'System.State.Known'")
     }
+
+    mapOf(
+        "measuring cpu load" to MeasuredLoad(current = 50.percent),
+        "measuring data size - total memory" to (MeasuredDataSize(current = 50.gibibytes) with System.MemoryType.Total),
+        "measuring data size - available memory" to (MeasuredDataSize(current = 50.gibibytes) with System.MemoryType.Available),
+        "measuring data size - swap total memory" to (MeasuredDataSize(current = 50.gibibytes) with System.MemoryType.SwapTotal),
+        "measuring data size - swap used memory" to (MeasuredDataSize(current = 50.gibibytes) with System.MemoryType.SwapUsed),
+    ).forEach { (description, capability) ->
+        test("Getting a capability that is required by the entity results in said capability - $description") {
+            val state = System.State.Known(
+                info = host(),
+                processor = processor(),
+                memory = memory(),
+                uptime = uptime(),
+            )
+
+            expectThat(state.get(capability))
+                .isNotNull()
+                .get { this::class }
+                .isEqualTo(capability::class)
+        }
+    }
+
+    test("Getting a capability that is required by the entity results in null when context doesn't match") {
+        val capability = MeasuredDataSize(current = 50.gibibytes) with Unsupported
+        val state = System.State.Known(
+            info = host(),
+            processor = processor(),
+            memory = memory(),
+            uptime = uptime(),
+        )
+
+        expectThat(state.get(capability))
+            .isNull()
+    }
+
+    test("Getting a capability that is optional by the entity results in said capability if present") {
+        val capability = MeasuredTemperature(current = 50.celsius)
+        val state = System.State.Known(
+            info = host(),
+            processor = processor(),
+            memory = memory(),
+            uptime = uptime(),
+        )
+
+        expectThat(state.get(capability))
+            .isA<MeasuredTemperature>()
+    }
+
+    test("Getting a capability that is optional by the entity results in null if not present") {
+        val capability = MeasuredTemperature(current = 50.celsius)
+        val state = System.State.Known(
+            info = host(),
+            processor = processor(
+                temperature = null,
+            ),
+            memory = memory(),
+            uptime = uptime(),
+        )
+
+        expectThat(state.get(capability))
+            .isNull()
+    }
+
+    test("Getting a capability that is not known by the entity results in null") {
+        val capability = OnOff(current = true)
+        val state = System.State.Known(
+            info = host(),
+            processor = processor(),
+            memory = memory(),
+            uptime = uptime(),
+        )
+
+        expectThat(state.get(capability))
+            .isNull()
+    }
 }
 
 private fun host() = System.HostInfo(
@@ -191,10 +270,10 @@ private fun host() = System.HostInfo(
 
 private fun processor(
     load: Quantity<Dimension.Ratio> = 0.5.percent,
-    temperature: Quantity<Dimension.Temperature> = 45.celsius,
+    temperature: Quantity<Dimension.Temperature>? = 45.celsius,
 ) = System.Processor(
     load = required(MeasuredLoad(current = load)),
-    temperature = optional(MeasuredTemperature(current = temperature)),
+    temperature = optional(temperature?.let(::MeasuredTemperature)),
 )
 
 private fun memory(

@@ -14,6 +14,12 @@ data class Light(
             val onOff: Capability.Required<OnOff>,
             val brightness: Capability.Optional<Brightness>,
         ) : State, Entity.State.Known {
+            override fun get(capability: Capability<*>): Capability<*>? = when (capability) {
+                is OnOff -> onOff.value
+                is Brightness if brightness is Capability.Available<*> -> brightness.value
+                else -> null
+            }
+
             override fun updateWith(
                 capability: Capability<*>,
             ): Entity.State = when (capability) {

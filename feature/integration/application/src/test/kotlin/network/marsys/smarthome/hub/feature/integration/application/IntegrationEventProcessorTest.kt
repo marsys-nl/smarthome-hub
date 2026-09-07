@@ -9,8 +9,11 @@ import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEmpty
 import dev.nmarsman.expect.assertions.isEqualTo
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
+import network.marsys.smarthome.domain.unit.percent
+import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
@@ -162,6 +165,66 @@ val IntegrationEventProcessorTest by testSuite(
 
         expectThat(store.load(entity = identifier))
             .contains(provisioned, discovered, capabilityUpdated)
+    }
+
+    test("Processing a capability changed event is ignored if the entity has a known state and the state is the same.") {
+        val store = FakeEventStore(
+            history = listOf(provisioned, discovered),
+        )
+        val processor = IntegrationEventProcessor(eventStore = store)
+        val result = processor.process(
+            event = capabilityUpdated.copy(
+                capability = OnOff(current = true),
+            ),
+        )
+
+        expectThat(result)
+            .isA<IntegrationEventProcessor.ProcessingResult.Ignored>()
+
+        expectThat(store.load(entity = identifier))
+            .contains(provisioned, discovered)
+    }
+
+    test("Processing a capability changed event is ignored if the entity has a known state and the state was unsupported") {
+        val capabilityUpdated = CapabilityUpdated(
+            identifier = identifier,
+            capability = Brightness(current = 50.percent),
+        )
+
+        val store = FakeEventStore(
+            history = listOf(provisioned, discovered),
+        )
+        val processor = IntegrationEventProcessor(eventStore = store)
+        val result = processor.process(capabilityUpdated)
+
+        expectThat(result)
+            .isA<IntegrationEventProcessor.ProcessingResult.Rejected>()
+            .get(IntegrationEventProcessor.ProcessingResult.Rejected::reason)
+            .isA<IntegrationEventProcessor.RejectionReason.CapabilityFailure>()
+
+        expectThat(store.load(entity = identifier))
+            .contains(provisioned, discovered)
+    }
+
+    test("Processing a capability changed event is ignored if the entity has a known state but an unknown capability passed") {
+        val capabilityUpdated = CapabilityUpdated(
+            identifier = identifier,
+            capability = MeasuredLoad(current = 50.percent),
+        )
+
+        val store = FakeEventStore(
+            history = listOf(provisioned, discovered),
+        )
+        val processor = IntegrationEventProcessor(eventStore = store)
+        val result = processor.process(capabilityUpdated)
+
+        expectThat(result)
+            .isA<IntegrationEventProcessor.ProcessingResult.Rejected>()
+            .get(IntegrationEventProcessor.ProcessingResult.Rejected::reason)
+            .isA<IntegrationEventProcessor.RejectionReason.CapabilityFailure>()
+
+        expectThat(store.load(entity = identifier))
+            .contains(provisioned, discovered)
     }
 
     test("Processing a capability changed event is ignored if the entity has an unknown state.") {
