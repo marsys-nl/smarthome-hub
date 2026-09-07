@@ -24,7 +24,13 @@ class IntegrationEventProcessor(
                     is ProcessingResult.Accepted ->
                         eventStore.append(event)
 
-                    is ProcessingResult.Ignored, is ProcessingResult.Rejected ->
+                    is ProcessingResult.Ignored ->
+                        logger.debug {
+                            "Event '${event::class.simpleName}' for entity '${event.identifier}' " +
+                                "was ${result::class.simpleName}."
+                        }
+
+                    is ProcessingResult.Rejected ->
                         logger.warn {
                             "Event '${event::class.simpleName}' for entity '${event.identifier}' " +
                                 "was ${result::class.simpleName}."
