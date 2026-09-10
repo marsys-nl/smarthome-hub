@@ -11,6 +11,7 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.testing.testApplication
 import network.marsys.smarthome.api.models.config.ConfigurationResponse
 import network.marsys.smarthome.hub.plugin.initializeForwardedHeaders
@@ -266,6 +267,76 @@ val ConfigRoutesTest by testSuite(
             expectThat(response.body<ConfigurationResponse>())
                 .get(ConfigurationResponse::baseUri)
                 .isEqualTo("http://smarthome.marsys.network")
+        }
+    }
+
+    test(name = "When a auth realm is provided the realm is used as the auth uri") {
+        testApplication {
+            environment {
+                config = MapApplicationConfig(
+                    "smarthome.auth.jwt.issuer" to "https://auth.marsys.network/",
+                )
+            }
+
+            application {
+                initializeForwardedHeaders()
+                initializeSerialization()
+            }
+
+            routing {
+                configRoutes()
+            }
+
+            val client = createClient {
+                install(ContentNegotiation) {
+                    json()
+                }
+            }
+
+            val response = client.get("/api/config")
+
+            expectThat(response)
+                .get(HttpResponse::status)
+                .isEqualTo(HttpStatusCode.OK)
+
+            expectThat(response.body<ConfigurationResponse>())
+                .get(ConfigurationResponse::authUri)
+                .isEqualTo("https://auth.marsys.network/")
+        }
+    }
+
+    test(name = "When no auth realm is provided the current domain is used as the auth uri") {
+        testApplication {
+            environment {
+                config = MapApplicationConfig()
+            }
+
+            application {
+                initializeForwardedHeaders()
+                initializeSerialization()
+            }
+
+            routing {
+                configRoutes()
+            }
+
+            val client = createClient {
+                install(ContentNegotiation) {
+                    json()
+                }
+            }
+
+            val response = client.get("/api/config") {
+                header(HttpHeaders.XForwardedHost, "smarthome.marsys.network")
+            }
+
+            expectThat(response)
+                .get(HttpResponse::status)
+                .isEqualTo(HttpStatusCode.OK)
+
+            expectThat(response.body<ConfigurationResponse>())
+                .get(ConfigurationResponse::authUri)
+                .isEqualTo("http://auth.smarthome.marsys.network")
         }
     }
 }
