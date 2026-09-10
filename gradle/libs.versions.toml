@@ -1,5 +1,5 @@
 [versions]
-smarthome-api = "2026.08-SNAPSHOT"
+smarthome-api = "2026.09-SNAPSHOT"
 smarthome-domain = "2026.09-SNAPSHOT"
 smarthome-hub = "2026.09-SNAPSHOT"
 
