@@ -37,6 +37,9 @@ tasks.withType(Zip::class).all {
 }
 
 dependencies {
+    implementation(projects.core.eventstore.application)
+    implementation(projects.core.eventstore.infrastructure)
+    implementation(projects.feature.entity.application)
     implementation(projects.feature.entity.domain)
     implementation(projects.feature.integration.application)
     implementation(projects.feature.integration.domain)

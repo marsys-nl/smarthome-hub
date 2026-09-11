@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.test.balloon)
 }
 
-group = "network.marsys.smarthome.hub.feature.integration.application"
+group = "network.marsys.smarthome.hub.core.eventstore.application"
 version = libs.versions.smarthome.hub.get()
 
 kotlin {
@@ -11,20 +11,10 @@ kotlin {
 }
 
 dependencies {
-    implementation(projects.core.eventstore.application)
-    implementation(projects.feature.entity.application)
     implementation(projects.feature.entity.domain)
-    implementation(projects.feature.integration.domain)
-
-    implementation(libs.bundles.kotlin.logging)
-
-    implementation(libs.kotlin.coroutines)
-
     implementation(libs.smarthome.domain)
 
     testImplementation(libs.kotlin.expect.core)
 
     testImplementation(libs.test.balloon.core)
-
-    testImplementation(libs.turbine)
 }
