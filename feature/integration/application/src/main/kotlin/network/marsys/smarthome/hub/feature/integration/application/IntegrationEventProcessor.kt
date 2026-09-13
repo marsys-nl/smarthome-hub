@@ -1,6 +1,7 @@
 package network.marsys.smarthome.hub.feature.integration.application
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import network.marsys.smarthome.hub.core.eventstore.application.ports.outbound.EventStore
 import network.marsys.smarthome.hub.feature.entity.application.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
@@ -8,7 +9,6 @@ import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnav
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
-import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EventStore
 
 private val logger = KotlinLogging.logger {}
 

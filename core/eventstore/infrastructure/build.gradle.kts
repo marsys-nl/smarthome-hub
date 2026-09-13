@@ -3,7 +3,7 @@ plugins {
     alias(libs.plugins.test.balloon)
 }
 
-group = "network.marsys.smarthome.hub.feature.integration.infrastructure.fake"
+group = "network.marsys.smarthome.hub.core.eventstore.infrastructure"
 version = libs.versions.smarthome.hub.get()
 
 kotlin {
@@ -11,9 +11,8 @@ kotlin {
 }
 
 dependencies {
+    implementation(projects.core.eventstore.application)
     implementation(projects.feature.entity.domain)
-    implementation(projects.feature.integration.application)
-    implementation(projects.feature.integration.domain)
 
     implementation(libs.kotlin.coroutines)
 

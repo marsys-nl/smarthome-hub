@@ -39,10 +39,12 @@ dependencyResolutionManagement {
 }
 
 include(
-    ":feature:entity:domain",
+    ":core:eventstore:application",
+    ":core:eventstore:infrastructure",
     ":feature:entity:application",
-    ":feature:integration:domain",
+    ":feature:entity:domain",
     ":feature:integration:application",
+    ":feature:integration:domain",
     ":feature:integration:infrastructure",
     ":hub",
 )

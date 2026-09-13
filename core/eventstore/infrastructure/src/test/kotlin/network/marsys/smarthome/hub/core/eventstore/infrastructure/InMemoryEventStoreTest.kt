@@ -1,4 +1,4 @@
-package network.marsys.smarthome.hub.feature.integration.infrastructure
+package network.marsys.smarthome.hub.core.eventstore.infrastructure
 
 import de.infix.testBalloon.framework.core.testSuite
 import dev.nmarsman.expect.api.expectThat
@@ -6,6 +6,7 @@ import dev.nmarsman.expect.assertions.containsExactly
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEmpty
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
+import network.marsys.smarthome.hub.core.eventstore.infrastructure.InMemoryEventStore
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event

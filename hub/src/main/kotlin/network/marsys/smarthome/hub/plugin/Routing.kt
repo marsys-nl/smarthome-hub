@@ -6,6 +6,7 @@ import io.ktor.server.response.respondText
 import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import network.marsys.smarthome.hub.routes.configRoutes
+import network.marsys.smarthome.hub.routes.entityRoutes
 import network.marsys.smarthome.hub.routes.healthRoutes
 import network.marsys.smarthome.hub.routes.integrationRoutes
 
@@ -17,13 +18,8 @@ fun Application.initializeRouting() {
         }
 
         authenticate(BEARER_AUTH_NAME) {
+            entityRoutes()
             integrationRoutes()
-
-            get("/auth-test") {
-                call.respondText {
-                    "Authenticated"
-                }
-            }
         }
     }
 }

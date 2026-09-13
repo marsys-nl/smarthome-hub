@@ -10,6 +10,7 @@ import dev.nmarsman.expect.assertions.isEmpty
 import dev.nmarsman.expect.assertions.isEqualTo
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.unit.percent
+import network.marsys.smarthome.hub.core.eventstore.application.ports.outbound.EventStore
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
@@ -21,7 +22,6 @@ import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnav
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
-import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EventStore
 import kotlin.collections.getOrPut
 
 val IntegrationEventProcessorTest by testSuite(
@@ -271,6 +271,9 @@ class FakeEventStore(
             append(event = event)
         }
     }
+
+    override suspend fun identifiers(): Collection<EntityIdentifier> =
+        events.keys.toList()
 
     private fun append(event: Event) {
         events.getOrPut(key = event.identifier, defaultValue = ::mutableListOf)
