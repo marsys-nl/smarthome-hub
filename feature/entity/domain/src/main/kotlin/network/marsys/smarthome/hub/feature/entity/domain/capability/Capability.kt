@@ -1,6 +1,6 @@
 package network.marsys.smarthome.hub.feature.entity.domain.capability
 
-sealed class Capability<T> {
+sealed class Capability<T : Any> {
     abstract val current: T
     abstract val context: Context
 
