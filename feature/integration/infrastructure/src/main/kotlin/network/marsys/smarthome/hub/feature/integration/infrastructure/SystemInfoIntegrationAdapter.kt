@@ -196,7 +196,7 @@ class SystemInfoIntegrationAdapter(
         device = System.HostInfo.Device(
             manufacturer = hardware.computerSystem.manufacturer,
             model = hardware.computerSystem.model,
-            architecture = hardware.processor.processorIdentifier.microarchitecture,
+            architecture = java.lang.System.getProperty("os.arch"),
             physicalCores = hardware.processor.physicalProcessorCount,
             logicalCores = hardware.processor.logicalProcessorCount,
         ),
