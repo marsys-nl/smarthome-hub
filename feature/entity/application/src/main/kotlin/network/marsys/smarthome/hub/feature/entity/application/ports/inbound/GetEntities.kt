@@ -1,4 +1,4 @@
-package network.marsys.smarthome.hub.feature.entity.application.usecase
+package network.marsys.smarthome.hub.feature.entity.application.ports.inbound
 
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 

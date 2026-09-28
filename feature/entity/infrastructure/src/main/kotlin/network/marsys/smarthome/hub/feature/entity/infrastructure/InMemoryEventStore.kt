@@ -1,13 +1,15 @@
-package network.marsys.smarthome.hub.core.eventstore.infrastructure
+package network.marsys.smarthome.hub.feature.entity.infrastructure
 
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
-import network.marsys.smarthome.hub.core.eventstore.application.ports.outbound.EventStore
+import network.marsys.smarthome.hub.feature.entity.application.EntityAggregate
+import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.GetEntities
+import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
+import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
-import kotlin.collections.getOrDefault
 
-class InMemoryEventStore : EventStore {
+class InMemoryEventStore : EventStore, GetEntities {
     private val mutex = Mutex()
     private val events = mutableMapOf<EntityIdentifier, MutableList<Event>>()
 
@@ -15,9 +17,6 @@ class InMemoryEventStore : EventStore {
         events.forEach { event ->
             append(event = event)
         }
-
-    override suspend fun identifiers(): Collection<EntityIdentifier> =
-        events.keys
 
     private suspend fun append(event: Event): Unit =
         mutex.withLock {
@@ -28,5 +27,12 @@ class InMemoryEventStore : EventStore {
     override suspend fun load(entity: EntityIdentifier): Collection<Event> =
         mutex.withLock {
             events.getOrDefault(entity, emptyList()).toList()
+        }
+
+    override suspend fun invoke(): List<Entity> =
+        mutex.withLock {
+            events.values
+                .map(::EntityAggregate)
+                .map(EntityAggregate::entity)
         }
 }

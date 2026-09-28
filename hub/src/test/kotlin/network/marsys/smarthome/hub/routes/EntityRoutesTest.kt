@@ -3,30 +3,20 @@ package network.marsys.smarthome.hub.routes
 import de.infix.testBalloon.framework.core.testSuite
 import dev.nmarsman.expect.api.expectThat
 import dev.nmarsman.expect.assertions.isEqualTo
-import dev.nmarsman.expect.assertions.single
-import io.ktor.client.call.body
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
-import io.ktor.client.request.post
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
-import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonBuilder
-import kotlinx.serialization.modules.SerializersModule
-import network.marsys.smarthome.api.apiModuleSerializersModule
-import network.marsys.smarthome.api.models.integration.IntegrationResponse
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
-import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.gibibytes
 import network.marsys.smarthome.domain.unit.percent
-import network.marsys.smarthome.hub.feature.entity.application.usecase.GetEntities
+import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.GetEntities
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
@@ -37,20 +27,10 @@ import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.entity.System
-import network.marsys.smarthome.hub.feature.integration.application.exception.IntegrationNotFoundException
-import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationQueries
-import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.ManageIntegrationLifecycle
-import network.marsys.smarthome.hub.feature.integration.domain.Integration
-import network.marsys.smarthome.hub.feature.integration.infrastructure.FakeIntegrationAdapter
 import network.marsys.smarthome.hub.plugin.initializeSerialization
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
-import java.time.LocalDate
-import java.time.ZoneOffset
-import kotlin.time.Clock
-import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
-import kotlin.time.toKotlinInstant
 
 val EntityRoutesTest by testSuite(
     name = "Entity routes tests",

@@ -1,4 +1,4 @@
-package network.marsys.smarthome.hub.feature.integration.application
+package network.marsys.smarthome.hub.feature.entity.application
 
 import de.infix.testBalloon.framework.core.testSuite
 import dev.nmarsman.expect.api.expectThat
@@ -10,7 +10,9 @@ import dev.nmarsman.expect.assertions.isEmpty
 import dev.nmarsman.expect.assertions.isEqualTo
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.unit.percent
-import network.marsys.smarthome.hub.core.eventstore.application.ports.outbound.EventStore
+import network.marsys.smarthome.hub.feature.entity.application.internal.EntityEventProcessor
+import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
+import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
@@ -24,8 +26,8 @@ import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisione
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import kotlin.collections.getOrPut
 
-val IntegrationEventProcessorTest by testSuite(
-    name = "Integration event processor tests",
+val EntityEventProcessorTest by testSuite(
+    name = "Entity event processor tests",
 ) {
     val identifier = EntityIdentifier("entity.test")
 
@@ -53,12 +55,12 @@ val IntegrationEventProcessorTest by testSuite(
 
     test(name = "Processing an entity provisioned event is accepted if the entity has no provisioned event processed yet.") {
         val store = FakeEventStore()
-        val processor = IntegrationEventProcessor(eventStore = store)
+        val processor = EntityEventProcessor(store = store)
 
-        val result = processor.process(provisioned)
+        val result = processor.invoke(provisioned)
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Accepted>()
+            .isA<ProcessEntityEvent.Result.Accepted>()
 
         expectThat(store.load(entity = identifier))
             .contains(provisioned)
@@ -66,15 +68,15 @@ val IntegrationEventProcessorTest by testSuite(
 
     test(name = "Processing an entity provisioned event is rejected if the entity already has a provisioned event processed.") {
         val store = FakeEventStore()
-        val processor = IntegrationEventProcessor(eventStore = store)
+        val processor = EntityEventProcessor(store = store)
 
-        processor.process(provisioned)
-        val result = processor.process(provisioned)
+        processor.invoke(provisioned)
+        val result = processor.invoke(provisioned)
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Rejected>()
-            .get(IntegrationEventProcessor.ProcessingResult.Rejected::reason)
-            .isA<IntegrationEventProcessor.RejectionReason.AlreadyProvisioned>()
+            .isA<ProcessEntityEvent.Result.Rejected>()
+            .get(ProcessEntityEvent.Result.Rejected::reason)
+            .isA<ProcessEntityEvent.Result.Rejected.Reason.AlreadyProvisioned>()
 
         expectThat(store.load(entity = identifier))
             .filter { it == provisioned }
@@ -86,11 +88,11 @@ val IntegrationEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned),
         )
-        val processor = IntegrationEventProcessor(eventStore = store)
-        val result = processor.process(discovered)
+        val processor = EntityEventProcessor(store = store)
+        val result = processor.invoke(discovered)
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Accepted>()
+            .isA<ProcessEntityEvent.Result.Accepted>()
 
         expectThat(store.load(entity = identifier))
             .contains(provisioned, discovered)
@@ -98,14 +100,14 @@ val IntegrationEventProcessorTest by testSuite(
 
     test(name = "Processing an entity discovered event is rejected if the entity has not processed a provisioned event yet.") {
         val store = FakeEventStore()
-        val processor = IntegrationEventProcessor(eventStore = store)
+        val processor = EntityEventProcessor(store = store)
 
-        val result = processor.process(discovered)
+        val result = processor.invoke(discovered)
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Rejected>()
-            .get(IntegrationEventProcessor.ProcessingResult.Rejected::reason)
-            .isA<IntegrationEventProcessor.RejectionReason.NotProvisioned>()
+            .isA<ProcessEntityEvent.Result.Rejected>()
+            .get(ProcessEntityEvent.Result.Rejected::reason)
+            .isA<ProcessEntityEvent.Result.Rejected.Reason.NotProvisioned>()
 
         expectThat(store.load(entity = identifier))
             .isEmpty()
@@ -115,11 +117,11 @@ val IntegrationEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned, discovered),
         )
-        val processor = IntegrationEventProcessor(eventStore = store)
-        val result = processor.process(becameUnavailable)
+        val processor = EntityEventProcessor(store = store)
+        val result = processor.invoke(becameUnavailable)
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Accepted>()
+            .isA<ProcessEntityEvent.Result.Accepted>()
 
         expectThat(store.load(entity = identifier))
             .contains(provisioned, discovered, becameUnavailable)
@@ -129,11 +131,11 @@ val IntegrationEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned),
         )
-        val processor = IntegrationEventProcessor(eventStore = store)
-        val result = processor.process(becameUnavailable)
+        val processor = EntityEventProcessor(store = store)
+        val result = processor.invoke(becameUnavailable)
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Ignored>()
+            .isA<ProcessEntityEvent.Result.Ignored>()
 
         expectThat(store.load(entity = identifier))
             .contains(provisioned)
@@ -143,11 +145,11 @@ val IntegrationEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned, discovered, becameUnavailable),
         )
-        val processor = IntegrationEventProcessor(eventStore = store)
-        val result = processor.process(becameUnavailable)
+        val processor = EntityEventProcessor(store = store)
+        val result = processor.invoke(becameUnavailable)
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Ignored>()
+            .isA<ProcessEntityEvent.Result.Ignored>()
 
         expectThat(store.load(entity = identifier))
             .contains(provisioned, discovered, becameUnavailable)
@@ -157,11 +159,11 @@ val IntegrationEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned, discovered),
         )
-        val processor = IntegrationEventProcessor(eventStore = store)
-        val result = processor.process(capabilityUpdated)
+        val processor = EntityEventProcessor(store = store)
+        val result = processor.invoke(capabilityUpdated)
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Accepted>()
+            .isA<ProcessEntityEvent.Result.Accepted>()
 
         expectThat(store.load(entity = identifier))
             .contains(provisioned, discovered, capabilityUpdated)
@@ -171,15 +173,15 @@ val IntegrationEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned, discovered),
         )
-        val processor = IntegrationEventProcessor(eventStore = store)
-        val result = processor.process(
+        val processor = EntityEventProcessor(store = store)
+        val result = processor.invoke(
             event = capabilityUpdated.copy(
                 capability = OnOff(current = true),
             ),
         )
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Ignored>()
+            .isA<ProcessEntityEvent.Result.Ignored>()
 
         expectThat(store.load(entity = identifier))
             .contains(provisioned, discovered)
@@ -194,13 +196,13 @@ val IntegrationEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned, discovered),
         )
-        val processor = IntegrationEventProcessor(eventStore = store)
-        val result = processor.process(capabilityUpdated)
+        val processor = EntityEventProcessor(store = store)
+        val result = processor.invoke(capabilityUpdated)
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Rejected>()
-            .get(IntegrationEventProcessor.ProcessingResult.Rejected::reason)
-            .isA<IntegrationEventProcessor.RejectionReason.CapabilityFailure>()
+            .isA<ProcessEntityEvent.Result.Rejected>()
+            .get(ProcessEntityEvent.Result.Rejected::reason)
+            .isA<ProcessEntityEvent.Result.Rejected.Reason.CapabilityNotPresent>()
 
         expectThat(store.load(entity = identifier))
             .contains(provisioned, discovered)
@@ -215,13 +217,13 @@ val IntegrationEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned, discovered),
         )
-        val processor = IntegrationEventProcessor(eventStore = store)
-        val result = processor.process(capabilityUpdated)
+        val processor = EntityEventProcessor(store = store)
+        val result = processor.invoke(capabilityUpdated)
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Rejected>()
-            .get(IntegrationEventProcessor.ProcessingResult.Rejected::reason)
-            .isA<IntegrationEventProcessor.RejectionReason.CapabilityFailure>()
+            .isA<ProcessEntityEvent.Result.Rejected>()
+            .get(ProcessEntityEvent.Result.Rejected::reason)
+            .isA<ProcessEntityEvent.Result.Rejected.Reason.CapabilityNotPresent>()
 
         expectThat(store.load(entity = identifier))
             .contains(provisioned, discovered)
@@ -231,13 +233,13 @@ val IntegrationEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned),
         )
-        val processor = IntegrationEventProcessor(eventStore = store)
-        val result = processor.process(capabilityUpdated)
+        val processor = EntityEventProcessor(store = store)
+        val result = processor.invoke(capabilityUpdated)
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Rejected>()
-            .get(IntegrationEventProcessor.ProcessingResult.Rejected::reason)
-            .isA<IntegrationEventProcessor.RejectionReason.NotDiscovered>()
+            .isA<ProcessEntityEvent.Result.Rejected>()
+            .get(ProcessEntityEvent.Result.Rejected::reason)
+            .isA<ProcessEntityEvent.Result.Rejected.Reason.NotDiscovered>()
 
         expectThat(store.load(entity = identifier))
             .contains(provisioned)
@@ -247,11 +249,11 @@ val IntegrationEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(discovered, provisioned),
         )
-        val processor = IntegrationEventProcessor(eventStore = store)
-        val result = processor.process(becameUnavailable)
+        val processor = EntityEventProcessor(store = store)
+        val result = processor.invoke(becameUnavailable)
 
         expectThat(result)
-            .isA<IntegrationEventProcessor.ProcessingResult.Ignored>()
+            .isA<ProcessEntityEvent.Result.Ignored>()
 
         expectThat(store.load(entity = identifier))
             .contains(discovered, provisioned)
@@ -271,9 +273,6 @@ class FakeEventStore(
             append(event = event)
         }
     }
-
-    override suspend fun identifiers(): Collection<EntityIdentifier> =
-        events.keys.toList()
 
     private fun append(event: Event) {
         events.getOrPut(key = event.identifier, defaultValue = ::mutableListOf)
