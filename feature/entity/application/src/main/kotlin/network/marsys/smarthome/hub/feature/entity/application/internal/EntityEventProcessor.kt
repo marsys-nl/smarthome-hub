@@ -3,6 +3,7 @@ package network.marsys.smarthome.hub.feature.entity.application.internal
 import io.github.oshai.kotlinlogging.KotlinLogging
 import network.marsys.smarthome.hub.feature.entity.application.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
+import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityEventPublisher
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
@@ -15,10 +16,15 @@ private val logger = KotlinLogging.logger {}
 
 fun processEntityEvent(
     store: EventStore,
-): ProcessEntityEvent = EntityEventProcessor(store)
+    publisher: EntityEventPublisher,
+): ProcessEntityEvent = EntityEventProcessor(
+    store = store,
+    publisher = publisher,
+)
 
 internal class EntityEventProcessor(
     private val store: EventStore,
+    private val publisher: EntityEventPublisher,
 ) : ProcessEntityEvent {
     override suspend fun invoke(event: Event): ProcessEntityEvent.Result {
         val history = store.load(entity = event.identifier)
@@ -26,20 +32,24 @@ internal class EntityEventProcessor(
         return process(event = event, history = history)
             .also { result ->
                 when (result) {
-                    is ProcessEntityEvent.Result.Accepted ->
+                    is ProcessEntityEvent.Result.Accepted -> {
                         store.append(event)
+                        publisher.publish(event)
+                    }
 
-                    is ProcessEntityEvent.Result.Ignored ->
+                    is ProcessEntityEvent.Result.Ignored -> {
                         logger.debug {
                             "Event '${event::class.simpleName}' for entity '${event.identifier}' " +
                                 "was ${result::class.simpleName}."
                         }
+                    }
 
-                    is ProcessEntityEvent.Result.Rejected ->
+                    is ProcessEntityEvent.Result.Rejected -> {
                         logger.warn {
                             "Event '${event::class.simpleName}' for entity '${event.identifier}' " +
                                 "was ${result::class.simpleName}."
                         }
+                    }
                 }
             }
     }

@@ -16,6 +16,9 @@ fun entityFeatureModule(): Module = module {
     single<ProcessEntityEvent> {
         processEntityEvent(
             store = get(),
+            publisher = {
+                // No-op publisher for now.
+            },
         )
     }
 }
