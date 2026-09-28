@@ -12,6 +12,7 @@ import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.application.internal.EntityEventProcessor
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
+import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityEventPublisher
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
@@ -55,7 +56,11 @@ val EntityEventProcessorTest by testSuite(
 
     test(name = "Processing an entity provisioned event is accepted if the entity has no provisioned event processed yet.") {
         val store = FakeEventStore()
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
 
         val result = processor.invoke(provisioned)
 
@@ -66,9 +71,31 @@ val EntityEventProcessorTest by testSuite(
             .contains(provisioned)
     }
 
+    test(name = "Processing an entity provisioned event is accepted if the entity has no provisioned event processed yet.") {
+        val store = FakeEventStore()
+        val publisher = FakeEventPublisher()
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = publisher,
+        )
+
+        val result = processor.invoke(provisioned)
+
+        expectThat(result)
+            .isA<ProcessEntityEvent.Result.Accepted>()
+
+        expectThat(publisher.published)
+            .contains(provisioned)
+    }
+
     test(name = "Processing an entity provisioned event is rejected if the entity already has a provisioned event processed.") {
         val store = FakeEventStore()
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
 
         processor.invoke(provisioned)
         val result = processor.invoke(provisioned)
@@ -88,7 +115,12 @@ val EntityEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned),
         )
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
+
         val result = processor.invoke(discovered)
 
         expectThat(result)
@@ -100,7 +132,11 @@ val EntityEventProcessorTest by testSuite(
 
     test(name = "Processing an entity discovered event is rejected if the entity has not processed a provisioned event yet.") {
         val store = FakeEventStore()
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
 
         val result = processor.invoke(discovered)
 
@@ -117,7 +153,12 @@ val EntityEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned, discovered),
         )
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
+
         val result = processor.invoke(becameUnavailable)
 
         expectThat(result)
@@ -131,7 +172,12 @@ val EntityEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned),
         )
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
+
         val result = processor.invoke(becameUnavailable)
 
         expectThat(result)
@@ -145,7 +191,12 @@ val EntityEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned, discovered, becameUnavailable),
         )
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
+
         val result = processor.invoke(becameUnavailable)
 
         expectThat(result)
@@ -159,7 +210,12 @@ val EntityEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned, discovered),
         )
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
+
         val result = processor.invoke(capabilityUpdated)
 
         expectThat(result)
@@ -173,7 +229,12 @@ val EntityEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned, discovered),
         )
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
+
         val result = processor.invoke(
             event = capabilityUpdated.copy(
                 capability = OnOff(current = true),
@@ -196,7 +257,12 @@ val EntityEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned, discovered),
         )
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
+
         val result = processor.invoke(capabilityUpdated)
 
         expectThat(result)
@@ -217,7 +283,12 @@ val EntityEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned, discovered),
         )
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
+
         val result = processor.invoke(capabilityUpdated)
 
         expectThat(result)
@@ -233,7 +304,12 @@ val EntityEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(provisioned),
         )
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
+
         val result = processor.invoke(capabilityUpdated)
 
         expectThat(result)
@@ -249,7 +325,12 @@ val EntityEventProcessorTest by testSuite(
         val store = FakeEventStore(
             history = listOf(discovered, provisioned),
         )
-        val processor = EntityEventProcessor(store = store)
+
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = {},
+        )
+
         val result = processor.invoke(becameUnavailable)
 
         expectThat(result)
@@ -281,4 +362,13 @@ class FakeEventStore(
 
     override suspend fun load(entity: EntityIdentifier): Collection<Event> =
         events.getOrDefault(entity, emptyList()).toList()
+}
+
+class FakeEventPublisher : EntityEventPublisher {
+    private val events: MutableList<Event> = mutableListOf()
+    val published: List<Event> get() = events.toList()
+
+    override suspend fun publish(event: Event) {
+        events.add(event)
+    }
 }
