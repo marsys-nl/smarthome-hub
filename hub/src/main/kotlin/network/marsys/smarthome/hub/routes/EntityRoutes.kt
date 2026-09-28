@@ -7,7 +7,7 @@ import io.ktor.server.routing.get
 import network.marsys.smarthome.api.models.entity.EntityResponse
 import network.marsys.smarthome.api.models.entity.LightEntity
 import network.marsys.smarthome.api.models.entity.SystemEntity
-import network.marsys.smarthome.hub.feature.entity.application.usecase.GetEntities
+import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.GetEntities
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light

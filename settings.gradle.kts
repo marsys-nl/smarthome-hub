@@ -39,10 +39,9 @@ dependencyResolutionManagement {
 }
 
 include(
-    ":core:eventstore:application",
-    ":core:eventstore:infrastructure",
     ":feature:entity:application",
     ":feature:entity:domain",
+    ":feature:entity:infrastructure",
     ":feature:integration:application",
     ":feature:integration:domain",
     ":feature:integration:infrastructure",

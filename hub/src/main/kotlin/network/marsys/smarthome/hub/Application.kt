@@ -6,8 +6,8 @@ import io.ktor.server.engine.embeddedServer
 import io.ktor.server.netty.Netty
 import network.marsys.smarthome.hub.plugin.initializeAuthentication
 import network.marsys.smarthome.hub.plugin.initializeDependencyInjection
+import network.marsys.smarthome.hub.plugin.initializeEntityEventProcessor
 import network.marsys.smarthome.hub.plugin.initializeForwardedHeaders
-import network.marsys.smarthome.hub.plugin.initializeIntegrationEventProcessor
 import network.marsys.smarthome.hub.plugin.initializeIntegrationLifecycleManager
 import network.marsys.smarthome.hub.plugin.initializeRouting
 import network.marsys.smarthome.hub.plugin.initializeSerialization
@@ -33,7 +33,7 @@ fun main(args: Array<String>) {
             initializeSerialization()
             initializeRouting()
 
-            initializeIntegrationEventProcessor()
+            initializeEntityEventProcessor()
             initializeIntegrationLifecycleManager()
         },
     ).start(wait = true)
