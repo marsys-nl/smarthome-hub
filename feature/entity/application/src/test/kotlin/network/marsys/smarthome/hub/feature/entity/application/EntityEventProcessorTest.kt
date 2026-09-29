@@ -12,13 +12,14 @@ import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.application.internal.EntityEventProcessor
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
-import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityEventPublisher
+import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityUpdatePublisher
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
+import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
@@ -71,9 +72,9 @@ val EntityEventProcessorTest by testSuite(
             .contains(provisioned)
     }
 
-    test(name = "Processing an entity provisioned event is accepted if the entity has no provisioned event processed yet.") {
+    test(name = "Processing an entity provisioned event results in publishing the updated entity.") {
         val store = FakeEventStore()
-        val publisher = FakeEventPublisher()
+        val publisher = FakeEntityUpdatePublisher()
 
         val processor = EntityEventProcessor(
             store = store,
@@ -85,8 +86,32 @@ val EntityEventProcessorTest by testSuite(
         expectThat(result)
             .isA<ProcessEntityEvent.Result.Accepted>()
 
-        expectThat(publisher.published)
-            .contains(provisioned)
+        expectThat(publisher.updated.first())
+            .isA<Light>()
+            .get(Light::state)
+            .isA<Light.State.Unknown>()
+    }
+
+    test(name = "Processing an entity discovered event results in publishing the updated entity.") {
+        val store = FakeEventStore(
+            history = listOf(provisioned),
+        )
+
+        val publisher = FakeEntityUpdatePublisher()
+        val processor = EntityEventProcessor(
+            store = store,
+            publisher = publisher,
+        )
+
+        val result = processor.invoke(discovered)
+
+        expectThat(result)
+            .isA<ProcessEntityEvent.Result.Accepted>()
+
+        expectThat(publisher.updated.first())
+            .isA<Light>()
+            .get(Light::state)
+            .isA<Light.State.Known>()
     }
 
     test(name = "Processing an entity provisioned event is rejected if the entity already has a provisioned event processed.") {
@@ -364,11 +389,11 @@ class FakeEventStore(
         events.getOrDefault(entity, emptyList()).toList()
 }
 
-class FakeEventPublisher : EntityEventPublisher {
-    private val events: MutableList<Event> = mutableListOf()
-    val published: List<Event> get() = events.toList()
+class FakeEntityUpdatePublisher : EntityUpdatePublisher {
+    private val entities: MutableList<Entity> = mutableListOf()
+    val updated: List<Entity> get() = entities.toList()
 
-    override suspend fun publish(event: Event) {
-        events.add(event)
+    override suspend fun publish(entity: Entity) {
+        entities.add(entity)
     }
 }
