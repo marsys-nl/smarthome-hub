@@ -1,9 +1,8 @@
 package network.marsys.smarthome.hub.plugin
 
 import io.ktor.server.application.Application
+import io.ktor.server.auth.AuthenticationStrategy
 import io.ktor.server.auth.authenticate
-import io.ktor.server.response.respondText
-import io.ktor.server.routing.get
 import io.ktor.server.routing.routing
 import network.marsys.smarthome.hub.routes.configRoutes
 import network.marsys.smarthome.hub.routes.entityRoutes
@@ -17,7 +16,11 @@ fun Application.initializeRouting() {
             configRoutes()
         }
 
-        authenticate(BEARER_AUTH_NAME) {
+        authenticate(
+            API_KEY_AUTH_NAME,
+            BEARER_AUTH_NAME,
+            strategy = AuthenticationStrategy.Required,
+        ) {
             entityRoutes()
             integrationRoutes()
         }
