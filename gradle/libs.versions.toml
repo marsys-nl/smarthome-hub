@@ -1,7 +1,7 @@
 [versions]
 smarthome-api = "2026.09-SNAPSHOT"
-smarthome-domain = "2026.09-SNAPSHOT"
-smarthome-hub = "2026.09-SNAPSHOT"
+smarthome-domain = "2026.10-SNAPSHOT"
+smarthome-hub = "2026.10-SNAPSHOT"
 
 buildconfig = "6.1.2"
 

@@ -28,22 +28,22 @@ val IntegrationLifecycleManagerTest by testSuite(
     test(name = "Starting integration with an unknown identifier should throw an exception") {
         val integration = FakeIntegration()
         val manager = IntegrationLifecycleManager(listOf(integration))
-        expectThrows<IntegrationNotFoundException> { manager.start(IntegrationIdentifier("unknown")) }
-            .hasMessage("Integration 'unknown' was not found.")
+        expectThrows<IntegrationNotFoundException> { manager.start(IntegrationIdentifier("integration.unknown")) }
+            .hasMessage("Integration 'integration.unknown' was not found.")
     }
 
     test(name = "Stopping integration with an unknown identifier should throw an exception") {
         val integration = FakeIntegration()
         val manager = IntegrationLifecycleManager(listOf(integration))
-        expectThrows<IntegrationNotFoundException> { manager.stop(IntegrationIdentifier("unknown")) }
-            .hasMessage("Integration 'unknown' was not found.")
+        expectThrows<IntegrationNotFoundException> { manager.stop(IntegrationIdentifier("integration.unknown")) }
+            .hasMessage("Integration 'integration.unknown' was not found.")
     }
 
     test(name = "Restarting integration with an unknown identifier should throw an exception") {
         val integration = FakeIntegration()
         val manager = IntegrationLifecycleManager(listOf(integration))
-        expectThrows<IntegrationNotFoundException> { manager.restart(IntegrationIdentifier("unknown")) }
-            .hasMessage("Integration 'unknown' was not found.")
+        expectThrows<IntegrationNotFoundException> { manager.restart(IntegrationIdentifier("integration.unknown")) }
+            .hasMessage("Integration 'integration.unknown' was not found.")
     }
 
     test(name = "Starting an integration by its identifier succeeds if the integration isn't running") {
@@ -237,7 +237,7 @@ private class FakeIntegration(
     private val start: suspend () -> Unit = {},
     private val stop: suspend () -> Unit = {},
     override val identifier: IntegrationIdentifier =
-        IntegrationIdentifier("integration.fake"),
+        IntegrationIdentifier("integration.fake-integration"),
     initialStatus: Integration.Status = Integration.Status.Stopped,
 ) : IntegrationAdapter {
     override val events: Flow<Event> = flowOf()

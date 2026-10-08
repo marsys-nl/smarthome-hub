@@ -67,7 +67,7 @@ val IntegrationRoutesTest by testSuite(
         ).forEach { status, expected ->
             test(name = "When a integration is known with a '$status' status, the request returns a list containing that integration") {
                 testApplication {
-                    val identifier = IntegrationIdentifier("integration.fake")
+                    val identifier = IntegrationIdentifier("integration.fake-integration")
 
                     initializeDependencyInjection(
                         integrationQueries = integrationQueries(
@@ -126,7 +126,7 @@ val IntegrationRoutesTest by testSuite(
                     integrationRoutes()
                 }
 
-                val response = client.post("/api/integrations/valid-integration-identifier/restart")
+                val response = client.post("/api/integrations/integration.valid-integration-identifier/restart")
 
                 expectThat(response)
                     .get(HttpResponse::status)
@@ -148,7 +148,7 @@ val IntegrationRoutesTest by testSuite(
                     integrationRoutes()
                 }
 
-                val response = client.post("/api/integrations/unknown-itegration-identifier/restart")
+                val response = client.post("/api/integrations/integration.unknown-itegration-identifier/restart")
 
                 expectThat(response)
                     .get(HttpResponse::status)
@@ -170,7 +170,7 @@ val IntegrationRoutesTest by testSuite(
                     integrationRoutes()
                 }
 
-                val response = client.post("/api/integrations/valid-integration-identifier/restart")
+                val response = client.post("/api/integrations/integration.valid-integration-identifier/restart")
 
                 expectThat(response)
                     .get(HttpResponse::status)
@@ -207,7 +207,7 @@ val IntegrationRoutesTest by testSuite(
                     integrationRoutes()
                 }
 
-                val response = client.post("/api/integrations/valid-integration-identifier/start")
+                val response = client.post("/api/integrations/integration.valid-integration-identifier/start")
 
                 expectThat(response)
                     .get(HttpResponse::status)
@@ -229,7 +229,7 @@ val IntegrationRoutesTest by testSuite(
                     integrationRoutes()
                 }
 
-                val response = client.post("/api/integrations/unknown-itegration-identifier/start")
+                val response = client.post("/api/integrations/integration.unknown-itegration-identifier/start")
 
                 expectThat(response)
                     .get(HttpResponse::status)
@@ -251,7 +251,7 @@ val IntegrationRoutesTest by testSuite(
                     integrationRoutes()
                 }
 
-                val response = client.post("/api/integrations/valid-integration-identifier/start")
+                val response = client.post("/api/integrations/integration.valid-integration-identifier/start")
 
                 expectThat(response)
                     .get(HttpResponse::status)
@@ -288,7 +288,7 @@ val IntegrationRoutesTest by testSuite(
                     integrationRoutes()
                 }
 
-                val response = client.post("/api/integrations/valid-integration-identifier/stop")
+                val response = client.post("/api/integrations/integration.valid-integration-identifier/stop")
 
                 expectThat(response)
                     .get(HttpResponse::status)
@@ -310,7 +310,7 @@ val IntegrationRoutesTest by testSuite(
                     integrationRoutes()
                 }
 
-                val response = client.post("/api/integrations/unknown-itegration-identifier/stop")
+                val response = client.post("/api/integrations/integration.unknown-itegration-identifier/stop")
 
                 expectThat(response)
                     .get(HttpResponse::status)
@@ -332,7 +332,7 @@ val IntegrationRoutesTest by testSuite(
                     integrationRoutes()
                 }
 
-                val response = client.post("/api/integrations/valid-integration-identifier/stop")
+                val response = client.post("/api/integrations/integration.valid-integration-identifier/stop")
 
                 expectThat(response)
                     .get(HttpResponse::status)

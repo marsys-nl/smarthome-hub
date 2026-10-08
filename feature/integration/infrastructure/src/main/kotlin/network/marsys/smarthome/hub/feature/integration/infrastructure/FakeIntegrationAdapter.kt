@@ -13,13 +13,14 @@ import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationLifecycleController
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
+import network.marsys.smarthome.hub.feature.integration.domain.entity
 import kotlin.time.Duration.Companion.seconds
 
 class FakeIntegrationAdapter(
-    override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.fake"),
+    override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.fake-integration"),
     initialStatus: Integration.Status = Integration.Status.Stopped,
 ) : IntegrationAdapter {
-    private val entityIdentifier = EntityIdentifier("entity.fake")
+    private val entityIdentifier = identifier.entity("entity")
 
     private val lifecycle = IntegrationLifecycleController(
         initialStatus = initialStatus,
