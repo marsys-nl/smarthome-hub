@@ -27,6 +27,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationLifecycleController
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
+import network.marsys.smarthome.hub.feature.integration.domain.entity
 import oshi.SystemInfo
 import oshi.hardware.HardwareAbstractionLayer
 import oshi.software.os.OperatingSystem
@@ -42,7 +43,7 @@ class SystemInfoIntegrationAdapter(
     private val systemInfo: SystemInfo = SystemInfo(),
     private val scope: CoroutineScope = CoroutineScope(SupervisorJob()),
 ) : IntegrationAdapter {
-    private val entityIdentifier = EntityIdentifier("smarthome.system")
+    private val entityIdentifier = identifier.entity("smarthome")
 
     private var job: Job? = null
 
