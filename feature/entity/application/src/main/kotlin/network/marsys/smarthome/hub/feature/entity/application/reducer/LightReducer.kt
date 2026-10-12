@@ -1,6 +1,7 @@
 package network.marsys.smarthome.hub.feature.entity.application.reducer
 
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
+import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
@@ -10,11 +11,13 @@ internal object LightReducer : EntityReducer<Light, Light.State, Light.State.Kno
 
     override fun reduce(
         identifier: EntityIdentifier,
+        naming: EntityNaming,
         history: Collection<Event>,
     ): Light = history
         .fold(
             initial = Light(
                 identifier = identifier,
+                naming = naming,
                 state = createUnknownState(),
             ),
             operation = { entity, event ->
