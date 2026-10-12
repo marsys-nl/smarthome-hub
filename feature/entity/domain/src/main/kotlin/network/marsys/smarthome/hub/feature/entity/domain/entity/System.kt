@@ -1,16 +1,16 @@
 package network.marsys.smarthome.hub.feature.entity.domain.entity
 
+import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
-import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import kotlin.time.Instant
 
 data class System(
     override val identifier: EntityIdentifier,
+    override val naming: EntityNaming,
     override val state: State,
 ) : Entity {
     sealed interface State : Entity.State {
@@ -143,5 +143,7 @@ data class System(
         }
     }
 
-    companion object : Entity.Type<System>
+    companion object : Entity.Type<System> {
+        override val defaultNamingKey: TranslationKey = TranslationKey("system.smarthome-hub")
+    }
 }

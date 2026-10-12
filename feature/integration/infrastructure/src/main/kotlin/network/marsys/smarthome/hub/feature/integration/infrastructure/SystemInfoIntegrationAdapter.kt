@@ -20,6 +20,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDat
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
 import network.marsys.smarthome.hub.feature.entity.domain.entity.System
+import network.marsys.smarthome.hub.feature.entity.domain.entity.naming
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
@@ -74,6 +75,7 @@ class SystemInfoIntegrationAdapter(
             EntityProvisioned(
                 identifier = entityIdentifier,
                 type = System,
+                naming = System.naming(),
             ),
         )
 

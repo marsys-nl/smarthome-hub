@@ -1,5 +1,6 @@
 package network.marsys.smarthome.hub.feature.entity.domain.entity
 
+import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
@@ -7,6 +8,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 
 data class Light(
     override val identifier: EntityIdentifier,
+    override val naming: EntityNaming,
     override val state: State,
 ) : Entity {
     sealed interface State : Entity.State {
@@ -34,5 +36,7 @@ data class Light(
         ) : State, Entity.State.Unknown
     }
 
-    companion object : Entity.Type<Light>
+    companion object : Entity.Type<Light> {
+        override val defaultNamingKey: TranslationKey = TranslationKey("light")
+    }
 }

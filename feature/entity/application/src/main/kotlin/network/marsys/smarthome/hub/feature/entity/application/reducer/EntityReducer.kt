@@ -2,6 +2,7 @@ package network.marsys.smarthome.hub.feature.entity.application.reducer
 
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
+import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 import network.marsys.smarthome.hub.feature.entity.domain.entity.formattedName
@@ -41,7 +42,11 @@ internal abstract class EntityReducer<E : Entity, S : Entity.State, K, U>
             } as K?,
         )
 
-    abstract fun reduce(identifier: EntityIdentifier, history: Collection<Event>): E
+    abstract fun reduce(
+        identifier: EntityIdentifier,
+        naming: EntityNaming,
+        history: Collection<Event>,
+    ): E
 
     @Suppress("UNCHECKED_CAST")
     inline fun <reified T : K> reduce(entity: E, event: Event): E {
@@ -81,6 +86,7 @@ internal abstract class EntityReducer<E : Entity, S : Entity.State, K, U>
 
             return reducer.reduce(
                 identifier = provisioned.identifier,
+                naming = provisioned.naming,
                 history = history.drop(1),
             )
         }

@@ -5,9 +5,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
+import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
+import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
+import network.marsys.smarthome.hub.feature.entity.domain.entity.naming
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationAdapter
@@ -17,7 +20,7 @@ import network.marsys.smarthome.hub.feature.integration.domain.entity
 import kotlin.time.Duration.Companion.seconds
 
 class FakeIntegrationAdapter(
-    override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.fake-integration"),
+    override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.fake"),
     initialStatus: Integration.Status = Integration.Status.Stopped,
 ) : IntegrationAdapter {
     private val entityIdentifier = identifier.entity("entity")
@@ -30,7 +33,8 @@ class FakeIntegrationAdapter(
             eventChannel.trySend(
                 EntityProvisioned(
                     identifier = entityIdentifier,
-                    type = Light.Companion,
+                    type = Light,
+                    naming = Light.naming(),
                 ),
             )
         },

@@ -1,11 +1,13 @@
 package network.marsys.smarthome.hub.feature.entity.domain.entity
 
+import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import kotlin.reflect.KClass
 
 sealed interface Entity {
     val identifier: EntityIdentifier
+    val naming: EntityNaming
     val state: State
 
     sealed interface State {
@@ -22,8 +24,18 @@ sealed interface Entity {
         }
     }
 
-    sealed interface Type<E : Entity>
+    sealed interface Type<E : Entity> {
+        val defaultNamingKey: TranslationKey
+    }
 }
+
+fun Entity.Type<*>.naming(
+    key: TranslationKey? = null,
+    qualifier: TranslationKey? = null,
+): EntityNaming = EntityNaming(
+    key = key ?: defaultNamingKey,
+    qualifier = qualifier,
+)
 
 val KClass<*>.formattedName: String get() = this.qualifiedName!!
     .replace(java.packageName, "")

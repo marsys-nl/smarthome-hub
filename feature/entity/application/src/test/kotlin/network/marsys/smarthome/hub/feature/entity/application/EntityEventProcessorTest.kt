@@ -8,6 +8,7 @@ import dev.nmarsman.expect.assertions.filter
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEmpty
 import dev.nmarsman.expect.assertions.isEqualTo
+import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.application.internal.EntityEventProcessor
@@ -20,6 +21,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
+import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
@@ -32,10 +34,14 @@ val EntityEventProcessorTest by testSuite(
     name = "Entity event processor tests",
 ) {
     val identifier = EntityIdentifier("entity.test")
+    val naming = EntityNaming(
+        key = TranslationKey("entity-naming"),
+    )
 
     val provisioned = EntityProvisioned(
         identifier = identifier,
         type = Light,
+        naming = naming,
     )
 
     val discovered = EntityDiscovered(

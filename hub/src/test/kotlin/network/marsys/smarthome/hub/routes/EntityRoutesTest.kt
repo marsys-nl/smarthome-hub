@@ -27,6 +27,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.entity.System
+import network.marsys.smarthome.hub.feature.entity.domain.entity.naming
 import network.marsys.smarthome.hub.plugin.initializeSerialization
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -73,6 +74,7 @@ val EntityRoutesTest by testSuite(
                     entities = listOf(
                         Light(
                             identifier = EntityIdentifier("light.test"),
+                            naming = Light.naming(),
                             state = Light.State.Unknown(),
                         ),
                     ),
@@ -115,6 +117,7 @@ val EntityRoutesTest by testSuite(
                         entities = listOf(
                             Light(
                                 identifier = EntityIdentifier("light.test"),
+                                naming = Light.naming(),
                                 state = Light.State.Known(
                                     onOff = required(OnOff(current = true)),
                                     brightness = optional(Brightness(current = 50.percent)),
@@ -161,6 +164,7 @@ val EntityRoutesTest by testSuite(
                         entities = listOf(
                             Light(
                                 identifier = EntityIdentifier("light.test"),
+                                naming = Light.naming(),
                                 state = Light.State.Known(
                                     onOff = required(OnOff(current = true)),
                                     brightness = optional(null),
@@ -206,6 +210,7 @@ val EntityRoutesTest by testSuite(
                         entities = listOf(
                             System(
                                 identifier = EntityIdentifier("system.test"),
+                                naming = System.naming(),
                                 state = System.State.Known(
                                     info = host(),
                                     processor = processor(),
@@ -283,6 +288,7 @@ val EntityRoutesTest by testSuite(
                         entities = listOf(
                             System(
                                 identifier = EntityIdentifier("system.test"),
+                                naming = System.naming(),
                                 state = System.State.Known(
                                     info = host(),
                                     processor = processor(
@@ -362,10 +368,12 @@ val EntityRoutesTest by testSuite(
                     entities = listOf(
                         Light(
                             identifier = EntityIdentifier("light.test"),
+                            naming = Light.naming(),
                             state = Light.State.Unknown(),
                         ),
                         System(
                             identifier = EntityIdentifier("system.smarthome"),
+                            naming = System.naming(),
                             state = System.State.Unknown(),
                         ),
                     ),

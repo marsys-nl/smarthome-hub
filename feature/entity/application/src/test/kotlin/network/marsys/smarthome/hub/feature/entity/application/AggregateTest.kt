@@ -9,13 +9,12 @@ import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.isNotNull
 import dev.nmarsman.expect.assertions.isNull
 import dev.nmarsman.expect.assertions.isSameInstanceAs
+import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.gibibytes
-import network.marsys.smarthome.domain.unit.gigabytes
-import network.marsys.smarthome.domain.unit.minutes
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
@@ -25,6 +24,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoa
 import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
+import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
@@ -38,6 +38,10 @@ import kotlin.time.Instant
 val AggregateTest by testSuite(
     name = "Aggregate tests",
 ) {
+    val naming = EntityNaming(
+        key = TranslationKey("living-room"),
+    )
+
     test(name = "Creating aggregate succeeds when entity provisioned event is provided") {
         val identifier = EntityIdentifier("light.living-room")
 
@@ -45,6 +49,7 @@ val AggregateTest by testSuite(
             EntityProvisioned(
                 identifier = identifier,
                 type = Light,
+                naming = naming,
             ),
         )
 
@@ -54,6 +59,7 @@ val AggregateTest by testSuite(
             .isEqualTo(
                 expected = Light(
                     identifier = identifier,
+                    naming = naming,
                     state = Light.State.Unknown(),
                 ),
             )
@@ -78,10 +84,12 @@ val AggregateTest by testSuite(
                 EntityProvisioned(
                     identifier = identifier,
                     type = Light,
+                    naming = naming,
                 ),
                 EntityProvisioned(
                     identifier = identifier,
                     type = Light,
+                    naming = naming,
                 ),
             )
 
@@ -106,6 +114,7 @@ val AggregateTest by testSuite(
                 EntityProvisioned(
                     identifier = identifier,
                     type = Light,
+                    naming = naming,
                 ),
             )
 
@@ -125,6 +134,7 @@ val AggregateTest by testSuite(
             EntityProvisioned(
                 identifier = identifier,
                 type = Light,
+                naming = naming,
             ),
             EntityDiscovered(
                 identifier = identifier,
@@ -138,6 +148,7 @@ val AggregateTest by testSuite(
             .isEqualTo(
                 expected = Light(
                     identifier = identifier,
+                    naming = naming,
                     state = state,
                 ),
             )
@@ -157,6 +168,7 @@ val AggregateTest by testSuite(
             EntityProvisioned(
                 identifier = identifier,
                 type = System,
+                naming = naming,
             ),
             EntityDiscovered(
                 identifier = identifier,
@@ -170,6 +182,7 @@ val AggregateTest by testSuite(
             .isEqualTo(
                 expected = System(
                     identifier = identifier,
+                    naming = naming,
                     state = state,
                 ),
             )
@@ -187,6 +200,7 @@ val AggregateTest by testSuite(
             EntityProvisioned(
                 identifier = identifier,
                 type = Light,
+                naming = naming,
             ),
             EntityDiscovered(
                 identifier = EntityIdentifier("light.kitchen"),
@@ -213,6 +227,7 @@ val AggregateTest by testSuite(
             EntityProvisioned(
                 identifier = identifier,
                 type = Light,
+                naming = naming,
             ),
             EntityDiscovered(
                 identifier = identifier,
@@ -237,6 +252,7 @@ val AggregateTest by testSuite(
             EntityProvisioned(
                 identifier = identifier,
                 type = Light,
+                naming = naming,
             ),
             EntityDiscovered(
                 identifier = identifier,
@@ -267,6 +283,7 @@ val AggregateTest by testSuite(
             EntityProvisioned(
                 identifier = identifier,
                 type = Light,
+                naming = naming,
             ),
             EntityDiscovered(
                 identifier = identifier,
@@ -296,6 +313,7 @@ val AggregateTest by testSuite(
             EntityProvisioned(
                 identifier = identifier,
                 type = Light,
+                naming = naming,
             ),
             EntityBecameUnavailable(
                 identifier = identifier,
@@ -317,6 +335,7 @@ val AggregateTest by testSuite(
             EntityProvisioned(
                 identifier = identifier,
                 type = Light,
+                naming = naming,
             ),
             EntityBecameUnavailable(
                 identifier = identifier,
@@ -350,6 +369,7 @@ val AggregateTest by testSuite(
             EntityProvisioned(
                 identifier = identifier,
                 type = System,
+                naming = naming,
             ),
             EntityDiscovered(
                 identifier = identifier,
@@ -376,20 +396,13 @@ val AggregateTest by testSuite(
 
     test(name = "Creating aggregate fails when entity with unknown state has capability update events") {
         val identifier = EntityIdentifier("system.smarthome")
-
-        val state = System.State.Known(
-            info = host(),
-            processor = processor(),
-            memory = memory(),
-            uptime = uptime(),
-        )
-
         val updatedCapability = MeasuredLoad(current = 75.percent)
 
         val history = listOf(
             EntityProvisioned(
                 identifier = identifier,
                 type = System,
+                naming = naming,
             ),
             CapabilityUpdated(
                 identifier = identifier,
