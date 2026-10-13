@@ -100,7 +100,10 @@ val EntityRoutesTest by testSuite(
                             |[
                             |    {
                             |        "type": "light",
-                            |        "identifier": "light.test"
+                            |        "identifier": "light.test",
+                            |        "naming": {
+                            |            "key": "light"
+                            |        }
                             |    }
                             |]
                         """.trimMargin(),
@@ -147,6 +150,9 @@ val EntityRoutesTest by testSuite(
                                 |    {
                                 |        "type": "light",
                                 |        "identifier": "light.test",
+                                |        "naming": {
+                                |            "key": "light"
+                                |        },
                                 |        "state": {
                                 |            "onOff": true,
                                 |            "brightness": 50.0
@@ -194,6 +200,9 @@ val EntityRoutesTest by testSuite(
                                 |    {
                                 |        "type": "light",
                                 |        "identifier": "light.test",
+                                |        "naming": {
+                                |            "key": "light"
+                                |        },
                                 |        "state": {
                                 |            "onOff": true
                                 |        }
@@ -242,6 +251,9 @@ val EntityRoutesTest by testSuite(
                                 |    {
                                 |        "type": "system",
                                 |        "identifier": "system.test",
+                                |        "naming": {
+                                |            "key": "system.smarthome-hub"
+                                |        },
                                 |        "state": {
                                 |            "host": {
                                 |                "device": {
@@ -322,6 +334,9 @@ val EntityRoutesTest by testSuite(
                                 |    {
                                 |        "type": "system",
                                 |        "identifier": "system.test",
+                                |        "naming": {
+                                |            "key": "system.smarthome-hub"
+                                |        },
                                 |        "state": {
                                 |            "host": {
                                 |                "device": {
@@ -399,11 +414,17 @@ val EntityRoutesTest by testSuite(
                             |[
                             |    {
                             |        "type": "light",
-                            |        "identifier": "light.test"
+                            |        "identifier": "light.test",
+                            |        "naming": {
+                            |            "key": "light"
+                            |        }
                             |    },
                             |    {
                             |        "type": "system",
-                            |        "identifier": "system.smarthome"
+                            |        "identifier": "system.smarthome",
+                            |        "naming": {
+                            |            "key": "system.smarthome-hub"
+                            |        }
                             |    }
                             |]
                         """.trimMargin(),

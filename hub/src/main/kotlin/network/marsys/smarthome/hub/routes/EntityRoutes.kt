@@ -10,6 +10,7 @@ import network.marsys.smarthome.api.models.entity.SystemEntity
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.GetEntities
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
+import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 import org.koin.ktor.ext.inject
@@ -28,12 +29,14 @@ fun Route.entityRoutes() {
 private fun EntityResponse.Companion.map(entity: Entity): EntityResponse =
     when (entity) {
         is Light -> LightEntity(
-            identifier = entity.identifier.value,
+            identifier = entity.identifier,
+            naming = entity.naming.map(),
             state = entity.state.map(),
         )
 
         is System -> SystemEntity(
-            identifier = entity.identifier.value,
+            identifier = entity.identifier,
+            naming = entity.naming.map(),
             state = entity.state.map(),
         )
     }
@@ -84,6 +87,12 @@ private fun System.State.Known.map(): SystemEntity.State =
             host = uptime.host,
             application = uptime.application,
         ),
+    )
+
+private fun EntityNaming.map(): EntityResponse.Naming =
+    EntityResponse.Naming(
+        key = key.value,
+        qualifier = qualifier?.value,
     )
 
 @Suppress("UNCHECKED_CAST", "UseIfInsteadOfWhen")
