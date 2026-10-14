@@ -13,7 +13,7 @@ logback = "1.6.5"
 
 koin = "4.2.2"
 
-kotlin = "2.4.20"
+kotlin = "2.4.21"
 kotlin-coroutines = "1.11.0"
 kotlin-expect = "0.2"
 kotlin-kover = "0.9.11"
