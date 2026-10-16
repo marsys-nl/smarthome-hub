@@ -13,7 +13,6 @@ import network.marsys.smarthome.domain.unit.Quantity
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.gibibytes
 import network.marsys.smarthome.domain.unit.percent
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
@@ -33,7 +32,7 @@ val UpdateSystemStateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         val update = MeasuredDataSize(current = 16.gibibytes) with System.MemoryType.Total
@@ -52,7 +51,7 @@ val UpdateSystemStateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         val update = MeasuredDataSize(current = 2.gibibytes) with System.MemoryType.Available
@@ -71,7 +70,7 @@ val UpdateSystemStateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         val update = MeasuredDataSize(current = 16.gibibytes) with System.MemoryType.SwapTotal
@@ -91,7 +90,7 @@ val UpdateSystemStateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         val update = MeasuredDataSize(current = 4.gibibytes) with System.MemoryType.SwapUsed
@@ -111,7 +110,7 @@ val UpdateSystemStateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         val update = MeasuredDataSize(current = 4.gibibytes) with Unsupported
@@ -126,7 +125,7 @@ val UpdateSystemStateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         val update = MeasuredLoad(current = 75.percent)
@@ -145,7 +144,7 @@ val UpdateSystemStateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         val update = MeasuredTemperature(current = 75.celsius)
@@ -165,7 +164,7 @@ val UpdateSystemStateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         val update = OnOff(current = true)
@@ -187,7 +186,7 @@ val UpdateSystemStateTest by testSuite(
                 info = host(),
                 processor = processor(),
                 memory = memory(),
-                uptime = uptime(),
+                startedAt = uptime(),
             )
 
             expectThat(state.get(capability))
@@ -203,7 +202,7 @@ val UpdateSystemStateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         expectThat(state.get(capability))
@@ -216,7 +215,7 @@ val UpdateSystemStateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         expectThat(state.get(capability))
@@ -231,7 +230,7 @@ val UpdateSystemStateTest by testSuite(
                 temperature = null,
             ),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         expectThat(state.get(capability))
@@ -244,7 +243,7 @@ val UpdateSystemStateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         expectThat(state.get(capability))
@@ -293,7 +292,7 @@ private fun memory(
 private fun uptime(
     host: Instant = Clock.System.now().minus(15.seconds),
     application: Instant = Clock.System.now().minus(5.seconds),
-) = System.Uptime(
+) = System.StartedAt(
     host = host,
     application = application,
 )
