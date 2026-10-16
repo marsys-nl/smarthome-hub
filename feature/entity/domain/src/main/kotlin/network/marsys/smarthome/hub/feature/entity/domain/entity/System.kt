@@ -18,7 +18,7 @@ data class System(
             val info: HostInfo,
             val processor: Processor,
             val memory: Memory,
-            val uptime: Uptime,
+            val startedAt: StartedAt,
         ) : State, Entity.State.Known {
             override fun get(capability: Capability<*>): Capability<*>? = when (capability) {
                 is MeasuredDataSize if MemoryType.Total in capability.context ->
@@ -92,7 +92,7 @@ data class System(
         )
     }
 
-    data class Uptime(
+    data class StartedAt(
         val host: Instant,
         val application: Instant,
     )

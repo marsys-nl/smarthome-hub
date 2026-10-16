@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
-import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 import network.marsys.smarthome.domain.unit.bytes
 import network.marsys.smarthome.domain.unit.celsius
@@ -110,7 +109,7 @@ class SystemInfoIntegrationAdapter(
                 },
                 processor = constructProcessorInfo(),
                 memory = constructMemoryInfo(),
-                uptime = System.Uptime(
+                startedAt = System.StartedAt(
                     host = Clock.System.now()
                         .minus(operatingSystemUptimeInSeconds),
                     application = Clock.System.now()
