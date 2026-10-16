@@ -224,7 +224,7 @@ val EntityRoutesTest by testSuite(
                                     info = host(),
                                     processor = processor(),
                                     memory = memory(),
-                                    uptime = uptime(),
+                                    startedAt = uptime(),
                                 ),
                             ),
                         ),
@@ -307,7 +307,7 @@ val EntityRoutesTest by testSuite(
                                         temperature = null,
                                     ),
                                     memory = memory(),
-                                    uptime = uptime(),
+                                    startedAt = uptime(),
                                 ),
                             ),
                         ),
@@ -491,7 +491,7 @@ private fun memory(
 private fun uptime(
     host: Instant = Instant.fromEpochSeconds(0),
     application: Instant = Instant.fromEpochSeconds(3600),
-) = System.Uptime(
+) = System.StartedAt(
     host = host,
     application = application,
 )

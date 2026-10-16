@@ -161,7 +161,7 @@ val AggregateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         val history = listOf(
@@ -220,7 +220,7 @@ val AggregateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         val history = listOf(
@@ -360,7 +360,7 @@ val AggregateTest by testSuite(
             info = host(),
             processor = processor(),
             memory = memory(),
-            uptime = uptime(),
+            startedAt = uptime(),
         )
 
         val updatedCapability = MeasuredLoad(current = 75.percent)
@@ -457,7 +457,7 @@ private fun memory(
 private fun uptime(
     host: Instant = Clock.System.now().minus(15.seconds),
     application: Instant = Clock.System.now().minus(5.seconds),
-) = System.Uptime(
+) = System.StartedAt(
     host = host,
     application = application,
 )
