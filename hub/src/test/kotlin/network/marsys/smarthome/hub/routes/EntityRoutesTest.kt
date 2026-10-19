@@ -224,7 +224,7 @@ val EntityRoutesTest by testSuite(
                                     info = host(),
                                     processor = processor(),
                                     memory = memory(),
-                                    uptime = uptime(),
+                                    startedAt = uptime(),
                                 ),
                             ),
                         ),
@@ -282,7 +282,7 @@ val EntityRoutesTest by testSuite(
                                 |                    "used": 1.073741824E9
                                 |                }
                                 |            },
-                                |            "uptime": {
+                                |            "startedAt": {
                                 |                "host": "1970-01-01T00:00:00Z",
                                 |                "application": "1970-01-01T01:00:00Z"
                                 |            }
@@ -307,7 +307,7 @@ val EntityRoutesTest by testSuite(
                                         temperature = null,
                                     ),
                                     memory = memory(),
-                                    uptime = uptime(),
+                                    startedAt = uptime(),
                                 ),
                             ),
                         ),
@@ -364,7 +364,7 @@ val EntityRoutesTest by testSuite(
                                 |                    "used": 1.073741824E9
                                 |                }
                                 |            },
-                                |            "uptime": {
+                                |            "startedAt": {
                                 |                "host": "1970-01-01T00:00:00Z",
                                 |                "application": "1970-01-01T01:00:00Z"
                                 |            }
@@ -491,7 +491,7 @@ private fun memory(
 private fun uptime(
     host: Instant = Instant.fromEpochSeconds(0),
     application: Instant = Instant.fromEpochSeconds(3600),
-) = System.Uptime(
+) = System.StartedAt(
     host = host,
     application = application,
 )

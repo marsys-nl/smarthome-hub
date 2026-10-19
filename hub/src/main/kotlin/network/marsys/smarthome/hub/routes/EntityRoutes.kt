@@ -83,9 +83,9 @@ private fun System.State.Known.map(): SystemEntity.State =
                 used = memory.swap.used.value.current.value,
             ),
         ),
-        uptime = SystemEntity.Uptime(
-            host = uptime.host,
-            application = uptime.application,
+        startedAt = SystemEntity.StartedAt(
+            host = startedAt.host,
+            application = startedAt.application,
         ),
     )
 
