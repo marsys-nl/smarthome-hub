@@ -8,9 +8,15 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
+import network.marsys.smarthome.domain.unit.percent
+import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
+import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
+import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
+import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.entity.naming
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationAdapter
@@ -35,6 +41,16 @@ class FakeIntegrationAdapter(
                     identifier = entityIdentifier,
                     type = Light,
                     naming = Light.naming(),
+                ),
+            )
+
+            eventChannel.trySend(
+                EntityDiscovered(
+                    identifier = entityIdentifier,
+                    state = Light.State.Known(
+                        onOff = required(OnOff(current = false)),
+                        brightness = optional(Brightness(current = 50.percent)),
+                    ),
                 ),
             )
         },

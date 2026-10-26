@@ -10,6 +10,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.json.JsonBuilder
+import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
@@ -103,6 +104,52 @@ val EntityRoutesTest by testSuite(
                             |        "identifier": "light.test",
                             |        "naming": {
                             |            "key": "light"
+                            |        }
+                            |    }
+                            |]
+                        """.trimMargin(),
+                    )
+            }
+        }
+
+        test(name = "When an entity is known and has a naming qualifier the request returns that entity") {
+            testApplication {
+                initializeDependencyInjection(
+                    entities = listOf(
+                        Light(
+                            identifier = EntityIdentifier("light.test"),
+                            naming = Light.naming(
+                                qualifier = TranslationKey("ceiling"),
+                            ),
+                            state = Light.State.Unknown(),
+                        ),
+                    ),
+                )
+
+                application {
+                    initializeSerialization(builder = builder)
+                }
+
+                routing {
+                    entityRoutes()
+                }
+
+                val response = client.get("/api/entities")
+
+                expectThat(response)
+                    .get(HttpResponse::status)
+                    .isEqualTo(HttpStatusCode.OK)
+
+                expectThat(response.bodyAsText())
+                    .isEqualTo(
+                        expected = """
+                            |[
+                            |    {
+                            |        "type": "light",
+                            |        "identifier": "light.test",
+                            |        "naming": {
+                            |            "key": "light",
+                            |            "qualifier": "ceiling"
                             |        }
                             |    }
                             |]
