@@ -15,9 +15,9 @@ import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureDataSize
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureLoad
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureTemperature
 import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 import network.marsys.smarthome.hub.feature.entity.domain.entity.naming
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
@@ -146,14 +146,14 @@ class SystemInfoIntegrationAdapter(
         eventChannel.trySend(
             CapabilityUpdated(
                 identifier = entityIdentifier,
-                capability = MeasuredDataSize(hardware.memory.available.bytes) with System.MemoryType.Available,
+                capability = MeasureDataSize(hardware.memory.available.bytes) with System.MemoryType.Available,
             ),
         )
 
         eventChannel.trySend(
             CapabilityUpdated(
                 identifier = entityIdentifier,
-                capability = MeasuredDataSize(hardware.memory.virtualMemory.swapUsed.bytes) with System.MemoryType.SwapUsed,
+                capability = MeasureDataSize(hardware.memory.virtualMemory.swapUsed.bytes) with System.MemoryType.SwapUsed,
             ),
         )
     }
@@ -167,10 +167,10 @@ class SystemInfoIntegrationAdapter(
     context(hardware: HardwareAbstractionLayer)
     private suspend fun measureProcessorLoad(
         interval: kotlin.time.Duration = 1000.milliseconds,
-    ): MeasuredLoad {
+    ): MeasureLoad {
         val previousTicks = hardware.processor.systemCpuLoadTicks
         delay(interval)
-        return MeasuredLoad(
+        return MeasureLoad(
             current = hardware.processor
                 .getSystemCpuLoadBetweenTicks(previousTicks)
                 .let { (it * 100).percent },
@@ -178,18 +178,18 @@ class SystemInfoIntegrationAdapter(
     }
 
     context(hardware: HardwareAbstractionLayer)
-    private fun measureProcessorTemperature(): MeasuredTemperature? =
+    private fun measureProcessorTemperature(): MeasureTemperature? =
         hardware.sensors.cpuTemperature
             .takeIf { it > 0.0 }
-            ?.let { MeasuredTemperature(current = it.celsius) }
+            ?.let { MeasureTemperature(current = it.celsius) }
 
     context(hardware: HardwareAbstractionLayer)
     private fun constructMemoryInfo(): System.Memory = System.Memory(
-        total = required(MeasuredDataSize(hardware.memory.total.bytes)),
-        available = required(MeasuredDataSize(hardware.memory.available.bytes)),
+        total = required(MeasureDataSize(hardware.memory.total.bytes)),
+        available = required(MeasureDataSize(hardware.memory.available.bytes)),
         swap = System.Memory.Swap(
-            total = required(MeasuredDataSize(hardware.memory.virtualMemory.swapTotal.bytes)),
-            used = required(MeasuredDataSize(hardware.memory.virtualMemory.swapUsed.bytes)),
+            total = required(MeasureDataSize(hardware.memory.virtualMemory.swapTotal.bytes)),
+            used = required(MeasureDataSize(hardware.memory.virtualMemory.swapUsed.bytes)),
         ),
     )
 

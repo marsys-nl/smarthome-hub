@@ -21,9 +21,9 @@ import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.Get
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureDataSize
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureLoad
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureTemperature
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
@@ -517,8 +517,8 @@ private fun processor(
     load: Quantity<Dimension.Ratio> = 5.percent,
     temperature: Quantity<Dimension.Temperature>? = 45.celsius,
 ) = System.Processor(
-    load = required(MeasuredLoad(current = load)),
-    temperature = optional(temperature?.let { MeasuredTemperature(current = it) }),
+    load = required(MeasureLoad(current = load)),
+    temperature = optional(temperature?.let { MeasureTemperature(current = it) }),
 )
 
 private fun memory(
@@ -527,11 +527,11 @@ private fun memory(
     swapTotal: Quantity<Dimension.DigitalInformation> = 2.gibibytes,
     swapUsed: Quantity<Dimension.DigitalInformation> = 1.gibibytes,
 ) = System.Memory(
-    total = required(MeasuredDataSize(current = total)),
-    available = required(MeasuredDataSize(current = available)),
+    total = required(MeasureDataSize(current = total)),
+    available = required(MeasureDataSize(current = available)),
     swap = System.Memory.Swap(
-        total = required(MeasuredDataSize(current = swapTotal)),
-        used = required(MeasuredDataSize(current = swapUsed)),
+        total = required(MeasureDataSize(current = swapTotal)),
+        used = required(MeasureDataSize(current = swapUsed)),
     ),
 )
 

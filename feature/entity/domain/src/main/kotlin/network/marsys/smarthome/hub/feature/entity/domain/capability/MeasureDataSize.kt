@@ -3,14 +3,14 @@ package network.marsys.smarthome.hub.feature.entity.domain.capability
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
 
-data class MeasuredTemperature(
-    override val current: Quantity<Dimension.Temperature>,
+data class MeasureDataSize(
+    override val current: Quantity<Dimension.DigitalInformation>,
     override val context: Context = Context.Empty,
-) : Capability<Quantity<Dimension.Temperature>>() {
+) : Capability<Quantity<Dimension.DigitalInformation>>() {
     override fun create(
-        current: Quantity<Dimension.Temperature>,
+        current: Quantity<Dimension.DigitalInformation>,
         context: Context,
-    ): MeasuredTemperature = copy(
+    ): MeasureDataSize = copy(
         current = current,
         context = context,
     )

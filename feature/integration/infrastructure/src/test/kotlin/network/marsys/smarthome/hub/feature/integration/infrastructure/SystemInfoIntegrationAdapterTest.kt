@@ -11,9 +11,9 @@ import network.marsys.smarthome.domain.unit.bytes
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureDataSize
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureLoad
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureTemperature
 import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
@@ -152,9 +152,9 @@ val SystemInfoIntegrationAdapterTest by testSuite(
                     .isA<System.State.Known>()
                     .get(System.State.Known::processor)
                     .get(System.Processor::temperature)
-                    .isA<Capability.Available<MeasuredTemperature>>()
-                    .get(Capability.Available<MeasuredTemperature>::value)
-                    .get(MeasuredTemperature::current)
+                    .isA<Capability.Available<MeasureTemperature>>()
+                    .get(Capability.Available<MeasureTemperature>::value)
+                    .get(MeasureTemperature::current)
                     .isEqualTo(56.celsius)
 
                 expectNoEvents()
@@ -223,15 +223,15 @@ val SystemInfoIntegrationAdapterTest by testSuite(
                 expectThat(awaitItem())
                     .isA<CapabilityUpdated>()
                     .get(CapabilityUpdated::capability)
-                    .isA<MeasuredLoad>()
-                    .get(MeasuredLoad::current)
+                    .isA<MeasureLoad>()
+                    .get(MeasureLoad::current)
                     .isEqualTo(50.percent)
 
                 expectThat(awaitItem())
                     .isA<CapabilityUpdated>()
                     .get(CapabilityUpdated::capability)
-                    .isA<MeasuredTemperature>()
-                    .get(MeasuredTemperature::current)
+                    .isA<MeasureTemperature>()
+                    .get(MeasureTemperature::current)
                     .isEqualTo(56.celsius)
 
                 cancelAndIgnoreRemainingEvents()
@@ -265,14 +265,14 @@ val SystemInfoIntegrationAdapterTest by testSuite(
                 expectThat(awaitItem())
                     .isA<CapabilityUpdated>()
                     .get(CapabilityUpdated::capability)
-                    .isA<MeasuredLoad>()
-                    .get(MeasuredLoad::current)
+                    .isA<MeasureLoad>()
+                    .get(MeasureLoad::current)
                     .isEqualTo(50.percent)
 
                 expectThat(awaitItem())
                     .isA<CapabilityUpdated>()
                     .get(CapabilityUpdated::capability)
-                    .isA<MeasuredDataSize>()
+                    .isA<MeasureDataSize>()
 
                 cancelAndIgnoreRemainingEvents()
             }
@@ -307,15 +307,15 @@ val SystemInfoIntegrationAdapterTest by testSuite(
                 expectThat(awaitItem())
                     .isA<CapabilityUpdated>()
                     .get(CapabilityUpdated::capability)
-                    .isA<MeasuredDataSize>()
-                    .get(MeasuredDataSize::current)
+                    .isA<MeasureDataSize>()
+                    .get(MeasureDataSize::current)
                     .isEqualTo(512.bytes)
 
                 expectThat(awaitItem())
                     .isA<CapabilityUpdated>()
                     .get(CapabilityUpdated::capability)
-                    .isA<MeasuredDataSize>()
-                    .get(MeasuredDataSize::current)
+                    .isA<MeasureDataSize>()
+                    .get(MeasureDataSize::current)
                     .isEqualTo(1536.bytes)
 
                 cancelAndIgnoreRemainingEvents()

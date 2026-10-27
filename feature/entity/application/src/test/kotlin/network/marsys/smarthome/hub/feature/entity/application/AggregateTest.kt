@@ -19,9 +19,9 @@ import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureDataSize
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureLoad
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureTemperature
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
@@ -363,7 +363,7 @@ val AggregateTest by testSuite(
             startedAt = uptime(),
         )
 
-        val updatedCapability = MeasuredLoad(current = 75.percent)
+        val updatedCapability = MeasureLoad(current = 75.percent)
 
         val history = listOf(
             EntityProvisioned(
@@ -389,14 +389,14 @@ val AggregateTest by testSuite(
             .isA<System.State.Known>()
             .get(System.State.Known::processor)
             .get(System.Processor::load)
-            .isA<Capability.Present<MeasuredLoad>>()
-            .get(Capability.Present<MeasuredLoad>::value)
+            .isA<Capability.Present<MeasureLoad>>()
+            .get(Capability.Present<MeasureLoad>::value)
             .isEqualTo(updatedCapability)
     }
 
     test(name = "Creating aggregate fails when entity with unknown state has capability update events") {
         val identifier = EntityIdentifier("system.smarthome")
-        val updatedCapability = MeasuredLoad(current = 75.percent)
+        val updatedCapability = MeasureLoad(current = 75.percent)
 
         val history = listOf(
             EntityProvisioned(
@@ -436,8 +436,8 @@ private fun processor(
     load: Quantity<Dimension.Ratio> = 5.percent,
     temperature: Quantity<Dimension.Temperature> = 45.celsius,
 ) = System.Processor(
-    load = required(MeasuredLoad(current = load)),
-    temperature = optional(MeasuredTemperature(current = temperature)),
+    load = required(MeasureLoad(current = load)),
+    temperature = optional(MeasureTemperature(current = temperature)),
 )
 
 private fun memory(
@@ -446,11 +446,11 @@ private fun memory(
     swapTotal: Quantity<Dimension.DigitalInformation> = 2.gibibytes,
     swapUsed: Quantity<Dimension.DigitalInformation> = 1.gibibytes,
 ) = System.Memory(
-    total = required(MeasuredDataSize(current = total)),
-    available = required(MeasuredDataSize(current = available)),
+    total = required(MeasureDataSize(current = total)),
+    available = required(MeasureDataSize(current = available)),
     swap = System.Memory.Swap(
-        total = required(MeasuredDataSize(current = swapTotal)),
-        used = required(MeasuredDataSize(current = swapUsed)),
+        total = required(MeasureDataSize(current = swapTotal)),
+        used = required(MeasureDataSize(current = swapUsed)),
     ),
 )
 

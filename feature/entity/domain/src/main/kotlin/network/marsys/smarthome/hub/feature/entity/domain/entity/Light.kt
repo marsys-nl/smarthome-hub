@@ -14,7 +14,7 @@ data class Light(
     sealed interface State : Entity.State {
         data class Known(
             val onOff: Capability.Required<OnOff>,
-            val brightness: Capability.Optional<Brightness>,
+            val brightness: Capability.Optional<Brightness> = Capability.Unsupported,
         ) : State, Entity.State.Known {
             override fun get(capability: Capability<*>): Capability<*>? = when (capability) {
                 is OnOff -> onOff.value

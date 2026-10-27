@@ -9,12 +9,11 @@ import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.isFalse
 import dev.nmarsman.expect.assertions.isNull
 import network.marsys.smarthome.domain.unit.percent
-import network.marsys.smarthome.domain.unit.seconds
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 
 val UpdateLightStateTest by testSuite(
@@ -86,7 +85,7 @@ val UpdateLightStateTest by testSuite(
             brightness = optional(Brightness(current = 25.percent)),
         )
 
-        val update = MeasuredLoad(current = 50.percent)
+        val update = MeasureLoad(current = 50.percent)
 
         expectThrows<IllegalStateException> {
             state.updateWith(update)

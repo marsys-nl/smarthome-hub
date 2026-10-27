@@ -3,9 +3,9 @@ package network.marsys.smarthome.hub.feature.entity.domain.entity
 import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureDataSize
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureLoad
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureTemperature
 import kotlin.time.Instant
 
 data class System(
@@ -21,22 +21,22 @@ data class System(
             val startedAt: StartedAt,
         ) : State, Entity.State.Known {
             override fun get(capability: Capability<*>): Capability<*>? = when (capability) {
-                is MeasuredDataSize if MemoryType.Total in capability.context ->
+                is MeasureDataSize if MemoryType.Total in capability.context ->
                     memory.total.value
 
-                is MeasuredDataSize if MemoryType.Available in capability.context ->
+                is MeasureDataSize if MemoryType.Available in capability.context ->
                     memory.available.value
 
-                is MeasuredDataSize if MemoryType.SwapTotal in capability.context ->
+                is MeasureDataSize if MemoryType.SwapTotal in capability.context ->
                     memory.swap.total.value
 
-                is MeasuredDataSize if MemoryType.SwapUsed in capability.context ->
+                is MeasureDataSize if MemoryType.SwapUsed in capability.context ->
                     memory.swap.used.value
 
-                is MeasuredLoad ->
+                is MeasureLoad ->
                     processor.load.value
 
-                is MeasuredTemperature if processor.temperature is Capability.Available<*> ->
+                is MeasureTemperature if processor.temperature is Capability.Available<*> ->
                     processor.temperature.value
 
                 else -> null
@@ -45,22 +45,22 @@ data class System(
             override fun updateWith(
                 capability: Capability<*>,
             ): Entity.State = when (capability) {
-                is MeasuredDataSize if MemoryType.Total in capability.context ->
+                is MeasureDataSize if MemoryType.Total in capability.context ->
                     copy(memory = memory.copy(total = memory.total.updateWith(capability)))
 
-                is MeasuredDataSize if MemoryType.Available in capability.context ->
+                is MeasureDataSize if MemoryType.Available in capability.context ->
                     copy(memory = memory.copy(available = memory.available.updateWith(capability)))
 
-                is MeasuredDataSize if MemoryType.SwapTotal in capability.context ->
+                is MeasureDataSize if MemoryType.SwapTotal in capability.context ->
                     copy(memory = memory.copy(swap = memory.swap.copy(total = memory.swap.total.updateWith(capability))))
 
-                is MeasuredDataSize if MemoryType.SwapUsed in capability.context ->
+                is MeasureDataSize if MemoryType.SwapUsed in capability.context ->
                     copy(memory = memory.copy(swap = memory.swap.copy(used = memory.swap.used.updateWith(capability))))
 
-                is MeasuredLoad ->
+                is MeasureLoad ->
                     copy(processor = processor.copy(load = processor.load.updateWith(capability)))
 
-                is MeasuredTemperature ->
+                is MeasureTemperature ->
                     copy(processor = processor.copy(temperature = processor.temperature.updateWith(capability)))
 
                 else -> unsupportedCapabilityError(capability = capability)
@@ -98,18 +98,18 @@ data class System(
     )
 
     data class Processor(
-        val load: Capability.Required<MeasuredLoad>,
-        val temperature: Capability.Optional<MeasuredTemperature>,
+        val load: Capability.Required<MeasureLoad>,
+        val temperature: Capability.Optional<MeasureTemperature> = Capability.Unsupported,
     )
 
     data class Memory(
-        val total: Capability.Required<MeasuredDataSize>,
-        val available: Capability.Required<MeasuredDataSize>,
+        val total: Capability.Required<MeasureDataSize>,
+        val available: Capability.Required<MeasureDataSize>,
         val swap: Swap,
     ) {
         data class Swap(
-            val total: Capability.Required<MeasuredDataSize>,
-            val used: Capability.Required<MeasuredDataSize>,
+            val total: Capability.Required<MeasureDataSize>,
+            val used: Capability.Required<MeasureDataSize>,
         )
     }
 

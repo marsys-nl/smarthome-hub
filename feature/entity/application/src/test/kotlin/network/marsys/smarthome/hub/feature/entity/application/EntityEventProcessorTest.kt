@@ -18,7 +18,7 @@ import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.Ev
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
+import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasureLoad
 import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
@@ -308,7 +308,7 @@ val EntityEventProcessorTest by testSuite(
     test("Processing a capability changed event is ignored if the entity has a known state but an unknown capability passed") {
         val capabilityUpdated = CapabilityUpdated(
             identifier = identifier,
-            capability = MeasuredLoad(current = 50.percent),
+            capability = MeasureLoad(current = 50.percent),
         )
 
         val store = FakeEventStore(
