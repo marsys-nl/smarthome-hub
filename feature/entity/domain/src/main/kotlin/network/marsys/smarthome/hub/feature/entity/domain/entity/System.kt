@@ -1,5 +1,6 @@
 package network.marsys.smarthome.hub.feature.entity.domain.entity
 
+import network.marsys.smarthome.domain.capability.Capability.Context
 import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
@@ -114,32 +115,20 @@ data class System(
     }
 
     sealed interface MemoryType {
-        data object Total : MemoryType, Capability.Context.Element {
-            override val key: Capability.Context.Key<Total>
-                get() = Key
-
-            data object Key : Capability.Context.Key<Total>
+        data object Total : MemoryType, Context.Element, Context.Key<Total> {
+            override val key: Context.Key<Total> = Total
         }
 
-        data object Available : MemoryType, Capability.Context.Element {
-            override val key: Capability.Context.Key<Available>
-                get() = Key
-
-            data object Key : Capability.Context.Key<Available>
+        data object Available : MemoryType, Context.Element, Context.Key<Available> {
+            override val key: Context.Key<Available> = Available
         }
 
-        data object SwapTotal : MemoryType, Capability.Context.Element {
-            override val key: Capability.Context.Key<SwapTotal>
-                get() = Key
-
-            data object Key : Capability.Context.Key<SwapTotal>
+        data object SwapTotal : MemoryType, Context.Element, Context.Key<SwapTotal> {
+            override val key: Context.Key<SwapTotal> = SwapTotal
         }
 
-        data object SwapUsed : MemoryType, Capability.Context.Element {
-            override val key: Capability.Context.Key<SwapUsed>
-                get() = Key
-
-            data object Key : Capability.Context.Key<SwapUsed>
+        data object SwapUsed : MemoryType, Context.Element, Context.Key<SwapUsed> {
+            override val key: Context.Key<SwapUsed> = SwapUsed
         }
     }
 

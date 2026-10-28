@@ -1,5 +1,7 @@
 package network.marsys.smarthome.hub.feature.entity.domain.capability
 
+import network.marsys.smarthome.domain.capability.Capability.Context
+
 data class OnOff(
     override val current: Boolean,
     override val context: Context = Context.Empty,

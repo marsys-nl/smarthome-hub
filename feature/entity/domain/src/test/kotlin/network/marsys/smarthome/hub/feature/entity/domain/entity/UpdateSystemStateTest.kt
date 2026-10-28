@@ -8,6 +8,7 @@ import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.isNotNull
 import dev.nmarsman.expect.assertions.isNull
+import network.marsys.smarthome.domain.capability.Capability.Context
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
 import network.marsys.smarthome.domain.unit.celsius
@@ -297,9 +298,6 @@ private fun uptime(
     application = application,
 )
 
-private data object Unsupported : Capability.Context.Element {
-    override val key: Capability.Context.Key<Unsupported>
-        get() = Key
-
-    data object Key : Capability.Context.Key<Unsupported>
+private data object Unsupported : Context.Element, Context.Key<Unsupported> {
+    override val key: Context.Key<Unsupported> = Unsupported
 }
