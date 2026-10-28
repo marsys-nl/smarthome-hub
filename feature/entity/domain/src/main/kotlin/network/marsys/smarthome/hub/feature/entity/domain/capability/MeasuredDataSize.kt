@@ -1,5 +1,6 @@
 package network.marsys.smarthome.hub.feature.entity.domain.capability
 
+import network.marsys.smarthome.domain.capability.Capability.Context
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
 
