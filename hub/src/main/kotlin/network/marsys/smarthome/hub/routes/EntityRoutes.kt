@@ -7,8 +7,8 @@ import io.ktor.server.routing.get
 import network.marsys.smarthome.api.models.entity.EntityResponse
 import network.marsys.smarthome.api.models.entity.LightEntity
 import network.marsys.smarthome.api.models.entity.SystemEntity
+import network.marsys.smarthome.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.GetEntities
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
@@ -96,7 +96,7 @@ private fun EntityNaming.map(): EntityResponse.Naming =
     )
 
 @Suppress("UNCHECKED_CAST", "UseIfInsteadOfWhen")
-private val <T : Capability<*>> Capability.Optional<T>.value: T? get() =
+private val <T : Capability<*, *>> Capability.Optional<T>.value: T? get() =
     when (this) {
         is Capability.Available<*> -> value as T
         else -> null

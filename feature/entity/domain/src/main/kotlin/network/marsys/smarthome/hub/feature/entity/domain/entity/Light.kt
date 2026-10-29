@@ -1,10 +1,10 @@
 package network.marsys.smarthome.hub.feature.entity.domain.entity
 
+import network.marsys.smarthome.domain.capability.Brightness
+import network.marsys.smarthome.domain.capability.Capability
+import network.marsys.smarthome.domain.capability.OnOff
 import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
-import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 
 data class Light(
     override val identifier: EntityIdentifier,
@@ -16,14 +16,14 @@ data class Light(
             val onOff: Capability.Required<OnOff>,
             val brightness: Capability.Optional<Brightness>,
         ) : State, Entity.State.Known {
-            override fun get(capability: Capability<*>): Capability<*>? = when (capability) {
+            override fun get(capability: Capability<*, *>): Capability<*, *>? = when (capability) {
                 is OnOff -> onOff.value
                 is Brightness if brightness is Capability.Available<*> -> brightness.value
                 else -> null
             }
 
             override fun updateWith(
-                capability: Capability<*>,
+                capability: Capability<*, *>,
             ): Entity.State = when (capability) {
                 is OnOff -> copy(onOff = onOff.updateWith(capability = capability))
                 is Brightness -> copy(brightness = brightness.updateWith(capability = capability))
