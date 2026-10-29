@@ -8,14 +8,13 @@ import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.isFalse
 import dev.nmarsman.expect.assertions.isNull
+import network.marsys.smarthome.domain.capability.Brightness
+import network.marsys.smarthome.domain.capability.Capability
+import network.marsys.smarthome.domain.capability.Capability.Companion.optional
+import network.marsys.smarthome.domain.capability.Capability.Companion.required
+import network.marsys.smarthome.domain.capability.MeasureLoad
+import network.marsys.smarthome.domain.capability.OnOff
 import network.marsys.smarthome.domain.unit.percent
-import network.marsys.smarthome.domain.unit.seconds
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
-import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 
 val UpdateLightStateTest by testSuite(
     name = "Update light state tests",
@@ -86,11 +85,11 @@ val UpdateLightStateTest by testSuite(
             brightness = optional(Brightness(current = 25.percent)),
         )
 
-        val update = MeasuredLoad(current = 50.percent)
+        val update = MeasureLoad(current = 50.percent)
 
         expectThrows<IllegalStateException> {
             state.updateWith(update)
-        }.hasMessage("Unsupported 'MeasuredLoad' capability provided for 'Light.State.Known'")
+        }.hasMessage("Unsupported 'MeasureLoad' capability provided for 'Light.State.Known'")
     }
 
     test("Getting a capability that is required by the entity results in said capability") {
@@ -127,7 +126,7 @@ val UpdateLightStateTest by testSuite(
     }
 
     test("Getting a capability that is not known by the entity results in null") {
-        val capability = MeasuredLoad(current = 50.percent)
+        val capability = MeasureLoad(current = 50.percent)
         val state = Light.State.Known(
             onOff = required(OnOff(current = true)),
             brightness = optional(null),

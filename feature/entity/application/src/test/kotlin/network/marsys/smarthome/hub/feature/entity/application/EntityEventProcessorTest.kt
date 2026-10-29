@@ -8,6 +8,11 @@ import dev.nmarsman.expect.assertions.filter
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEmpty
 import dev.nmarsman.expect.assertions.isEqualTo
+import network.marsys.smarthome.domain.capability.Brightness
+import network.marsys.smarthome.domain.capability.Capability.Companion.optional
+import network.marsys.smarthome.domain.capability.Capability.Companion.required
+import network.marsys.smarthome.domain.capability.MeasureLoad
+import network.marsys.smarthome.domain.capability.OnOff
 import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.unit.percent
@@ -15,11 +20,6 @@ import network.marsys.smarthome.hub.feature.entity.application.internal.EntityEv
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityUpdatePublisher
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Brightness
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
-import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
 import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
@@ -308,7 +308,7 @@ val EntityEventProcessorTest by testSuite(
     test("Processing a capability changed event is ignored if the entity has a known state but an unknown capability passed") {
         val capabilityUpdated = CapabilityUpdated(
             identifier = identifier,
-            capability = MeasuredLoad(current = 50.percent),
+            capability = MeasureLoad(current = 50.percent),
         )
 
         val store = FakeEventStore(

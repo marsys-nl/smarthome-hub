@@ -8,19 +8,19 @@ import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.isNotNull
 import dev.nmarsman.expect.assertions.isNull
+import network.marsys.smarthome.domain.capability.Capability
+import network.marsys.smarthome.domain.capability.Capability.Companion.optional
+import network.marsys.smarthome.domain.capability.Capability.Companion.required
 import network.marsys.smarthome.domain.capability.Capability.Context
+import network.marsys.smarthome.domain.capability.MeasureDataSize
+import network.marsys.smarthome.domain.capability.MeasureLoad
+import network.marsys.smarthome.domain.capability.MeasureTemperature
+import network.marsys.smarthome.domain.capability.OnOff
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.gibibytes
 import network.marsys.smarthome.domain.unit.percent
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.optional
-import network.marsys.smarthome.hub.feature.entity.domain.capability.Capability.Companion.required
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredDataSize
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredLoad
-import network.marsys.smarthome.hub.feature.entity.domain.capability.MeasuredTemperature
-import network.marsys.smarthome.hub.feature.entity.domain.capability.OnOff
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.Instant
@@ -36,14 +36,14 @@ val UpdateSystemStateTest by testSuite(
             startedAt = uptime(),
         )
 
-        val update = MeasuredDataSize(current = 16.gibibytes) with System.MemoryType.Total
+        val update = MeasureDataSize(current = 16.gibibytes) with System.MemoryType.Total
 
         expectThat(state.updateWith(update))
             .isA<System.State.Known>()
             .get(System.State.Known::memory)
             .get(System.Memory::total)
-            .get(Capability.Present<MeasuredDataSize>::value)
-            .get(MeasuredDataSize::current)
+            .get(Capability.Present<MeasureDataSize>::value)
+            .get(MeasureDataSize::current)
             .isEqualTo(16.gibibytes)
     }
 
@@ -55,14 +55,14 @@ val UpdateSystemStateTest by testSuite(
             startedAt = uptime(),
         )
 
-        val update = MeasuredDataSize(current = 2.gibibytes) with System.MemoryType.Available
+        val update = MeasureDataSize(current = 2.gibibytes) with System.MemoryType.Available
 
         expectThat(state.updateWith(update))
             .isA<System.State.Known>()
             .get(System.State.Known::memory)
             .get(System.Memory::available)
-            .get(Capability.Present<MeasuredDataSize>::value)
-            .get(MeasuredDataSize::current)
+            .get(Capability.Present<MeasureDataSize>::value)
+            .get(MeasureDataSize::current)
             .isEqualTo(2.gibibytes)
     }
 
@@ -74,15 +74,15 @@ val UpdateSystemStateTest by testSuite(
             startedAt = uptime(),
         )
 
-        val update = MeasuredDataSize(current = 16.gibibytes) with System.MemoryType.SwapTotal
+        val update = MeasureDataSize(current = 16.gibibytes) with System.MemoryType.SwapTotal
 
         expectThat(state.updateWith(update))
             .isA<System.State.Known>()
             .get(System.State.Known::memory)
             .get(System.Memory::swap)
             .get(System.Memory.Swap::total)
-            .get(Capability.Present<MeasuredDataSize>::value)
-            .get(MeasuredDataSize::current)
+            .get(Capability.Present<MeasureDataSize>::value)
+            .get(MeasureDataSize::current)
             .isEqualTo(16.gibibytes)
     }
 
@@ -94,15 +94,15 @@ val UpdateSystemStateTest by testSuite(
             startedAt = uptime(),
         )
 
-        val update = MeasuredDataSize(current = 4.gibibytes) with System.MemoryType.SwapUsed
+        val update = MeasureDataSize(current = 4.gibibytes) with System.MemoryType.SwapUsed
 
         expectThat(state.updateWith(update))
             .isA<System.State.Known>()
             .get(System.State.Known::memory)
             .get(System.Memory::swap)
             .get(System.Memory.Swap::used)
-            .get(Capability.Present<MeasuredDataSize>::value)
-            .get(MeasuredDataSize::current)
+            .get(Capability.Present<MeasureDataSize>::value)
+            .get(MeasureDataSize::current)
             .isEqualTo(4.gibibytes)
     }
 
@@ -114,11 +114,11 @@ val UpdateSystemStateTest by testSuite(
             startedAt = uptime(),
         )
 
-        val update = MeasuredDataSize(current = 4.gibibytes) with Unsupported
+        val update = MeasureDataSize(current = 4.gibibytes) with Unsupported
 
         expectThrows<IllegalStateException> {
             state.updateWith(update)
-        }.hasMessage("Unsupported 'MeasuredDataSize' capability provided for 'System.State.Known'")
+        }.hasMessage("Unsupported 'MeasureDataSize' capability provided for 'System.State.Known'")
     }
 
     test(name = "Updating a known state with a valid measured load") {
@@ -129,14 +129,14 @@ val UpdateSystemStateTest by testSuite(
             startedAt = uptime(),
         )
 
-        val update = MeasuredLoad(current = 75.percent)
+        val update = MeasureLoad(current = 75.percent)
 
         expectThat(state.updateWith(update))
             .isA<System.State.Known>()
             .get(System.State.Known::processor)
             .get(System.Processor::load)
-            .get(Capability.Present<MeasuredLoad>::value)
-            .get(MeasuredLoad::current)
+            .get(Capability.Present<MeasureLoad>::value)
+            .get(MeasureLoad::current)
             .isEqualTo(75.percent)
     }
 
@@ -148,15 +148,15 @@ val UpdateSystemStateTest by testSuite(
             startedAt = uptime(),
         )
 
-        val update = MeasuredTemperature(current = 75.celsius)
+        val update = MeasureTemperature(current = 75.celsius)
 
         expectThat(state.updateWith(update))
             .isA<System.State.Known>()
             .get(System.State.Known::processor)
             .get(System.Processor::temperature)
-            .isA<Capability.Available<MeasuredTemperature>>()
-            .get(Capability.Available<MeasuredTemperature>::value)
-            .get(MeasuredTemperature::current)
+            .isA<Capability.Available<MeasureTemperature>>()
+            .get(Capability.Available<MeasureTemperature>::value)
+            .get(MeasureTemperature::current)
             .isEqualTo(75.celsius)
     }
 
@@ -176,11 +176,11 @@ val UpdateSystemStateTest by testSuite(
     }
 
     mapOf(
-        "measuring cpu load" to MeasuredLoad(current = 50.percent),
-        "measuring data size - total memory" to (MeasuredDataSize(current = 50.gibibytes) with System.MemoryType.Total),
-        "measuring data size - available memory" to (MeasuredDataSize(current = 50.gibibytes) with System.MemoryType.Available),
-        "measuring data size - swap total memory" to (MeasuredDataSize(current = 50.gibibytes) with System.MemoryType.SwapTotal),
-        "measuring data size - swap used memory" to (MeasuredDataSize(current = 50.gibibytes) with System.MemoryType.SwapUsed),
+        "measuring cpu load" to MeasureLoad(current = 50.percent),
+        "measuring data size - total memory" to (MeasureDataSize(current = 50.gibibytes) with System.MemoryType.Total),
+        "measuring data size - available memory" to (MeasureDataSize(current = 50.gibibytes) with System.MemoryType.Available),
+        "measuring data size - swap total memory" to (MeasureDataSize(current = 50.gibibytes) with System.MemoryType.SwapTotal),
+        "measuring data size - swap used memory" to (MeasureDataSize(current = 50.gibibytes) with System.MemoryType.SwapUsed),
     ).forEach { (description, capability) ->
         test("Getting a capability that is required by the entity results in said capability - $description") {
             val state = System.State.Known(
@@ -198,7 +198,7 @@ val UpdateSystemStateTest by testSuite(
     }
 
     test("Getting a capability that is required by the entity results in null when context doesn't match") {
-        val capability = MeasuredDataSize(current = 50.gibibytes) with Unsupported
+        val capability = MeasureDataSize(current = 50.gibibytes) with Unsupported
         val state = System.State.Known(
             info = host(),
             processor = processor(),
@@ -211,7 +211,7 @@ val UpdateSystemStateTest by testSuite(
     }
 
     test("Getting a capability that is optional by the entity results in said capability if present") {
-        val capability = MeasuredTemperature(current = 50.celsius)
+        val capability = MeasureTemperature(current = 50.celsius)
         val state = System.State.Known(
             info = host(),
             processor = processor(),
@@ -220,11 +220,11 @@ val UpdateSystemStateTest by testSuite(
         )
 
         expectThat(state.get(capability))
-            .isA<MeasuredTemperature>()
+            .isA<MeasureTemperature>()
     }
 
     test("Getting a capability that is optional by the entity results in null if not present") {
-        val capability = MeasuredTemperature(current = 50.celsius)
+        val capability = MeasureTemperature(current = 50.celsius)
         val state = System.State.Known(
             info = host(),
             processor = processor(
@@ -272,8 +272,8 @@ private fun processor(
     load: Quantity<Dimension.Ratio> = 0.5.percent,
     temperature: Quantity<Dimension.Temperature>? = 45.celsius,
 ) = System.Processor(
-    load = required(MeasuredLoad(current = load)),
-    temperature = optional(temperature?.let(::MeasuredTemperature)),
+    load = required(MeasureLoad(current = load)),
+    temperature = optional(temperature?.let(::MeasureTemperature)),
 )
 
 private fun memory(
@@ -282,11 +282,11 @@ private fun memory(
     swapTotal: Quantity<Dimension.DigitalInformation> = 2.gibibytes,
     swapUsed: Quantity<Dimension.DigitalInformation> = 1.gibibytes,
 ) = System.Memory(
-    total = required(MeasuredDataSize(current = total)),
-    available = required(MeasuredDataSize(current = available)),
+    total = required(MeasureDataSize(current = total)),
+    available = required(MeasureDataSize(current = available)),
     swap = System.Memory.Swap(
-        total = required(MeasuredDataSize(current = swapTotal)),
-        used = required(MeasuredDataSize(current = swapUsed)),
+        total = required(MeasureDataSize(current = swapTotal)),
+        used = required(MeasureDataSize(current = swapUsed)),
     ),
 )
 
