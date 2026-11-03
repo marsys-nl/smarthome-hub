@@ -1,10 +1,19 @@
 package network.marsys.smarthome.hub.feature.entity.application.reducer
 
+import network.marsys.smarthome.domain.entity.Blind
+import network.marsys.smarthome.domain.entity.Camera
+import network.marsys.smarthome.domain.entity.Curtain
 import network.marsys.smarthome.domain.entity.Entity
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
+import network.marsys.smarthome.domain.entity.Fan
 import network.marsys.smarthome.domain.entity.Light
+import network.marsys.smarthome.domain.entity.Shutter
+import network.marsys.smarthome.domain.entity.SmartLock
+import network.marsys.smarthome.domain.entity.SmartPlug
+import network.marsys.smarthome.domain.entity.Speaker
 import network.marsys.smarthome.domain.entity.System
+import network.marsys.smarthome.domain.entity.Thermostat
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
@@ -75,9 +84,17 @@ internal abstract class EntityReducer<E : Entity, S : Entity.State, K, U>
             }
 
             val reducer = when (provisioned.type) {
+                Blind -> BlindReducer
+                Camera -> CameraReducer
+                Curtain -> CurtainReducer
+                Fan -> FanReducer
                 Light -> LightReducer
+                Shutter -> ShutterReducer
+                SmartLock -> SmartLockReducer
+                SmartPlug -> SmartPlugReducer
+                Speaker -> SpeakerReducer
                 System -> SystemReducer
-                else -> error("Unsupported entity type '${provisioned.type::class.formattedName}'")
+                Thermostat -> ThermostatReducer
             }
 
             return reducer.reduce(

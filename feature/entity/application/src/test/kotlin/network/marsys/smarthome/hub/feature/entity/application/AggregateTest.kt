@@ -16,11 +16,20 @@ import network.marsys.smarthome.domain.capability.MeasureDataSize
 import network.marsys.smarthome.domain.capability.MeasureLoad
 import network.marsys.smarthome.domain.capability.MeasureTemperature
 import network.marsys.smarthome.domain.capability.OnOff
+import network.marsys.smarthome.domain.entity.Blind
+import network.marsys.smarthome.domain.entity.Camera
+import network.marsys.smarthome.domain.entity.Curtain
 import network.marsys.smarthome.domain.entity.Entity
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
+import network.marsys.smarthome.domain.entity.Fan
 import network.marsys.smarthome.domain.entity.Light
+import network.marsys.smarthome.domain.entity.Shutter
+import network.marsys.smarthome.domain.entity.SmartLock
+import network.marsys.smarthome.domain.entity.SmartPlug
+import network.marsys.smarthome.domain.entity.Speaker
 import network.marsys.smarthome.domain.entity.System
+import network.marsys.smarthome.domain.entity.Thermostat
 import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
@@ -372,6 +381,32 @@ val AggregateTest by testSuite(
         expectThrows<IllegalStateException> {
             EntityAggregate(history)
         }.hasMessage("Can't handle 'CapabilityUpdated' when state is 'System.State.Unknown'")
+    }
+
+    /*
+     * Types
+     */
+
+    listOf(
+        Blind, Camera, Curtain, Fan, Light, Shutter,
+        SmartLock, SmartPlug, Speaker, System, Thermostat,
+    ).forEach { type ->
+        test(name = "Creating aggregate succeeds when entity provisioned event for '${type.defaultNamingKey}'") {
+            val identifier = EntityIdentifier("${type.defaultNamingKey}.entity")
+
+            val history = listOf(
+                EntityProvisioned(
+                    identifier = identifier,
+                    type = type,
+                    naming = naming,
+                ),
+            )
+
+            expectThat(EntityAggregate(history))
+                .get(EntityAggregate::entity)
+                .get(Entity::state)
+                .isA<Entity.State.Unknown>()
+        }
     }
 }
 
