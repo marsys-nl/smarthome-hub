@@ -1,13 +1,13 @@
 package network.marsys.smarthome.hub.feature.entity.application.reducer
 
-import network.marsys.smarthome.domain.identifiers.EntityIdentifier
-import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
-import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
+import network.marsys.smarthome.domain.entity.EntityIdentifier
+import network.marsys.smarthome.domain.entity.EntityNaming
+import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
 internal object LightReducer : EntityReducer<Light, Light.State, Light.State.Known, Light.State.Unknown>() {
-    override fun createUnknownState(lastKnown: Light.State.Known?) =
-        Light.State.Unknown(lastKnown = lastKnown)
+    override fun createUnknownState() =
+        Light.State.Unknown
 
     override fun reduce(
         identifier: EntityIdentifier,

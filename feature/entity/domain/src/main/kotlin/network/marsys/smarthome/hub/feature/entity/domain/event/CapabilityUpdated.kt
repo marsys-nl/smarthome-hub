@@ -1,7 +1,7 @@
 package network.marsys.smarthome.hub.feature.entity.domain.event
 
 import network.marsys.smarthome.domain.capability.Capability
-import network.marsys.smarthome.domain.identifiers.EntityIdentifier
+import network.marsys.smarthome.domain.entity.EntityIdentifier
 import kotlin.time.Clock
 import kotlin.time.Instant
 

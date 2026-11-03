@@ -1,21 +1,30 @@
 package network.marsys.smarthome.hub.feature.entity.application.reducer
 
-import network.marsys.smarthome.domain.identifiers.EntityIdentifier
-import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
-import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
-import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
-import network.marsys.smarthome.hub.feature.entity.domain.entity.System
-import network.marsys.smarthome.hub.feature.entity.domain.entity.formattedName
+import network.marsys.smarthome.domain.entity.Blind
+import network.marsys.smarthome.domain.entity.Camera
+import network.marsys.smarthome.domain.entity.Curtain
+import network.marsys.smarthome.domain.entity.Entity
+import network.marsys.smarthome.domain.entity.EntityIdentifier
+import network.marsys.smarthome.domain.entity.EntityNaming
+import network.marsys.smarthome.domain.entity.Fan
+import network.marsys.smarthome.domain.entity.Light
+import network.marsys.smarthome.domain.entity.Shutter
+import network.marsys.smarthome.domain.entity.SmartLock
+import network.marsys.smarthome.domain.entity.SmartPlug
+import network.marsys.smarthome.domain.entity.Speaker
+import network.marsys.smarthome.domain.entity.System
+import network.marsys.smarthome.domain.entity.Thermostat
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
+import kotlin.reflect.KClass
 
 internal abstract class EntityReducer<E : Entity, S : Entity.State, K, U>
     where K : Entity.State.Known, K : Entity.State, U : Entity.State.Unknown, U : Entity.State {
 
-    abstract fun createUnknownState(lastKnown: K? = null): U
+    abstract fun createUnknownState(): U
 
     @Suppress("UNCHECKED_CAST")
     context(entity: E)
@@ -34,13 +43,8 @@ internal abstract class EntityReducer<E : Entity, S : Entity.State, K, U>
 
     @Suppress("UNCHECKED_CAST")
     context(entity: E)
-    protected fun handle(event: EntityBecameUnavailable): U =
-        createUnknownState(
-            lastKnown = when (val state = entity.state) {
-                is Entity.State.Known -> state
-                is Entity.State.Unknown -> state.lastKnown
-            } as K?,
-        )
+    protected fun handle(@Suppress("unused") event: EntityBecameUnavailable): U =
+        createUnknownState()
 
     abstract fun reduce(
         identifier: EntityIdentifier,
@@ -80,8 +84,17 @@ internal abstract class EntityReducer<E : Entity, S : Entity.State, K, U>
             }
 
             val reducer = when (provisioned.type) {
+                Blind -> BlindReducer
+                Camera -> CameraReducer
+                Curtain -> CurtainReducer
+                Fan -> FanReducer
                 Light -> LightReducer
+                Shutter -> ShutterReducer
+                SmartLock -> SmartLockReducer
+                SmartPlug -> SmartPlugReducer
+                Speaker -> SpeakerReducer
                 System -> SystemReducer
+                Thermostat -> ThermostatReducer
             }
 
             return reducer.reduce(
@@ -92,3 +105,7 @@ internal abstract class EntityReducer<E : Entity, S : Entity.State, K, U>
         }
     }
 }
+
+private val KClass<*>.formattedName: String get() = this.qualifiedName!!
+    .replace(java.packageName, "")
+    .trimStart('.')

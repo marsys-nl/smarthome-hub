@@ -16,17 +16,26 @@ import network.marsys.smarthome.domain.capability.MeasureDataSize
 import network.marsys.smarthome.domain.capability.MeasureLoad
 import network.marsys.smarthome.domain.capability.MeasureTemperature
 import network.marsys.smarthome.domain.capability.OnOff
+import network.marsys.smarthome.domain.entity.Blind
+import network.marsys.smarthome.domain.entity.Camera
+import network.marsys.smarthome.domain.entity.Curtain
+import network.marsys.smarthome.domain.entity.Entity
+import network.marsys.smarthome.domain.entity.EntityIdentifier
+import network.marsys.smarthome.domain.entity.EntityNaming
+import network.marsys.smarthome.domain.entity.Fan
+import network.marsys.smarthome.domain.entity.Light
+import network.marsys.smarthome.domain.entity.Shutter
+import network.marsys.smarthome.domain.entity.SmartLock
+import network.marsys.smarthome.domain.entity.SmartPlug
+import network.marsys.smarthome.domain.entity.Speaker
+import network.marsys.smarthome.domain.entity.System
+import network.marsys.smarthome.domain.entity.Thermostat
 import network.marsys.smarthome.domain.i18n.TranslationKey
-import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.gibibytes
 import network.marsys.smarthome.domain.unit.percent
-import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
-import network.marsys.smarthome.hub.feature.entity.domain.entity.EntityNaming
-import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
-import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
@@ -60,7 +69,7 @@ val AggregateTest by testSuite(
                 expected = Light(
                     identifier = identifier,
                     naming = naming,
-                    state = Light.State.Unknown(),
+                    state = Light.State.Unknown,
                 ),
             )
 
@@ -158,7 +167,7 @@ val AggregateTest by testSuite(
         val identifier = EntityIdentifier("system.smarthome")
 
         val state = System.State.Known(
-            info = host(),
+            host = host(),
             processor = processor(),
             memory = memory(),
             startedAt = uptime(),
@@ -217,7 +226,7 @@ val AggregateTest by testSuite(
         val identifier = EntityIdentifier("light.living-room")
 
         val state = System.State.Known(
-            info = host(),
+            host = host(),
             processor = processor(),
             memory = memory(),
             startedAt = uptime(),
@@ -267,43 +276,6 @@ val AggregateTest by testSuite(
 
         expectThat(aggregate.entity.state)
             .isA<Light.State.Unknown>()
-            .get(Light.State.Unknown::lastKnown)
-            .isSameInstanceAs(state)
-    }
-
-    test(name = "Initializing aggregate with multiple entity became unavailable events after discovery keeps the last known state") {
-        val identifier = EntityIdentifier("light.living-room")
-
-        val state = Light.State.Known(
-            onOff = required(OnOff(current = true)),
-            brightness = Capability.Unsupported,
-        )
-
-        val history = listOf(
-            EntityProvisioned(
-                identifier = identifier,
-                type = Light,
-                naming = naming,
-            ),
-            EntityDiscovered(
-                identifier = identifier,
-                state = state,
-            ),
-            EntityBecameUnavailable(
-                identifier = identifier,
-            ),
-            EntityBecameUnavailable(
-                identifier = identifier,
-            ),
-        )
-
-        val aggregate = EntityAggregate(history)
-
-        expectThat(aggregate.entity.state)
-            .isA<Light.State.Unknown>()
-            .get(Light.State.Unknown::lastKnown)
-            .isNotNull()
-            .isSameInstanceAs(state)
     }
 
     test(name = "Initializing aggregate with entity became unavailable event without discovery sets state to unknown") {
@@ -324,8 +296,6 @@ val AggregateTest by testSuite(
 
         expectThat(aggregate.entity.state)
             .isA<Light.State.Unknown>()
-            .get(Light.State.Unknown::lastKnown)
-            .isNull()
     }
 
     test(name = "Initializing aggregate with multiple entity became unavailable events without discovery sets state to unknown") {
@@ -349,15 +319,13 @@ val AggregateTest by testSuite(
 
         expectThat(aggregate.entity.state)
             .isA<Light.State.Unknown>()
-            .get(Light.State.Unknown::lastKnown)
-            .isNull()
     }
 
     test(name = "Creating aggregate succeeds when discovered entity also has capability update events") {
         val identifier = EntityIdentifier("system.smarthome")
 
         val state = System.State.Known(
-            info = host(),
+            host = host(),
             processor = processor(),
             memory = memory(),
             startedAt = uptime(),
@@ -414,17 +382,43 @@ val AggregateTest by testSuite(
             EntityAggregate(history)
         }.hasMessage("Can't handle 'CapabilityUpdated' when state is 'System.State.Unknown'")
     }
+
+    /*
+     * Types
+     */
+
+    listOf(
+        Blind, Camera, Curtain, Fan, Light, Shutter,
+        SmartLock, SmartPlug, Speaker, System, Thermostat,
+    ).forEach { type ->
+        test(name = "Creating aggregate succeeds when entity provisioned event for '${type.defaultNamingKey}'") {
+            val identifier = EntityIdentifier("${type.defaultNamingKey}.entity")
+
+            val history = listOf(
+                EntityProvisioned(
+                    identifier = identifier,
+                    type = type,
+                    naming = naming,
+                ),
+            )
+
+            expectThat(EntityAggregate(history))
+                .get(EntityAggregate::entity)
+                .get(Entity::state)
+                .isA<Entity.State.Unknown>()
+        }
+    }
 }
 
-private fun host() = System.HostInfo(
-    device = System.HostInfo.Device(
+private fun host() = System.Host(
+    device = System.Host.Device(
         manufacturer = "Test Manufacturer",
         model = "Test Model",
         architecture = "x86_64",
         physicalCores = 4,
         logicalCores = 8,
     ),
-    operatingSystem = System.HostInfo.OperatingSystem(
+    operatingSystem = System.Host.OperatingSystem(
         description = "Test OS",
         family = "Test Family",
         version = "1.0.0",
@@ -444,13 +438,13 @@ private fun memory(
     total: Quantity<Dimension.DigitalInformation> = 8.gibibytes,
     available: Quantity<Dimension.DigitalInformation> = 4.gibibytes,
     swapTotal: Quantity<Dimension.DigitalInformation> = 2.gibibytes,
-    swapUsed: Quantity<Dimension.DigitalInformation> = 1.gibibytes,
+    swapAvailable: Quantity<Dimension.DigitalInformation> = 1.gibibytes,
 ) = System.Memory(
     total = required(MeasureDataSize(current = total)),
     available = required(MeasureDataSize(current = available)),
     swap = System.Memory.Swap(
         total = required(MeasureDataSize(current = swapTotal)),
-        used = required(MeasureDataSize(current = swapUsed)),
+        available = required(MeasureDataSize(current = swapAvailable)),
     ),
 )
 

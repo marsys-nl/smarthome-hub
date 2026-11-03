@@ -89,7 +89,7 @@ private fun extractIntegrationIdentifier(
 }
 
 private fun Integration.map(): IntegrationResponse = IntegrationResponse(
-    identifier = identifier,
+    identifier = identifier.value,
     status = status.value.map(),
 )
 

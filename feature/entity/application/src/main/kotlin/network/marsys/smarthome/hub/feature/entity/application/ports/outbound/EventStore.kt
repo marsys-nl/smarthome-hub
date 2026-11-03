@@ -1,6 +1,6 @@
 package network.marsys.smarthome.hub.feature.entity.application.ports.outbound
 
-import network.marsys.smarthome.domain.identifiers.EntityIdentifier
+import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
 interface EventStore {

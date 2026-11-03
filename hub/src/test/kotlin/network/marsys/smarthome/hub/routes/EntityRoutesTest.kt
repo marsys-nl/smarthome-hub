@@ -17,18 +17,18 @@ import network.marsys.smarthome.domain.capability.MeasureDataSize
 import network.marsys.smarthome.domain.capability.MeasureLoad
 import network.marsys.smarthome.domain.capability.MeasureTemperature
 import network.marsys.smarthome.domain.capability.OnOff
+import network.marsys.smarthome.domain.entity.Entity
+import network.marsys.smarthome.domain.entity.EntityIdentifier
+import network.marsys.smarthome.domain.entity.Light
+import network.marsys.smarthome.domain.entity.System
+import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.domain.i18n.TranslationKey
-import network.marsys.smarthome.domain.identifiers.EntityIdentifier
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.gibibytes
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.GetEntities
-import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
-import network.marsys.smarthome.hub.feature.entity.domain.entity.Light
-import network.marsys.smarthome.hub.feature.entity.domain.entity.System
-import network.marsys.smarthome.hub.feature.entity.domain.entity.naming
 import network.marsys.smarthome.hub.plugin.initializeSerialization
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -76,7 +76,7 @@ val EntityRoutesTest by testSuite(
                         Light(
                             identifier = EntityIdentifier("light.test"),
                             naming = Light.naming(),
-                            state = Light.State.Unknown(),
+                            state = Light.State.Unknown,
                         ),
                     ),
                 )
@@ -121,7 +121,7 @@ val EntityRoutesTest by testSuite(
                             naming = Light.naming(
                                 qualifier = TranslationKey("ceiling"),
                             ),
-                            state = Light.State.Unknown(),
+                            state = Light.State.Unknown,
                         ),
                     ),
                 )
@@ -268,7 +268,7 @@ val EntityRoutesTest by testSuite(
                                 identifier = EntityIdentifier("system.test"),
                                 naming = System.naming(),
                                 state = System.State.Known(
-                                    info = host(),
+                                    host = host(),
                                     processor = processor(),
                                     memory = memory(),
                                     startedAt = uptime(),
@@ -299,7 +299,7 @@ val EntityRoutesTest by testSuite(
                                 |        "type": "system",
                                 |        "identifier": "system.test",
                                 |        "naming": {
-                                |            "key": "system.smarthome-hub"
+                                |            "key": "system"
                                 |        },
                                 |        "state": {
                                 |            "host": {
@@ -326,7 +326,7 @@ val EntityRoutesTest by testSuite(
                                 |                "available": 4.294967296E9,
                                 |                "swap": {
                                 |                    "total": 2.147483648E9,
-                                |                    "used": 1.073741824E9
+                                |                    "available": 1.073741824E9
                                 |                }
                                 |            },
                                 |            "startedAt": {
@@ -349,7 +349,7 @@ val EntityRoutesTest by testSuite(
                                 identifier = EntityIdentifier("system.test"),
                                 naming = System.naming(),
                                 state = System.State.Known(
-                                    info = host(),
+                                    host = host(),
                                     processor = processor(
                                         temperature = null,
                                     ),
@@ -382,7 +382,7 @@ val EntityRoutesTest by testSuite(
                                 |        "type": "system",
                                 |        "identifier": "system.test",
                                 |        "naming": {
-                                |            "key": "system.smarthome-hub"
+                                |            "key": "system"
                                 |        },
                                 |        "state": {
                                 |            "host": {
@@ -408,7 +408,7 @@ val EntityRoutesTest by testSuite(
                                 |                "available": 4.294967296E9,
                                 |                "swap": {
                                 |                    "total": 2.147483648E9,
-                                |                    "used": 1.073741824E9
+                                |                    "available": 1.073741824E9
                                 |                }
                                 |            },
                                 |            "startedAt": {
@@ -431,12 +431,12 @@ val EntityRoutesTest by testSuite(
                         Light(
                             identifier = EntityIdentifier("light.test"),
                             naming = Light.naming(),
-                            state = Light.State.Unknown(),
+                            state = Light.State.Unknown,
                         ),
                         System(
                             identifier = EntityIdentifier("system.smarthome"),
                             naming = System.naming(),
-                            state = System.State.Unknown(),
+                            state = System.State.Unknown,
                         ),
                     ),
                 )
@@ -470,7 +470,7 @@ val EntityRoutesTest by testSuite(
                             |        "type": "system",
                             |        "identifier": "system.smarthome",
                             |        "naming": {
-                            |            "key": "system.smarthome-hub"
+                            |            "key": "system"
                             |        }
                             |    }
                             |]
@@ -497,15 +497,15 @@ private fun ApplicationTestBuilder.initializeDependencyInjection(
     }
 }
 
-private fun host() = System.HostInfo(
-    device = System.HostInfo.Device(
+private fun host() = System.Host(
+    device = System.Host.Device(
         manufacturer = "Raspberry Pi",
         model = "4B",
         architecture = "x64",
         physicalCores = 1,
         logicalCores = 4,
     ),
-    operatingSystem = System.HostInfo.OperatingSystem(
+    operatingSystem = System.Host.OperatingSystem(
         description = "Raspbian GNU/Linux 11 (bullseye)",
         family = "Linux",
         version = "11",
@@ -525,13 +525,13 @@ private fun memory(
     total: Quantity<Dimension.DigitalInformation> = 8.gibibytes,
     available: Quantity<Dimension.DigitalInformation> = 4.gibibytes,
     swapTotal: Quantity<Dimension.DigitalInformation> = 2.gibibytes,
-    swapUsed: Quantity<Dimension.DigitalInformation> = 1.gibibytes,
+    swapAvailable: Quantity<Dimension.DigitalInformation> = 1.gibibytes,
 ) = System.Memory(
     total = required(MeasureDataSize(current = total)),
     available = required(MeasureDataSize(current = available)),
     swap = System.Memory.Swap(
         total = required(MeasureDataSize(current = swapTotal)),
-        used = required(MeasureDataSize(current = swapUsed)),
+        available = required(MeasureDataSize(current = swapAvailable)),
     ),
 )
 

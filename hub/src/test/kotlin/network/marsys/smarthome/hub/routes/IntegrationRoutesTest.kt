@@ -108,7 +108,7 @@ val IntegrationRoutesTest by testSuite(
 
                     expectThat(response.body<Collection<IntegrationResponse>>())
                         .single()
-                        .with(IntegrationResponse::identifier) { isEqualTo(identifier) }
+                        .with(IntegrationResponse::identifier) { isEqualTo(identifier.value) }
                         .with(IntegrationResponse::status) { isEqualTo(expected) }
                 }
             }

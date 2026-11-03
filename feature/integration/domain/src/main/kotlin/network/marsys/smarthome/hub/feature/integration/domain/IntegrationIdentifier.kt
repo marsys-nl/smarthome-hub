@@ -1,6 +1,6 @@
 package network.marsys.smarthome.hub.feature.integration.domain
 
-import network.marsys.smarthome.domain.identifiers.EntityIdentifier
+import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 
 fun IntegrationIdentifier.entity(
