@@ -14,12 +14,12 @@ import network.marsys.smarthome.domain.capability.Capability.Companion.required
 import network.marsys.smarthome.domain.capability.MeasureDataSize
 import network.marsys.smarthome.domain.capability.MeasureLoad
 import network.marsys.smarthome.domain.capability.MeasureTemperature
+import network.marsys.smarthome.domain.entity.System
+import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 import network.marsys.smarthome.domain.unit.bytes
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.percent
-import network.marsys.smarthome.hub.feature.entity.domain.entity.System
-import network.marsys.smarthome.hub.feature.entity.domain.entity.naming
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
@@ -104,7 +104,7 @@ class SystemInfoIntegrationAdapter(
 
         return context(with = systemInfo.hardware) {
             System.State.Known(
-                info = context(with = systemInfo.operatingSystem) {
+                host = context(with = systemInfo.operatingSystem) {
                     constructHostInfo()
                 },
                 processor = constructProcessorInfo(),
@@ -153,7 +153,9 @@ class SystemInfoIntegrationAdapter(
         eventChannel.trySend(
             CapabilityUpdated(
                 identifier = entityIdentifier,
-                capability = MeasureDataSize(hardware.memory.virtualMemory.swapUsed.bytes) with System.MemoryType.SwapUsed,
+                capability = MeasureDataSize(
+                    current = (hardware.memory.virtualMemory.swapTotal - hardware.memory.virtualMemory.swapUsed).bytes,
+                ) with System.MemoryType.SwapAvailable,
             ),
         )
     }
@@ -189,20 +191,24 @@ class SystemInfoIntegrationAdapter(
         available = required(MeasureDataSize(hardware.memory.available.bytes)),
         swap = System.Memory.Swap(
             total = required(MeasureDataSize(hardware.memory.virtualMemory.swapTotal.bytes)),
-            used = required(MeasureDataSize(hardware.memory.virtualMemory.swapUsed.bytes)),
+            available = required(
+                value = MeasureDataSize(
+                    current = (hardware.memory.virtualMemory.swapTotal - hardware.memory.virtualMemory.swapUsed).bytes,
+                ),
+            ),
         ),
     )
 
     context(hardware: HardwareAbstractionLayer, operatingSystem: OperatingSystem)
-    private fun constructHostInfo(): System.HostInfo = System.HostInfo(
-        device = System.HostInfo.Device(
+    private fun constructHostInfo(): System.Host = System.Host(
+        device = System.Host.Device(
             manufacturer = hardware.computerSystem.manufacturer,
             model = hardware.computerSystem.model,
             architecture = java.lang.System.getProperty("os.arch"),
             physicalCores = hardware.processor.physicalProcessorCount,
             logicalCores = hardware.processor.logicalProcessorCount,
         ),
-        operatingSystem = System.HostInfo.OperatingSystem(
+        operatingSystem = System.Host.OperatingSystem(
             description = operatingSystem.toString(),
             family = operatingSystem.family,
             version = operatingSystem.versionInfo.version,

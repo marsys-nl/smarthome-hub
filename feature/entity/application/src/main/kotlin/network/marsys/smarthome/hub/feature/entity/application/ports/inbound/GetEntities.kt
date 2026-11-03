@@ -1,6 +1,6 @@
 package network.marsys.smarthome.hub.feature.entity.application.ports.inbound
 
-import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
+import network.marsys.smarthome.domain.entity.Entity
 
 fun interface GetEntities {
     suspend operator fun invoke(): List<Entity>

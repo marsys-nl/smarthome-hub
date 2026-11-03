@@ -1,11 +1,11 @@
 package network.marsys.smarthome.hub.feature.entity.application.internal
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import network.marsys.smarthome.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.application.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityUpdatePublisher
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
-import network.marsys.smarthome.hub.feature.entity.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
@@ -109,9 +109,10 @@ internal class EntityEventProcessor(
         )
 
         is Entity.State.Known -> {
-            val capability = aggregate.entity.state.get(event.capability) ?: return ProcessEntityEvent.Result.Rejected(
-                reason = ProcessEntityEvent.Result.Rejected.Reason.CapabilityNotPresent,
-            )
+            val capability = aggregate.entity.state.get(event.capability.type, event.capability.context)
+                ?: return ProcessEntityEvent.Result.Rejected(
+                    reason = ProcessEntityEvent.Result.Rejected.Reason.CapabilityNotPresent,
+                )
 
             return when {
                 capability.current == event.capability.current -> ProcessEntityEvent.Result.Ignored

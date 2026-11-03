@@ -8,13 +8,14 @@ import dev.nmarsman.expect.assertions.isEqualTo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import network.marsys.smarthome.domain.capability.Capability
+import network.marsys.smarthome.domain.capability.Capability.Context.Empty.contains
 import network.marsys.smarthome.domain.capability.MeasureDataSize
 import network.marsys.smarthome.domain.capability.MeasureLoad
 import network.marsys.smarthome.domain.capability.MeasureTemperature
+import network.marsys.smarthome.domain.entity.System
 import network.marsys.smarthome.domain.unit.bytes
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.percent
-import network.marsys.smarthome.hub.feature.entity.domain.entity.System
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
@@ -288,7 +289,7 @@ val SystemInfoIntegrationAdapterTest by testSuite(
                         globalMemory = FakeGlobalMemory(
                             available = 512,
                             virtualMemory = FakeVirtualMemory(
-                                used = 1536,
+                                used = 512,
                             ),
                         ),
                     ),
@@ -308,15 +309,15 @@ val SystemInfoIntegrationAdapterTest by testSuite(
                     .isA<CapabilityUpdated>()
                     .get(CapabilityUpdated::capability)
                     .isA<MeasureDataSize>()
-                    .get(MeasureDataSize::current)
-                    .isEqualTo(512.bytes)
+                    .with(MeasureDataSize::current) { isEqualTo(512.bytes) }
+                    .with(MeasureDataSize::context) { contains(System.MemoryType.Available) }
 
                 expectThat(awaitItem())
                     .isA<CapabilityUpdated>()
                     .get(CapabilityUpdated::capability)
                     .isA<MeasureDataSize>()
-                    .get(MeasureDataSize::current)
-                    .isEqualTo(1536.bytes)
+                    .with(MeasureDataSize::current) { isEqualTo(1536.bytes) }
+                    .with(MeasureDataSize::context) { contains(System.MemoryType.SwapAvailable) }
 
                 cancelAndIgnoreRemainingEvents()
             }
