@@ -8,6 +8,7 @@ import dev.nmarsman.expect.assertions.filter
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEmpty
 import dev.nmarsman.expect.assertions.isEqualTo
+import network.marsys.smarthome.domain.TranslationKey
 import network.marsys.smarthome.domain.capability.Brightness
 import network.marsys.smarthome.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.domain.capability.Capability.Companion.required
@@ -17,7 +18,6 @@ import network.marsys.smarthome.domain.entity.Entity
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
 import network.marsys.smarthome.domain.entity.Light
-import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.application.internal.EntityEventProcessor
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent

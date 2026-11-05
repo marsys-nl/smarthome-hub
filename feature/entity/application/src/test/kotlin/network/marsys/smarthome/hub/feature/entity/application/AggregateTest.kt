@@ -6,9 +6,7 @@ import dev.nmarsman.expect.api.expectThrows
 import dev.nmarsman.expect.assertions.hasMessage
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEqualTo
-import dev.nmarsman.expect.assertions.isNotNull
-import dev.nmarsman.expect.assertions.isNull
-import dev.nmarsman.expect.assertions.isSameInstanceAs
+import network.marsys.smarthome.domain.TranslationKey
 import network.marsys.smarthome.domain.capability.Capability
 import network.marsys.smarthome.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.domain.capability.Capability.Companion.required
@@ -30,7 +28,6 @@ import network.marsys.smarthome.domain.entity.SmartPlug
 import network.marsys.smarthome.domain.entity.Speaker
 import network.marsys.smarthome.domain.entity.System
 import network.marsys.smarthome.domain.entity.Thermostat
-import network.marsys.smarthome.domain.i18n.TranslationKey
 import network.marsys.smarthome.domain.unit.Dimension
 import network.marsys.smarthome.domain.unit.Quantity
 import network.marsys.smarthome.domain.unit.celsius
