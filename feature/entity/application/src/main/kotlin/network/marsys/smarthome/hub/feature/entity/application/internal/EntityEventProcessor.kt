@@ -1,6 +1,7 @@
 package network.marsys.smarthome.hub.feature.entity.application.internal
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import network.marsys.smarthome.domain.capability.with
 import network.marsys.smarthome.domain.entity.Entity
 import network.marsys.smarthome.hub.feature.entity.application.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
@@ -109,7 +110,7 @@ internal class EntityEventProcessor(
         )
 
         is Entity.State.Known -> {
-            val capability = aggregate.entity.state.get(event.capability.type, event.capability.context)
+            val capability = aggregate.entity.state.get(event.capability.type with event.capability.context)
                 ?: return ProcessEntityEvent.Result.Rejected(
                     reason = ProcessEntityEvent.Result.Rejected.Reason.CapabilityNotPresent,
                 )

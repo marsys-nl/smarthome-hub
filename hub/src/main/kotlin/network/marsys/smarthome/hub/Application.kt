@@ -11,6 +11,7 @@ import network.marsys.smarthome.hub.plugin.initializeForwardedHeaders
 import network.marsys.smarthome.hub.plugin.initializeIntegrationLifecycleManager
 import network.marsys.smarthome.hub.plugin.initializeRouting
 import network.marsys.smarthome.hub.plugin.initializeSerialization
+import network.marsys.smarthome.hub.plugin.initializeServerSentEvents
 
 private val logger = KotlinLogging.logger {}
 
@@ -31,6 +32,8 @@ fun main(args: Array<String>) {
             initializeAuthentication()
             initializeForwardedHeaders()
             initializeSerialization()
+            initializeServerSentEvents()
+
             initializeRouting()
 
             initializeEntityEventProcessor()
