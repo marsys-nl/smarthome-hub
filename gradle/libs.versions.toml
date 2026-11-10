@@ -17,7 +17,7 @@ kotlin = "2.4.21"
 kotlin-coroutines = "1.11.0"
 kotlin-expect = "0.2"
 kotlin-kover = "0.9.11"
-kotlin-logging = "8.0.4"
+kotlin-logging = "8.0.6"
 
 ktlint = "1.8.0"
 
