@@ -40,7 +40,10 @@ internal class EntityEventProcessor(
                             history = history + event,
                         )
 
-                        publisher.publish(entity = updated.entity)
+                        publisher.publish(
+                            event = event,
+                            entity = updated.entity,
+                        )
                     }
 
                     is ProcessEntityEvent.Result.Ignored -> {

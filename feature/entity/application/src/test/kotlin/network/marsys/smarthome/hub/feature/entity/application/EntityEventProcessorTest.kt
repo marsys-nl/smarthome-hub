@@ -8,6 +8,7 @@ import dev.nmarsman.expect.assertions.filter
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEmpty
 import dev.nmarsman.expect.assertions.isEqualTo
+import dev.nmarsman.expect.assertions.single
 import network.marsys.smarthome.domain.TranslationKey
 import network.marsys.smarthome.domain.capability.Brightness
 import network.marsys.smarthome.domain.capability.Capability.Companion.optional
@@ -62,314 +63,390 @@ val EntityEventProcessorTest by testSuite(
         capability = OnOff(current = false),
     )
 
-    test(name = "Processing an entity provisioned event is accepted if the entity has no provisioned event processed yet.") {
-        val store = FakeEventStore()
+    testSuite(
+        name = "Processing entity events",
+    ) {
+        test(name = "Processing an entity provisioned event is accepted if the entity has no provisioned event processed yet.") {
+            val store = FakeEventStore()
 
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
 
-        val result = processor.invoke(provisioned)
+            val result = processor.invoke(provisioned)
 
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Accepted>()
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Accepted>()
 
-        expectThat(store.load(entity = identifier))
-            .contains(provisioned)
+            expectThat(store.load(entity = identifier))
+                .contains(provisioned)
+        }
+
+        test(name = "Processing an entity discovered event results in publishing the updated entity.") {
+            val store = FakeEventStore(
+                history = listOf(provisioned),
+            )
+
+            val publisher = FakeEntityUpdatePublisher()
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = publisher,
+            )
+
+            val result = processor.invoke(discovered)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Accepted>()
+
+            expectThat(publisher.updated.first())
+                .isA<Light>()
+                .get(Light::state)
+                .isA<Light.State.Known>()
+        }
+
+        test(name = "Processing an entity provisioned event is rejected if the entity already has a provisioned event processed.") {
+            val store = FakeEventStore()
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
+
+            processor.invoke(provisioned)
+            val result = processor.invoke(provisioned)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Rejected>()
+                .get(ProcessEntityEvent.Result.Rejected::reason)
+                .isA<ProcessEntityEvent.Result.Rejected.Reason.AlreadyProvisioned>()
+
+            expectThat(store.load(entity = identifier))
+                .filter { it == provisioned }
+                .count()
+                .isEqualTo(1)
+        }
+
+        test(name = "Processing an entity discovered event is accepted if the entity has already processed a provisioned event.") {
+            val store = FakeEventStore(
+                history = listOf(provisioned),
+            )
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
+
+            val result = processor.invoke(discovered)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Accepted>()
+
+            expectThat(store.load(entity = identifier))
+                .contains(provisioned, discovered)
+        }
+
+        test(name = "Processing an entity discovered event is rejected if the entity has not processed a provisioned event yet.") {
+            val store = FakeEventStore()
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
+
+            val result = processor.invoke(discovered)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Rejected>()
+                .get(ProcessEntityEvent.Result.Rejected::reason)
+                .isA<ProcessEntityEvent.Result.Rejected.Reason.NotProvisioned>()
+
+            expectThat(store.load(entity = identifier))
+                .isEmpty()
+        }
+
+        test("Processing an entity became unavailable event is accepted if the entity has a known state.") {
+            val store = FakeEventStore(
+                history = listOf(provisioned, discovered),
+            )
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
+
+            val result = processor.invoke(becameUnavailable)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Accepted>()
+
+            expectThat(store.load(entity = identifier))
+                .contains(provisioned, discovered, becameUnavailable)
+        }
+
+        test("Processing an entity became unavailable event is ignored if the entity is not discovered yet.") {
+            val store = FakeEventStore(
+                history = listOf(provisioned),
+            )
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
+
+            val result = processor.invoke(becameUnavailable)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Ignored>()
+
+            expectThat(store.load(entity = identifier))
+                .contains(provisioned)
+        }
+
+        test("Processing an entity became unavailable event is ignored if the entity already has an unknown state.") {
+            val store = FakeEventStore(
+                history = listOf(provisioned, discovered, becameUnavailable),
+            )
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
+
+            val result = processor.invoke(becameUnavailable)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Ignored>()
+
+            expectThat(store.load(entity = identifier))
+                .contains(provisioned, discovered, becameUnavailable)
+        }
+
+        test("Processing a capability changed event is accepted if the entity has a known state and the state is actually different.") {
+            val store = FakeEventStore(
+                history = listOf(provisioned, discovered),
+            )
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
+
+            val result = processor.invoke(capabilityUpdated)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Accepted>()
+
+            expectThat(store.load(entity = identifier))
+                .contains(provisioned, discovered, capabilityUpdated)
+        }
+
+        test("Processing a capability changed event is ignored if the entity has a known state and the state is the same.") {
+            val store = FakeEventStore(
+                history = listOf(provisioned, discovered),
+            )
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
+
+            val result = processor.invoke(
+                event = capabilityUpdated.copy(
+                    capability = OnOff(current = true),
+                ),
+            )
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Ignored>()
+
+            expectThat(store.load(entity = identifier))
+                .contains(provisioned, discovered)
+        }
+
+        test("Processing a capability changed event is rejected if the entity has a known state and the state was unsupported") {
+            val capabilityUpdated = CapabilityUpdated(
+                identifier = identifier,
+                capability = Brightness(current = 50.percent),
+            )
+
+            val store = FakeEventStore(
+                history = listOf(provisioned, discovered),
+            )
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
+
+            val result = processor.invoke(capabilityUpdated)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Rejected>()
+                .get(ProcessEntityEvent.Result.Rejected::reason)
+                .isA<ProcessEntityEvent.Result.Rejected.Reason.CapabilityNotPresent>()
+
+            expectThat(store.load(entity = identifier))
+                .contains(provisioned, discovered)
+        }
+
+        test("Processing a capability changed event is rejected if the entity has a known state but an unknown capability passed") {
+            val capabilityUpdated = CapabilityUpdated(
+                identifier = identifier,
+                capability = MeasureLoad(current = 50.percent),
+            )
+
+            val store = FakeEventStore(
+                history = listOf(provisioned, discovered),
+            )
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
+
+            val result = processor.invoke(capabilityUpdated)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Rejected>()
+                .get(ProcessEntityEvent.Result.Rejected::reason)
+                .isA<ProcessEntityEvent.Result.Rejected.Reason.CapabilityNotPresent>()
+
+            expectThat(store.load(entity = identifier))
+                .contains(provisioned, discovered)
+        }
+
+        test("Processing a capability changed event is rejected if the entity has an unknown state.") {
+            val store = FakeEventStore(
+                history = listOf(provisioned),
+            )
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
+
+            val result = processor.invoke(capabilityUpdated)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Rejected>()
+                .get(ProcessEntityEvent.Result.Rejected::reason)
+                .isA<ProcessEntityEvent.Result.Rejected.Reason.NotDiscovered>()
+
+            expectThat(store.load(entity = identifier))
+                .contains(provisioned)
+        }
+
+        test("Processing an entity with events out of order saved ignores new events.") {
+            val store = FakeEventStore(
+                history = listOf(discovered, provisioned),
+            )
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+            )
+
+            val result = processor.invoke(becameUnavailable)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Ignored>()
+
+            expectThat(store.load(entity = identifier))
+                .contains(discovered, provisioned)
+        }
     }
 
-    test(name = "Processing an entity provisioned event results in publishing the updated entity.") {
-        val store = FakeEventStore()
-        val publisher = FakeEntityUpdatePublisher()
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = publisher,
-        )
-
-        val result = processor.invoke(provisioned)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Accepted>()
-
-        expectThat(publisher.updated.first())
-            .isA<Light>()
-            .get(Light::state)
-            .isA<Light.State.Unknown>()
-    }
-
-    test(name = "Processing an entity discovered event results in publishing the updated entity.") {
-        val store = FakeEventStore(
-            history = listOf(provisioned),
-        )
-
-        val publisher = FakeEntityUpdatePublisher()
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = publisher,
-        )
-
-        val result = processor.invoke(discovered)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Accepted>()
-
-        expectThat(publisher.updated.first())
-            .isA<Light>()
-            .get(Light::state)
-            .isA<Light.State.Known>()
-    }
-
-    test(name = "Processing an entity provisioned event is rejected if the entity already has a provisioned event processed.") {
-        val store = FakeEventStore()
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
-
-        processor.invoke(provisioned)
-        val result = processor.invoke(provisioned)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Rejected>()
-            .get(ProcessEntityEvent.Result.Rejected::reason)
-            .isA<ProcessEntityEvent.Result.Rejected.Reason.AlreadyProvisioned>()
-
-        expectThat(store.load(entity = identifier))
-            .filter { it == provisioned }
-            .count()
-            .isEqualTo(1)
-    }
-
-    test(name = "Processing an entity discovered event is accepted if the entity has already processed a provisioned event.") {
-        val store = FakeEventStore(
-            history = listOf(provisioned),
-        )
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
-
-        val result = processor.invoke(discovered)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Accepted>()
-
-        expectThat(store.load(entity = identifier))
-            .contains(provisioned, discovered)
-    }
-
-    test(name = "Processing an entity discovered event is rejected if the entity has not processed a provisioned event yet.") {
-        val store = FakeEventStore()
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
-
-        val result = processor.invoke(discovered)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Rejected>()
-            .get(ProcessEntityEvent.Result.Rejected::reason)
-            .isA<ProcessEntityEvent.Result.Rejected.Reason.NotProvisioned>()
-
-        expectThat(store.load(entity = identifier))
-            .isEmpty()
-    }
-
-    test("Processing an entity became unavailable event is accepted if the entity has a known state.") {
-        val store = FakeEventStore(
-            history = listOf(provisioned, discovered),
-        )
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
-
-        val result = processor.invoke(becameUnavailable)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Accepted>()
-
-        expectThat(store.load(entity = identifier))
-            .contains(provisioned, discovered, becameUnavailable)
-    }
-
-    test("Processing an entity became unavailable event is ignored if the entity is not discovered yet.") {
-        val store = FakeEventStore(
-            history = listOf(provisioned),
-        )
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
-
-        val result = processor.invoke(becameUnavailable)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Ignored>()
-
-        expectThat(store.load(entity = identifier))
-            .contains(provisioned)
-    }
-
-    test("Processing an entity became unavailable event is ignored if the entity already has an unknown state.") {
-        val store = FakeEventStore(
-            history = listOf(provisioned, discovered, becameUnavailable),
-        )
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
-
-        val result = processor.invoke(becameUnavailable)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Ignored>()
-
-        expectThat(store.load(entity = identifier))
-            .contains(provisioned, discovered, becameUnavailable)
-    }
-
-    test("Processing a capability changed event is accepted if the entity has a known state and the state is actually different.") {
-        val store = FakeEventStore(
-            history = listOf(provisioned, discovered),
-        )
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
-
-        val result = processor.invoke(capabilityUpdated)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Accepted>()
-
-        expectThat(store.load(entity = identifier))
-            .contains(provisioned, discovered, capabilityUpdated)
-    }
-
-    test("Processing a capability changed event is ignored if the entity has a known state and the state is the same.") {
-        val store = FakeEventStore(
-            history = listOf(provisioned, discovered),
-        )
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
-
-        val result = processor.invoke(
-            event = capabilityUpdated.copy(
-                capability = OnOff(current = true),
-            ),
-        )
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Ignored>()
-
-        expectThat(store.load(entity = identifier))
-            .contains(provisioned, discovered)
-    }
-
-    test("Processing a capability changed event is ignored if the entity has a known state and the state was unsupported") {
-        val capabilityUpdated = CapabilityUpdated(
-            identifier = identifier,
-            capability = Brightness(current = 50.percent),
-        )
-
-        val store = FakeEventStore(
-            history = listOf(provisioned, discovered),
-        )
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
-
-        val result = processor.invoke(capabilityUpdated)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Rejected>()
-            .get(ProcessEntityEvent.Result.Rejected::reason)
-            .isA<ProcessEntityEvent.Result.Rejected.Reason.CapabilityNotPresent>()
-
-        expectThat(store.load(entity = identifier))
-            .contains(provisioned, discovered)
-    }
-
-    test("Processing a capability changed event is ignored if the entity has a known state but an unknown capability passed") {
-        val capabilityUpdated = CapabilityUpdated(
-            identifier = identifier,
-            capability = MeasureLoad(current = 50.percent),
-        )
-
-        val store = FakeEventStore(
-            history = listOf(provisioned, discovered),
-        )
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
-
-        val result = processor.invoke(capabilityUpdated)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Rejected>()
-            .get(ProcessEntityEvent.Result.Rejected::reason)
-            .isA<ProcessEntityEvent.Result.Rejected.Reason.CapabilityNotPresent>()
-
-        expectThat(store.load(entity = identifier))
-            .contains(provisioned, discovered)
-    }
-
-    test("Processing a capability changed event is ignored if the entity has an unknown state.") {
-        val store = FakeEventStore(
-            history = listOf(provisioned),
-        )
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
-
-        val result = processor.invoke(capabilityUpdated)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Rejected>()
-            .get(ProcessEntityEvent.Result.Rejected::reason)
-            .isA<ProcessEntityEvent.Result.Rejected.Reason.NotDiscovered>()
-
-        expectThat(store.load(entity = identifier))
-            .contains(provisioned)
-    }
-
-    test("Processing an entity with events out of order saved ignores new events.") {
-        val store = FakeEventStore(
-            history = listOf(discovered, provisioned),
-        )
-
-        val processor = EntityEventProcessor(
-            store = store,
-            publisher = {},
-        )
-
-        val result = processor.invoke(becameUnavailable)
-
-        expectThat(result)
-            .isA<ProcessEntityEvent.Result.Ignored>()
-
-        expectThat(store.load(entity = identifier))
-            .contains(discovered, provisioned)
+    testSuite(
+        name = "Publishing entity events",
+    ) {
+        test(name = "Processing an event that gets accepted results in publishing the event.") {
+            val store = FakeEventStore()
+            val publisher = RecordingEntityUpdatePublisher()
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = publisher,
+            )
+
+            expectThat(publisher.updates)
+                .isEmpty()
+
+            val result = processor.invoke(provisioned)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Accepted>()
+
+            expectThat(publisher.updates)
+                .single()
+                .get(Pair<Event, Entity>::second)
+                .isA<Light>()
+        }
+
+        test(name = "Processing an accepted capability update publishes the updated entity and original event") {
+            val store = FakeEventStore(history = listOf(provisioned, discovered))
+            val publisher = RecordingEntityUpdatePublisher()
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = publisher,
+            )
+
+            val result = processor.invoke(capabilityUpdated)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Accepted>()
+
+            expectThat(publisher.updates)
+                .single()
+                .get(Pair<Event, Entity>::first)
+                .isEqualTo(capabilityUpdated)
+
+            expectThat(publisher.updates)
+                .single()
+                .get(Pair<Event, Entity>::second)
+                .isA<Light>()
+                .get(Light::state)
+                .isA<Light.State.Known>()
+        }
+
+        test(name = "Processing an event that gets rejected doesn't publish the event.") {
+            val store = FakeEventStore()
+
+            val publisher = RecordingEntityUpdatePublisher()
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = publisher,
+            )
+
+            val result = processor.invoke(discovered)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Rejected>()
+
+            expectThat(publisher.updates)
+                .isEmpty()
+        }
+
+        test(name = "Processing an event that gets ignored doesn't publish the event.") {
+            val store = FakeEventStore(
+                history = listOf(provisioned),
+            )
+
+            val publisher = RecordingEntityUpdatePublisher()
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = publisher,
+            )
+
+            val result = processor.invoke(becameUnavailable)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Ignored>()
+
+            expectThat(publisher.updates)
+                .isEmpty()
+        }
     }
 }
 
@@ -400,7 +477,7 @@ class FakeEntityUpdatePublisher : EntityUpdatePublisher {
     private val entities: MutableList<Entity> = mutableListOf()
     val updated: List<Entity> get() = entities.toList()
 
-    override suspend fun publish(entity: Entity) {
+    override suspend fun publish(event: Event, entity: Entity) {
         entities.add(entity)
     }
 }
