@@ -8,6 +8,6 @@ sealed interface PlatformEvent {
     data class CapabilityUpdated(
         val identifier: EntityIdentifier,
         val capability: Capability<*, *>,
-        val updatedAt: Instant,
+        val occurredAt: Instant,
     ) : PlatformEvent
 }

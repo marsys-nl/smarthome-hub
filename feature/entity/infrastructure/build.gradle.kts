@@ -13,6 +13,7 @@ kotlin {
 dependencies {
     implementation(projects.feature.entity.application)
     implementation(projects.feature.entity.domain)
+    implementation(projects.feature.platform.application)
 
     implementation(project.dependencies.platform(libs.koin.bom))
     implementation(libs.koin.core)

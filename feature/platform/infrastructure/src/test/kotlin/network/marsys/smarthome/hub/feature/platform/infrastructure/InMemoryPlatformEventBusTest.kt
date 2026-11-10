@@ -404,5 +404,5 @@ private fun testEvent(number: Int): PlatformEvent =
     PlatformEvent.CapabilityUpdated(
         identifier = EntityIdentifier("light.test-$number"),
         capability = OnOff(current = number % 2 == 0),
-        updatedAt = Instant.parse("2026-11-10T09:00:00Z"),
+        occurredAt = Instant.parse("2026-11-10T09:00:00Z"),
     )

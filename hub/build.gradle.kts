@@ -43,6 +43,8 @@ dependencies {
     implementation(projects.feature.integration.application)
     implementation(projects.feature.integration.domain)
     implementation(projects.feature.integration.infrastructure)
+    implementation(projects.feature.platform.application)
+    implementation(projects.feature.platform.infrastructure)
 
     implementation(libs.bundles.kotlin.logging)
 
