@@ -45,5 +45,7 @@ include(
     ":feature:integration:application",
     ":feature:integration:domain",
     ":feature:integration:infrastructure",
+    ":feature:platform:application",
+    ":feature:platform:infrastructure",
     ":hub",
 )
