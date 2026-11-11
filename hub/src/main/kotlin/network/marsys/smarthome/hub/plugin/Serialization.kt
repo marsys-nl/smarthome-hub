@@ -6,21 +6,15 @@ import io.ktor.server.application.install
 import io.ktor.server.plugins.contentnegotiation.ContentNegotiation
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonBuilder
-import kotlinx.serialization.modules.SerializersModule
-import network.marsys.smarthome.api.apiModuleSerializersModule
+import org.koin.core.parameter.parametersOf
+import org.koin.ktor.ext.get
 
 fun Application.initializeSerialization(
     builder: JsonBuilder.() -> Unit = {},
 ) {
-    install(ContentNegotiation) {
-        json(
-            json = Json {
-                builder.invoke(this)
+    val json = get<Json> { parametersOf(builder) }
 
-                serializersModule = SerializersModule {
-                    include(apiModuleSerializersModule)
-                }
-            },
-        )
+    install(ContentNegotiation) {
+        json(json = json)
     }
 }

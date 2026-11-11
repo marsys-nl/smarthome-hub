@@ -24,6 +24,7 @@ import network.marsys.smarthome.hub.feature.integration.application.ports.inboun
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.ManageIntegrationLifecycle
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import network.marsys.smarthome.hub.feature.integration.infrastructure.FakeIntegrationAdapter
+import network.marsys.smarthome.hub.plugin.applicationModule
 import network.marsys.smarthome.hub.plugin.initializeSerialization
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -365,6 +366,8 @@ private fun ApplicationTestBuilder.initializeDependencyInjection(
 ) {
     install(Koin) {
         modules(
+            applicationModule,
+
             module {
                 single<IntegrationQueries> { integrationQueries }
                 single<ManageIntegrationLifecycle> { integrationLifecycleManager }

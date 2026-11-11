@@ -18,6 +18,7 @@ dependencies {
 
     implementation(libs.kotlin.coroutines)
 
+    implementation(libs.smarthome.api)
     implementation(libs.smarthome.domain)
 
     testImplementation(libs.kotlin.expect.core)
