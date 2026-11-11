@@ -14,6 +14,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.config.MapApplicationConfig
 import io.ktor.server.testing.testApplication
 import network.marsys.smarthome.api.models.config.ConfigurationResponse
+import network.marsys.smarthome.hub.plugin.initializeDependencyInjection
 import network.marsys.smarthome.hub.plugin.initializeForwardedHeaders
 import network.marsys.smarthome.hub.plugin.initializeSerialization
 
@@ -23,6 +24,7 @@ val ConfigRoutesTest by testSuite(
     test(name = "When no explicit scheme, uri or port supplied the base uri returns localhost") {
         testApplication {
             application {
+                initializeDependencyInjection()
                 initializeForwardedHeaders()
                 initializeSerialization()
             }
@@ -52,6 +54,7 @@ val ConfigRoutesTest by testSuite(
     test(name = "When `https://` scheme is supplied the base uri contains `https://`") {
         testApplication {
             application {
+                initializeDependencyInjection()
                 initializeForwardedHeaders()
                 initializeSerialization()
             }
@@ -83,6 +86,7 @@ val ConfigRoutesTest by testSuite(
     test(name = "When a port is supplied the base uri doesn't contain the port if it's a default port - 80") {
         testApplication {
             application {
+                initializeDependencyInjection()
                 initializeForwardedHeaders()
                 initializeSerialization()
             }
@@ -114,6 +118,7 @@ val ConfigRoutesTest by testSuite(
     test(name = "When a port is supplied the base uri doesn't contain the port if it's a default port - 443") {
         testApplication {
             application {
+                initializeDependencyInjection()
                 initializeForwardedHeaders()
                 initializeSerialization()
             }
@@ -146,6 +151,7 @@ val ConfigRoutesTest by testSuite(
     test(name = "When no port is supplied the base uri doesn't contain the port") {
         testApplication {
             application {
+                initializeDependencyInjection()
                 initializeForwardedHeaders()
                 initializeSerialization()
             }
@@ -178,6 +184,7 @@ val ConfigRoutesTest by testSuite(
     test(name = "When a port is supplied the base uri contains the port if it isn't a default port") {
         testApplication {
             application {
+                initializeDependencyInjection()
                 initializeForwardedHeaders()
                 initializeSerialization()
             }
@@ -210,6 +217,7 @@ val ConfigRoutesTest by testSuite(
     test(name = "When a non-http scheme is supplied the base uri contains the port") {
         testApplication {
             application {
+                initializeDependencyInjection()
                 initializeForwardedHeaders()
                 initializeSerialization()
             }
@@ -242,6 +250,7 @@ val ConfigRoutesTest by testSuite(
     test(name = "When a domain is provided the base uri contains the domain") {
         testApplication {
             application {
+                initializeDependencyInjection()
                 initializeForwardedHeaders()
                 initializeSerialization()
             }
@@ -279,6 +288,7 @@ val ConfigRoutesTest by testSuite(
             }
 
             application {
+                initializeDependencyInjection()
                 initializeForwardedHeaders()
                 initializeSerialization()
             }
@@ -312,6 +322,7 @@ val ConfigRoutesTest by testSuite(
             }
 
             application {
+                initializeDependencyInjection()
                 initializeForwardedHeaders()
                 initializeSerialization()
             }

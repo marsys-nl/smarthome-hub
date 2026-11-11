@@ -29,6 +29,7 @@ import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.gibibytes
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.GetEntities
+import network.marsys.smarthome.hub.plugin.applicationModule
 import network.marsys.smarthome.hub.plugin.initializeSerialization
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
@@ -486,6 +487,8 @@ private fun ApplicationTestBuilder.initializeDependencyInjection(
 ) {
     install(Koin) {
         modules(
+            applicationModule,
+
             module {
                 single<GetEntities> {
                     GetEntities {

@@ -4,25 +4,56 @@ import io.ktor.server.routing.Route
 import io.ktor.server.sse.heartbeat
 import io.ktor.server.sse.sse
 import io.ktor.sse.ServerSentEvent
-import kotlinx.coroutines.awaitCancellation
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonBuilder
+import network.marsys.smarthome.hub.feature.platform.application.PlatformEventStream
+import network.marsys.smarthome.hub.feature.platform.infrastructure.PlatformEventMapper
+import org.koin.core.parameter.parametersOf
+import org.koin.ktor.ext.get
 import kotlin.time.Duration.Companion.seconds
 
 fun Route.eventRoutes() {
-    sse(path = "/api/events") {
-        heartbeat {
-            period = 30.seconds
-            event = ServerSentEvent(
-                event = "heartbeat",
-            )
+    val platformEventStream = get<PlatformEventStream>()
+
+    val json = get<Json> {
+        val builder: JsonBuilder.() -> Unit = {
+            encodeDefaults = false
+            ignoreUnknownKeys = true
         }
 
-        send(
-            event = ServerSentEvent(
-                event = "sync-required",
-                data = """{"scope":"all"}""",
-            ),
-        )
+        parametersOf(builder)
+    }
 
-        awaitCancellation()
+    sse(path = "/api/events") {
+        val subscription = platformEventStream.subscribe()
+
+        try {
+            heartbeat {
+                period = 30.seconds
+                event = ServerSentEvent(
+                    event = "heartbeat",
+                )
+            }
+
+            send(
+                event = ServerSentEvent(
+                    event = "sync-required",
+                    data = """{"scope":"all"}""",
+                ),
+            )
+
+            subscription.events.collect { event ->
+                send(
+                    event = ServerSentEvent(
+                        event = "platform-event",
+                        data = json.encodeToString(
+                            value = PlatformEventMapper.invoke(source = event),
+                        ),
+                    ),
+                )
+            }
+        } finally {
+            subscription.close()
+        }
     }
 }
