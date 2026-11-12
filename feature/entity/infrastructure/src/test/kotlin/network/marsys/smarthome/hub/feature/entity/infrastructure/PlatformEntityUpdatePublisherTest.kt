@@ -18,10 +18,10 @@ import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.domain.entity.System
 import network.marsys.smarthome.domain.entity.naming
+import network.marsys.smarthome.domain.platform.PlatformEvent
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
-import network.marsys.smarthome.hub.feature.platform.application.PlatformEvent
 import network.marsys.smarthome.hub.feature.platform.application.PlatformEventPublisher
 
 val PlatformEntityUpdatePublisherTest by testSuite(

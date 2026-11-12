@@ -27,7 +27,7 @@ import network.marsys.smarthome.api.models.platform.ContextMessage
 import network.marsys.smarthome.api.models.platform.PlatformEventMessage
 import network.marsys.smarthome.domain.capability.OnOff
 import network.marsys.smarthome.domain.entity.EntityIdentifier
-import network.marsys.smarthome.hub.feature.platform.application.PlatformEvent
+import network.marsys.smarthome.domain.platform.PlatformEvent
 import network.marsys.smarthome.hub.feature.platform.application.PlatformEventStream
 import network.marsys.smarthome.hub.feature.platform.infrastructure.InMemoryPlatformEventBus
 import network.marsys.smarthome.hub.plugin.initializeServerSentEvents

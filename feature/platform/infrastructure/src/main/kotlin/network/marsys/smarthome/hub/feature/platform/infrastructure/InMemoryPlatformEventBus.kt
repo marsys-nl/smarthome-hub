@@ -4,7 +4,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.consumeAsFlow
 import kotlinx.coroutines.flow.onCompletion
-import network.marsys.smarthome.hub.feature.platform.application.PlatformEvent
+import network.marsys.smarthome.domain.platform.PlatformEvent
 import network.marsys.smarthome.hub.feature.platform.application.PlatformEventPublisher
 import network.marsys.smarthome.hub.feature.platform.application.PlatformEventStream
 import network.marsys.smarthome.hub.feature.platform.application.PlatformEventSubscription

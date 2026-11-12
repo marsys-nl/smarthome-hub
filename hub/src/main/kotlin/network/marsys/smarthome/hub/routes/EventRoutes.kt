@@ -6,8 +6,8 @@ import io.ktor.server.sse.sse
 import io.ktor.sse.ServerSentEvent
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonBuilder
+import network.marsys.smarthome.api.mappers.PlatformEventApiMapper
 import network.marsys.smarthome.hub.feature.platform.application.PlatformEventStream
-import network.marsys.smarthome.hub.feature.platform.infrastructure.PlatformEventMapper
 import org.koin.core.parameter.parametersOf
 import org.koin.ktor.ext.get
 import kotlin.time.Duration.Companion.seconds
@@ -47,7 +47,7 @@ fun Route.eventRoutes() {
                     event = ServerSentEvent(
                         event = "platform-event",
                         data = json.encodeToString(
-                            value = PlatformEventMapper.invoke(source = event),
+                            value = PlatformEventApiMapper.invoke(source = event),
                         ),
                     ),
                 )
