@@ -3,13 +3,10 @@ package network.marsys.smarthome.hub.feature.entity.infrastructure
 import network.marsys.smarthome.domain.capability.with
 import network.marsys.smarthome.domain.entity.Entity
 import network.marsys.smarthome.domain.entity.formattedName
+import network.marsys.smarthome.domain.platform.PlatformEvent
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityUpdatePublisher
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
-import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
-import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
-import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
-import network.marsys.smarthome.hub.feature.platform.application.PlatformEvent
 import network.marsys.smarthome.hub.feature.platform.application.PlatformEventPublisher
 
 class PlatformEntityUpdatePublisher(

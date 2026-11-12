@@ -24,7 +24,7 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
 import network.marsys.smarthome.domain.capability.OnOff
 import network.marsys.smarthome.domain.entity.EntityIdentifier
-import network.marsys.smarthome.hub.feature.platform.application.PlatformEvent
+import network.marsys.smarthome.domain.platform.PlatformEvent
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Instant
 
