@@ -1,30 +1,30 @@
-package network.marsys.smarthome.hub.feature.entity.application.reducer
+package network.marsys.smarthome.hub.feature.entity.domain.reducer
 
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
-import network.marsys.smarthome.domain.entity.SmartLock
+import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
-internal object SmartLockReducer : EntityReducer<SmartLock, SmartLock.State, SmartLock.State.Known, SmartLock.State.Unknown>() {
+internal object LightReducer : EntityReducer<Light, Light.State, Light.State.Known, Light.State.Unknown>() {
     override fun createUnknownState() =
-        SmartLock.State.Unknown
+        Light.State.Unknown
 
     override fun reduce(
         identifier: EntityIdentifier,
         naming: EntityNaming,
         history: Collection<Event>,
-    ): SmartLock = history
+    ): Light = history
         .fold(
-            initial = SmartLock(
+            initial = Light(
                 identifier = identifier,
                 naming = naming,
                 state = createUnknownState(),
             ),
             operation = { entity, event ->
-                reduce<SmartLock.State.Known>(entity = entity, event = event)
+                reduce<Light.State.Known>(entity = entity, event = event)
             },
         )
 
-    override fun SmartLock.update(state: SmartLock.State): SmartLock =
+    override fun Light.update(state: Light.State): Light =
         copy(state = state)
 }

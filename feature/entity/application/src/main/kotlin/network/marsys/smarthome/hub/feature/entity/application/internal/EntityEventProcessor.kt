@@ -3,10 +3,10 @@ package network.marsys.smarthome.hub.feature.entity.application.internal
 import io.github.oshai.kotlinlogging.KotlinLogging
 import network.marsys.smarthome.domain.capability.with
 import network.marsys.smarthome.domain.entity.Entity
-import network.marsys.smarthome.hub.feature.entity.application.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityUpdatePublisher
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
+import network.marsys.smarthome.hub.feature.entity.domain.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered

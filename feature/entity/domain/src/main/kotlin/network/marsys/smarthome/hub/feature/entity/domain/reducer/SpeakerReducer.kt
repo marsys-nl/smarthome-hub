@@ -1,30 +1,30 @@
-package network.marsys.smarthome.hub.feature.entity.application.reducer
+package network.marsys.smarthome.hub.feature.entity.domain.reducer
 
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
-import network.marsys.smarthome.domain.entity.Thermostat
+import network.marsys.smarthome.domain.entity.Speaker
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
-internal object ThermostatReducer : EntityReducer<Thermostat, Thermostat.State, Thermostat.State.Known, Thermostat.State.Unknown>() {
+internal object SpeakerReducer : EntityReducer<Speaker, Speaker.State, Speaker.State.Known, Speaker.State.Unknown>() {
     override fun createUnknownState() =
-        Thermostat.State.Unknown
+        Speaker.State.Unknown
 
     override fun reduce(
         identifier: EntityIdentifier,
         naming: EntityNaming,
         history: Collection<Event>,
-    ): Thermostat = history
+    ): Speaker = history
         .fold(
-            initial = Thermostat(
+            initial = Speaker(
                 identifier = identifier,
                 naming = naming,
                 state = createUnknownState(),
             ),
             operation = { entity, event ->
-                reduce<Thermostat.State.Known>(entity = entity, event = event)
+                reduce<Speaker.State.Known>(entity = entity, event = event)
             },
         )
 
-    override fun Thermostat.update(state: Thermostat.State): Thermostat =
+    override fun Speaker.update(state: Speaker.State): Speaker =
         copy(state = state)
 }

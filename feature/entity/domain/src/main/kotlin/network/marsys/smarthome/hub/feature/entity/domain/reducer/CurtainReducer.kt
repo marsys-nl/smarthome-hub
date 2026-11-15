@@ -1,4 +1,4 @@
-package network.marsys.smarthome.hub.feature.entity.application.reducer
+package network.marsys.smarthome.hub.feature.entity.domain.reducer
 
 import network.marsys.smarthome.domain.entity.Curtain
 import network.marsys.smarthome.domain.entity.EntityIdentifier

@@ -1,30 +1,30 @@
-package network.marsys.smarthome.hub.feature.entity.application.reducer
+package network.marsys.smarthome.hub.feature.entity.domain.reducer
 
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
-import network.marsys.smarthome.domain.entity.System
+import network.marsys.smarthome.domain.entity.Shutter
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
-internal object SystemReducer : EntityReducer<System, System.State, System.State.Known, System.State.Unknown>() {
+internal object ShutterReducer : EntityReducer<Shutter, Shutter.State, Shutter.State.Known, Shutter.State.Unknown>() {
     override fun createUnknownState() =
-        System.State.Unknown
+        Shutter.State.Unknown
 
     override fun reduce(
         identifier: EntityIdentifier,
         naming: EntityNaming,
         history: Collection<Event>,
-    ): System = history
+    ): Shutter = history
         .fold(
-            initial = System(
+            initial = Shutter(
                 identifier = identifier,
                 naming = naming,
                 state = createUnknownState(),
             ),
             operation = { entity, event ->
-                reduce<System.State.Known>(entity = entity, event = event)
+                reduce<Shutter.State.Known>(entity = entity, event = event)
             },
         )
 
-    override fun System.update(state: System.State): System =
+    override fun Shutter.update(state: Shutter.State): Shutter =
         copy(state = state)
 }

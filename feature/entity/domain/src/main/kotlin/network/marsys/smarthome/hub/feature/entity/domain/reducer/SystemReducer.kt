@@ -1,30 +1,30 @@
-package network.marsys.smarthome.hub.feature.entity.application.reducer
+package network.marsys.smarthome.hub.feature.entity.domain.reducer
 
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
-import network.marsys.smarthome.domain.entity.Fan
+import network.marsys.smarthome.domain.entity.System
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
-internal object FanReducer : EntityReducer<Fan, Fan.State, Fan.State.Known, Fan.State.Unknown>() {
+internal object SystemReducer : EntityReducer<System, System.State, System.State.Known, System.State.Unknown>() {
     override fun createUnknownState() =
-        Fan.State.Unknown
+        System.State.Unknown
 
     override fun reduce(
         identifier: EntityIdentifier,
         naming: EntityNaming,
         history: Collection<Event>,
-    ): Fan = history
+    ): System = history
         .fold(
-            initial = Fan(
+            initial = System(
                 identifier = identifier,
                 naming = naming,
                 state = createUnknownState(),
             ),
             operation = { entity, event ->
-                reduce<Fan.State.Known>(entity = entity, event = event)
+                reduce<System.State.Known>(entity = entity, event = event)
             },
         )
 
-    override fun Fan.update(state: Fan.State): Fan =
+    override fun System.update(state: System.State): System =
         copy(state = state)
 }

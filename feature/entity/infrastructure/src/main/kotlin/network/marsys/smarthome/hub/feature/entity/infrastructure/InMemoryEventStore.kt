@@ -4,9 +4,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.marsys.smarthome.domain.entity.Entity
 import network.marsys.smarthome.domain.entity.EntityIdentifier
-import network.marsys.smarthome.hub.feature.entity.application.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.GetEntities
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
+import network.marsys.smarthome.hub.feature.entity.domain.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
 class InMemoryEventStore : EventStore, GetEntities {
