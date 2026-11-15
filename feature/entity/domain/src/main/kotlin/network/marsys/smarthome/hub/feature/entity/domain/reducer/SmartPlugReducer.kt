@@ -1,30 +1,30 @@
-package network.marsys.smarthome.hub.feature.entity.application.reducer
+package network.marsys.smarthome.hub.feature.entity.domain.reducer
 
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
-import network.marsys.smarthome.domain.entity.Speaker
+import network.marsys.smarthome.domain.entity.SmartPlug
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
-internal object SpeakerReducer : EntityReducer<Speaker, Speaker.State, Speaker.State.Known, Speaker.State.Unknown>() {
+internal object SmartPlugReducer : EntityReducer<SmartPlug, SmartPlug.State, SmartPlug.State.Known, SmartPlug.State.Unknown>() {
     override fun createUnknownState() =
-        Speaker.State.Unknown
+        SmartPlug.State.Unknown
 
     override fun reduce(
         identifier: EntityIdentifier,
         naming: EntityNaming,
         history: Collection<Event>,
-    ): Speaker = history
+    ): SmartPlug = history
         .fold(
-            initial = Speaker(
+            initial = SmartPlug(
                 identifier = identifier,
                 naming = naming,
                 state = createUnknownState(),
             ),
             operation = { entity, event ->
-                reduce<Speaker.State.Known>(entity = entity, event = event)
+                reduce<SmartPlug.State.Known>(entity = entity, event = event)
             },
         )
 
-    override fun Speaker.update(state: Speaker.State): Speaker =
+    override fun SmartPlug.update(state: SmartPlug.State): SmartPlug =
         copy(state = state)
 }

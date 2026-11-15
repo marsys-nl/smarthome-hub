@@ -1,30 +1,30 @@
-package network.marsys.smarthome.hub.feature.entity.application.reducer
+package network.marsys.smarthome.hub.feature.entity.domain.reducer
 
+import network.marsys.smarthome.domain.entity.Blind
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
-import network.marsys.smarthome.domain.entity.SmartPlug
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
-internal object SmartPlugReducer : EntityReducer<SmartPlug, SmartPlug.State, SmartPlug.State.Known, SmartPlug.State.Unknown>() {
+internal object BlindReducer : EntityReducer<Blind, Blind.State, Blind.State.Known, Blind.State.Unknown>() {
     override fun createUnknownState() =
-        SmartPlug.State.Unknown
+        Blind.State.Unknown
 
     override fun reduce(
         identifier: EntityIdentifier,
         naming: EntityNaming,
         history: Collection<Event>,
-    ): SmartPlug = history
+    ): Blind = history
         .fold(
-            initial = SmartPlug(
+            initial = Blind(
                 identifier = identifier,
                 naming = naming,
                 state = createUnknownState(),
             ),
             operation = { entity, event ->
-                reduce<SmartPlug.State.Known>(entity = entity, event = event)
+                reduce<Blind.State.Known>(entity = entity, event = event)
             },
         )
 
-    override fun SmartPlug.update(state: SmartPlug.State): SmartPlug =
+    override fun Blind.update(state: Blind.State): Blind =
         copy(state = state)
 }

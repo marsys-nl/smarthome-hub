@@ -1,30 +1,30 @@
-package network.marsys.smarthome.hub.feature.entity.application.reducer
+package network.marsys.smarthome.hub.feature.entity.domain.reducer
 
-import network.marsys.smarthome.domain.entity.Blind
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
+import network.marsys.smarthome.domain.entity.Thermostat
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
-internal object BlindReducer : EntityReducer<Blind, Blind.State, Blind.State.Known, Blind.State.Unknown>() {
+internal object ThermostatReducer : EntityReducer<Thermostat, Thermostat.State, Thermostat.State.Known, Thermostat.State.Unknown>() {
     override fun createUnknownState() =
-        Blind.State.Unknown
+        Thermostat.State.Unknown
 
     override fun reduce(
         identifier: EntityIdentifier,
         naming: EntityNaming,
         history: Collection<Event>,
-    ): Blind = history
+    ): Thermostat = history
         .fold(
-            initial = Blind(
+            initial = Thermostat(
                 identifier = identifier,
                 naming = naming,
                 state = createUnknownState(),
             ),
             operation = { entity, event ->
-                reduce<Blind.State.Known>(entity = entity, event = event)
+                reduce<Thermostat.State.Known>(entity = entity, event = event)
             },
         )
 
-    override fun Blind.update(state: Blind.State): Blind =
+    override fun Thermostat.update(state: Thermostat.State): Thermostat =
         copy(state = state)
 }

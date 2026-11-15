@@ -1,4 +1,4 @@
-package network.marsys.smarthome.hub.feature.entity.application
+package network.marsys.smarthome.hub.feature.entity.domain
 
 import de.infix.testBalloon.framework.core.testSuite
 import dev.nmarsman.expect.api.expectThat
