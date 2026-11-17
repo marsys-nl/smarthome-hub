@@ -44,8 +44,14 @@ kover {
                 // Exclude main entry point — tested indirectly via integration tests
                 classes("network.marsys.smarthome.hub.ApplicationKt*")
 
+                // Exclude fake implementations that are temporary.
+                classes("network.marsys.smarthome.hub.feature.integration.infrastructure.FakeIntegrationAdapter*")
+
                 // Don't include dependency injection code in coverage reports
-                classes("*.di.*")
+                classes(
+                    "*.di.*",
+                    $$$"*$$inlined$inject$default*",
+                )
             }
         }
 
