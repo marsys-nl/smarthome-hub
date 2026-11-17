@@ -15,6 +15,9 @@ dependencies {
 
     implementation(libs.bundles.kotlin.logging)
 
+    implementation(project.dependencies.platform(libs.koin.bom))
+    implementation(libs.koin.core)
+
     implementation(libs.smarthome.domain)
 
     testImplementation(libs.kotlin.expect.core)

@@ -17,7 +17,6 @@ fun interface ProcessEntityEvent {
                 data object CapabilityNotPresent : Reason
                 data object NotDiscovered : Reason
                 data object NotProvisioned : Reason
-                data object Unsupported : Reason
             }
         }
     }
