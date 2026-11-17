@@ -1,8 +1,7 @@
 package network.marsys.smarthome.hub.feature.entity.infrastructure.di
 
-import network.marsys.smarthome.hub.feature.entity.application.internal.processEntityEvent
+import network.marsys.smarthome.hub.feature.entity.application.di.entityApplicationModule
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.GetEntities
-import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityUpdatePublisher
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
 import network.marsys.smarthome.hub.feature.entity.infrastructure.InMemoryEventStore
@@ -17,10 +16,5 @@ fun entityFeatureModule(): Module = module {
     singleOf(::InMemoryEventStore) binds arrayOf(EventStore::class, GetEntities::class)
     singleOf(::PlatformEntityUpdatePublisher) bind EntityUpdatePublisher::class
 
-    single<ProcessEntityEvent> {
-        processEntityEvent(
-            store = get(),
-            publisher = get(),
-        )
-    }
+    includes(entityApplicationModule())
 }

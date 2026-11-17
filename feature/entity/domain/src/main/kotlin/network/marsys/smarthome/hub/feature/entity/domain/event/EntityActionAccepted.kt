@@ -7,7 +7,7 @@ import kotlin.time.Instant
 data class EntityActionAccepted(
     val action: Entity.Action,
     override val occurredAt: Instant,
-) : Event {
+) : EntityActionEvent {
     override val identifier: EntityIdentifier
         get() = action.entity
 }

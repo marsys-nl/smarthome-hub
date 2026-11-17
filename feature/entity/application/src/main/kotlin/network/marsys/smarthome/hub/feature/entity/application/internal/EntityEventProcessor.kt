@@ -16,14 +16,6 @@ import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 
 private val logger = KotlinLogging.logger {}
 
-fun processEntityEvent(
-    store: EventStore,
-    publisher: EntityUpdatePublisher,
-): ProcessEntityEvent = EntityEventProcessor(
-    store = store,
-    publisher = publisher,
-)
-
 internal class EntityEventProcessor(
     private val store: EventStore,
     private val publisher: EntityUpdatePublisher,

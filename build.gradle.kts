@@ -43,6 +43,9 @@ kover {
             excludes {
                 // Exclude main entry point — tested indirectly via integration tests
                 classes("network.marsys.smarthome.hub.ApplicationKt*")
+
+                // Don't include dependency injection code in coverage reports
+                classes("*.di.*")
             }
         }
 

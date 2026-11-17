@@ -4,7 +4,6 @@ import de.infix.testBalloon.framework.core.testSuite
 import dev.nmarsman.expect.api.expectThat
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isFalse
-import dev.nmarsman.expect.assertions.isTrue
 import network.marsys.smarthome.domain.capability.Capability
 import network.marsys.smarthome.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.domain.capability.Capability.Companion.required
