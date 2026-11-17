@@ -25,12 +25,12 @@ import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.Pro
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityUpdatePublisher
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
-import kotlin.collections.first
-import kotlin.collections.getOrPut
+import kotlin.time.Clock
 
 val EntityEventProcessorTest by testSuite(
     name = "Entity event processor tests",
@@ -440,6 +440,37 @@ val EntityEventProcessorTest by testSuite(
             )
 
             val result = processor.invoke(becameUnavailable)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Ignored>()
+
+            expectThat(publisher.updates)
+                .isEmpty()
+        }
+    }
+
+    testSuite(
+        name = "Processing action related events",
+    ) {
+        test(name = "Processing an action accepted event gets ignored.") {
+            val store = FakeEventStore(
+                history = listOf(provisioned),
+            )
+
+            val publisher = RecordingEntityUpdatePublisher()
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = publisher,
+            )
+
+            val event = EntityActionAccepted(
+                action = OnOff.Toggle.On(
+                    entity = identifier,
+                ),
+                occurredAt = Clock.System.now(),
+            )
+
+            val result = processor.invoke(event = event)
 
             expectThat(result)
                 .isA<ProcessEntityEvent.Result.Ignored>()

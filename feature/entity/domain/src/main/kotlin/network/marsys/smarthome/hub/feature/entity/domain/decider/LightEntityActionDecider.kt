@@ -6,45 +6,46 @@ import network.marsys.smarthome.domain.capability.OnOff
 import network.marsys.smarthome.domain.entity.Entity
 import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.EntityActionDecision
+import network.marsys.smarthome.hub.feature.entity.domain.EntityActionValidation
 
-object LightEntityActionDecider : EntityActionDecider<Light> {
+internal object LightEntityActionDecider : EntityActionDecider<Light> {
     override fun apply(
         entity: Light,
         action: Entity.Action,
-    ): EntityActionDecision = when (val state = entity.state as Light.State) {
+    ): EntityActionValidation = when (val state = entity.state as Light.State) {
         is Light.State.Known -> apply(state, action)
         is Light.State.Unknown -> apply(action)
     }
 
-    private fun apply(state: Light.State.Known, action: Entity.Action): EntityActionDecision =
+    private fun apply(state: Light.State.Known, action: Entity.Action): EntityActionValidation =
         when (action) {
             is Brightness.SetBrightness if state.brightness is Capability.Present<*> ->
-                EntityActionDecision.Accepted
+                EntityActionValidation.Accepted
 
             is OnOff.Toggle if state.onOff.value.current == (action is OnOff.Toggle.Off) ->
-                EntityActionDecision.Accepted
+                EntityActionValidation.Accepted
 
             is OnOff.Toggle ->
-                EntityActionDecision.Rejected(
+                EntityActionValidation.Rejected(
                     reason = EntityActionDecision.Reason.DuplicateState,
                 )
 
             else ->
-                EntityActionDecision.Rejected(
+                EntityActionValidation.Rejected(
                     reason = EntityActionDecision.Reason.Unsupported,
                 )
         }
 
-    private fun apply(action: Entity.Action): EntityActionDecision =
+    private fun apply(action: Entity.Action): EntityActionValidation =
         when (action) {
             is Brightness.SetBrightness ->
-                EntityActionDecision.Accepted
+                EntityActionValidation.Accepted
 
             is OnOff.Toggle ->
-                EntityActionDecision.Accepted
+                EntityActionValidation.Accepted
 
             else ->
-                EntityActionDecision.Rejected(
+                EntityActionValidation.Rejected(
                     reason = EntityActionDecision.Reason.Unsupported,
                 )
         }
