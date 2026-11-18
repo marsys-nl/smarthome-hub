@@ -12,7 +12,6 @@ import network.marsys.smarthome.domain.capability.OnOff
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.domain.entity.naming
-import network.marsys.smarthome.domain.zone.Zone
 import network.marsys.smarthome.hub.feature.entity.domain.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.domain.action.PendingAction
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted

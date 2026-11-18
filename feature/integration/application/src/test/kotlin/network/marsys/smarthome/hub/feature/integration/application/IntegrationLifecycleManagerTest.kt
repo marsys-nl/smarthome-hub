@@ -6,6 +6,7 @@ import dev.nmarsman.expect.api.expectThat
 import dev.nmarsman.expect.api.expectThrows
 import dev.nmarsman.expect.assertions.all
 import dev.nmarsman.expect.assertions.hasMessage
+import dev.nmarsman.expect.assertions.isEmpty
 import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.map
 import kotlinx.coroutines.flow.Flow
@@ -230,6 +231,27 @@ val IntegrationLifecycleManagerTest by testSuite(
         expectThat(integrations)
             .map { it.status.value }
             .all { isEqualTo(Integration.Status.Stopped) }
+    }
+
+    testSuite(
+        name = "Querying integrations",
+    ) {
+        test(name = "Querying all integrations without any integrations should return an empty list") {
+            val manager = IntegrationLifecycleManager(emptyList())
+
+            expectThat(manager.all())
+                .isEmpty()
+        }
+
+        for (count in 1..5) {
+            test(name = "Querying all integrations with $count integrations should return a list of $count integrations") {
+                val integrations = List(count) { FakeIntegration() }
+                val manager = IntegrationLifecycleManager(integrations)
+
+                expectThat(manager.all())
+                    .isEqualTo(integrations)
+            }
+        }
     }
 }
 
