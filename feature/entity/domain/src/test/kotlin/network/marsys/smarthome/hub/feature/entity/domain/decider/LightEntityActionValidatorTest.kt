@@ -14,8 +14,9 @@ import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.domain.EntityActionDecision
+import network.marsys.smarthome.hub.feature.entity.domain.EntityActionValidation
 
-val LightEntityActionDeciderTest by testSuite(
+val LightEntityActionValidatorTest by testSuite(
     name = "Light entity action decider tests",
 ) {
     test(name = "Toggling a light entity off should return an accepted decision when state is known") {
@@ -32,8 +33,8 @@ val LightEntityActionDeciderTest by testSuite(
             ),
         )
 
-        expectThat(EntityActionDecider.apply(entity, action))
-            .isA<EntityActionDecision.Accepted>()
+        expectThat(EntityActionValidator.validate(entity, action))
+            .isA<EntityActionValidation.Accepted>()
     }
 
     test(name = "Toggling a light entity on should return an accepted decision when state is known") {
@@ -50,8 +51,8 @@ val LightEntityActionDeciderTest by testSuite(
             ),
         )
 
-        expectThat(EntityActionDecider.apply(entity, action))
-            .isA<EntityActionDecision.Accepted>()
+        expectThat(EntityActionValidator.validate(entity, action))
+            .isA<EntityActionValidation.Accepted>()
     }
 
     test(name = "Toggling a light entity off should return a rejected decision when light is already off") {
@@ -68,9 +69,9 @@ val LightEntityActionDeciderTest by testSuite(
             ),
         )
 
-        expectThat(EntityActionDecider.apply(entity, action))
-            .isA<EntityActionDecision.Rejected>()
-            .get(EntityActionDecision.Rejected::reason)
+        expectThat(EntityActionValidator.validate(entity, action))
+            .isA<EntityActionValidation.Rejected>()
+            .get(EntityActionValidation.Rejected::reason)
             .isA<EntityActionDecision.Reason.DuplicateState>()
     }
 
@@ -88,9 +89,9 @@ val LightEntityActionDeciderTest by testSuite(
             ),
         )
 
-        expectThat(EntityActionDecider.apply(entity, action))
-            .isA<EntityActionDecision.Rejected>()
-            .get(EntityActionDecision.Rejected::reason)
+        expectThat(EntityActionValidator.validate(entity, action))
+            .isA<EntityActionValidation.Rejected>()
+            .get(EntityActionValidation.Rejected::reason)
             .isA<EntityActionDecision.Reason.DuplicateState>()
     }
 
@@ -109,8 +110,8 @@ val LightEntityActionDeciderTest by testSuite(
             ),
         )
 
-        expectThat(EntityActionDecider.apply(entity, action))
-            .isA<EntityActionDecision.Accepted>()
+        expectThat(EntityActionValidator.validate(entity, action))
+            .isA<EntityActionValidation.Accepted>()
     }
 
     test(name = "Setting the brightness of a light entity should return a rejected decision when brightness is unsupported") {
@@ -128,9 +129,9 @@ val LightEntityActionDeciderTest by testSuite(
             ),
         )
 
-        expectThat(EntityActionDecider.apply(entity, action))
-            .isA<EntityActionDecision.Rejected>()
-            .get(EntityActionDecision.Rejected::reason)
+        expectThat(EntityActionValidator.validate(entity, action))
+            .isA<EntityActionValidation.Rejected>()
+            .get(EntityActionValidation.Rejected::reason)
             .isA<EntityActionDecision.Reason.Unsupported>()
     }
 
@@ -145,8 +146,8 @@ val LightEntityActionDeciderTest by testSuite(
             state = Light.State.Unknown,
         )
 
-        expectThat(EntityActionDecider.apply(entity, action))
-            .isA<EntityActionDecision.Accepted>()
+        expectThat(EntityActionValidator.validate(entity, action))
+            .isA<EntityActionValidation.Accepted>()
     }
 
     test(name = "Setting the brightness of a light entity should return an accepted decision when state is unknown") {
@@ -161,8 +162,8 @@ val LightEntityActionDeciderTest by testSuite(
             state = Light.State.Unknown,
         )
 
-        expectThat(EntityActionDecider.apply(entity, action))
-            .isA<EntityActionDecision.Accepted>()
+        expectThat(EntityActionValidator.validate(entity, action))
+            .isA<EntityActionValidation.Accepted>()
     }
 
     test(name = "Setting the target temperature of a light entity should return an rejected decision when state is unknown") {
@@ -177,9 +178,9 @@ val LightEntityActionDeciderTest by testSuite(
             state = Light.State.Unknown,
         )
 
-        expectThat(EntityActionDecider.apply(entity, action))
-            .isA<EntityActionDecision.Rejected>()
-            .get(EntityActionDecision.Rejected::reason)
+        expectThat(EntityActionValidator.validate(entity, action))
+            .isA<EntityActionValidation.Rejected>()
+            .get(EntityActionValidation.Rejected::reason)
             .isA<EntityActionDecision.Reason.Unsupported>()
     }
 }

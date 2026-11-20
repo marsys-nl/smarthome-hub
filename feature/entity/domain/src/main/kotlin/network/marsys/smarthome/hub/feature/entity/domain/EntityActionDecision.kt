@@ -12,6 +12,7 @@ sealed interface EntityActionDecision {
     ) : EntityActionDecision
 
     sealed interface Reason {
+        data object DuplicateAction : Reason
         data object DuplicateState : Reason
         data object MismatchedEntity : Reason
         data object Unsupported : Reason

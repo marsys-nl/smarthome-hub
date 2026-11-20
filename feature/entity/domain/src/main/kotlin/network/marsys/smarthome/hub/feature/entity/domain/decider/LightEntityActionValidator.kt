@@ -8,8 +8,8 @@ import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.hub.feature.entity.domain.EntityActionDecision
 import network.marsys.smarthome.hub.feature.entity.domain.EntityActionValidation
 
-internal object LightEntityActionDecider : EntityActionDecider<Light> {
-    override fun apply(
+internal object LightEntityActionValidator : EntityActionValidator<Light> {
+    override fun validate(
         entity: Light,
         action: Entity.Action,
     ): EntityActionValidation = when (val state = entity.state as Light.State) {
