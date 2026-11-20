@@ -9,6 +9,7 @@ import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.Ev
 import network.marsys.smarthome.hub.feature.entity.domain.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionEvent
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
@@ -70,7 +71,7 @@ internal class EntityEventProcessor(
 
         return context(with = aggregate) {
             when (event) {
-                is EntityActionAccepted -> ProcessEntityEvent.Result.Ignored
+                is EntityActionEvent -> ProcessEntityEvent.Result.Ignored
 
                 is EntityProvisioned -> ProcessEntityEvent.Result.Rejected(
                     reason = ProcessEntityEvent.Result.Rejected.Reason.AlreadyProvisioned,

@@ -15,7 +15,7 @@ import network.marsys.smarthome.domain.entity.Speaker
 import network.marsys.smarthome.domain.entity.System
 import network.marsys.smarthome.domain.entity.Thermostat
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
-import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionEvent
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
@@ -66,7 +66,7 @@ internal abstract class EntityReducer<E : Entity, S : Entity.State, K, U>
         return entity.update(
             state = context(with = entity) {
                 when (event) {
-                    is EntityActionAccepted -> entity.state
+                    is EntityActionEvent -> entity.state
                     is CapabilityUpdated -> handle(event = event)
                     is EntityDiscovered -> handle<T>(event = event)
                     is EntityBecameUnavailable -> handle(event = event)
