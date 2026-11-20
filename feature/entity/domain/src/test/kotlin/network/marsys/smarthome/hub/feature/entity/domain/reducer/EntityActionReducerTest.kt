@@ -15,6 +15,8 @@ import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.hub.feature.entity.domain.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.domain.action.PendingAction
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionCompleted
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionFailed
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import kotlin.time.Clock
@@ -46,6 +48,141 @@ val EntityActionReducerTest by testSuite(
                     entity = EntityIdentifier("light.living-room"),
                 ),
                 acceptedAt = instant,
+            ),
+        )
+
+        expectThat(EntityActionReducer.reduce(history = events))
+            .isEqualTo(expected)
+    }
+
+    test(name = "Reducing a history of entity action events doesn't report completed actions") {
+        val instant = Clock.System.now()
+
+        val events = listOf(
+            EntityActionAccepted(
+                action = OnOff.Toggle.On(
+                    entity = EntityIdentifier("light.living-room"),
+                ),
+                occurredAt = instant.minus(1.minutes),
+            ),
+            EntityActionCompleted(
+                accepted = EntityActionAccepted(
+                    action = OnOff.Toggle.On(
+                        entity = EntityIdentifier("light.living-room"),
+                    ),
+                    occurredAt = instant.minus(1.minutes),
+                ),
+                occurredAt = instant,
+            ),
+        )
+
+        expectThat(EntityActionReducer.reduce(history = events))
+            .isEqualTo(emptyList())
+    }
+
+    test(name = "Reducing a history of entity action events doesn't report failed actions") {
+        val instant = Clock.System.now()
+
+        val events = listOf(
+            EntityActionAccepted(
+                action = OnOff.Toggle.On(
+                    entity = EntityIdentifier("light.living-room"),
+                ),
+                occurredAt = instant.minus(1.minutes),
+            ),
+            EntityActionFailed(
+                accepted = EntityActionAccepted(
+                    action = OnOff.Toggle.On(
+                        entity = EntityIdentifier("light.living-room"),
+                    ),
+                    occurredAt = instant.minus(1.minutes),
+                ),
+                reason = EntityActionFailed.Reason.Timeout,
+                occurredAt = instant,
+            ),
+        )
+
+        expectThat(EntityActionReducer.reduce(history = events))
+            .isEqualTo(emptyList())
+    }
+
+    test(name = "Earlier completed entity action events can be readded") {
+        val instant = Clock.System.now()
+
+        val events = listOf(
+            EntityActionAccepted(
+                action = OnOff.Toggle.On(
+                    entity = EntityIdentifier("light.living-room"),
+                ),
+                occurredAt = instant.minus(2.minutes),
+            ),
+            EntityActionCompleted(
+                accepted = EntityActionAccepted(
+                    action = OnOff.Toggle.On(
+                        entity = EntityIdentifier("light.living-room"),
+                    ),
+                    occurredAt = instant.minus(2.minutes),
+                ),
+                occurredAt = instant.minus(1.minutes),
+            ),
+            EntityActionAccepted(
+                action = OnOff.Toggle.On(
+                    entity = EntityIdentifier("light.living-room"),
+                ),
+                occurredAt = instant,
+            ),
+        )
+
+        val expected = listOf(
+            PendingAction(
+                action = OnOff.Toggle.On(
+                    entity = EntityIdentifier("light.living-room"),
+                ),
+                acceptedAt = instant,
+            ),
+        )
+
+        expectThat(EntityActionReducer.reduce(history = events))
+            .isEqualTo(expected)
+    }
+
+    test(name = "Reducing a history of entity action events ignores unrelated completed an failed events") {
+        val instant = Clock.System.now()
+
+        val events = listOf(
+            EntityActionAccepted(
+                action = OnOff.Toggle.On(
+                    entity = EntityIdentifier("light.living-room"),
+                ),
+                occurredAt = instant.minus(1.minutes),
+            ),
+            EntityActionCompleted(
+                accepted = EntityActionAccepted(
+                    action = OnOff.Toggle.On(
+                        entity = EntityIdentifier("light.kitchen"),
+                    ),
+                    occurredAt = instant.minus(1.minutes),
+                ),
+                occurredAt = instant,
+            ),
+            EntityActionFailed(
+                accepted = EntityActionAccepted(
+                    action = OnOff.Toggle.On(
+                        entity = EntityIdentifier("light.kitchen"),
+                    ),
+                    occurredAt = instant.minus(1.minutes),
+                ),
+                reason = EntityActionFailed.Reason.Timeout,
+                occurredAt = instant,
+            ),
+        )
+
+        val expected = listOf(
+            PendingAction(
+                action = OnOff.Toggle.On(
+                    entity = EntityIdentifier("light.living-room"),
+                ),
+                acceptedAt = instant.minus(1.minutes),
             ),
         )
 
