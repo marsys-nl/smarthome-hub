@@ -9,8 +9,9 @@ import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.domain.entity.Speaker
 import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.hub.feature.entity.domain.EntityActionDecision
+import network.marsys.smarthome.hub.feature.entity.domain.EntityActionValidation
 
-val EntityActionDeciderTest by testSuite(
+val EntityActionValidatorTest by testSuite(
     name = "Entity action decider tests",
 ) {
     test(
@@ -27,9 +28,9 @@ val EntityActionDeciderTest by testSuite(
             state = Light.State.Unknown,
         )
 
-        expectThat(EntityActionDecider.apply(entity, action))
-            .isA<EntityActionDecision.Rejected>()
-            .get(EntityActionDecision.Rejected::reason)
+        expectThat(EntityActionValidator.validate(entity, action))
+            .isA<EntityActionValidation.Rejected>()
+            .get(EntityActionValidation.Rejected::reason)
             .isA<EntityActionDecision.Reason.MismatchedEntity>()
     }
 
@@ -47,9 +48,9 @@ val EntityActionDeciderTest by testSuite(
             state = Speaker.State.Unknown,
         )
 
-        expectThat(EntityActionDecider.apply(entity, action))
-            .isA<EntityActionDecision.Rejected>()
-            .get(EntityActionDecision.Rejected::reason)
+        expectThat(EntityActionValidator.validate(entity, action))
+            .isA<EntityActionValidation.Rejected>()
+            .get(EntityActionValidation.Rejected::reason)
             .isA<EntityActionDecision.Reason.Unsupported>()
     }
 }
