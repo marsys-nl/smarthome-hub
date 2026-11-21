@@ -97,7 +97,6 @@ val EntityActionReducerTest by testSuite(
                     ),
                     occurredAt = instant.minus(1.minutes),
                 ),
-                reason = EntityActionFailed.Reason.Timeout,
                 occurredAt = instant,
             ),
         )
@@ -172,7 +171,6 @@ val EntityActionReducerTest by testSuite(
                     ),
                     occurredAt = instant.minus(1.minutes),
                 ),
-                reason = EntityActionFailed.Reason.Timeout,
                 occurredAt = instant,
             ),
         )

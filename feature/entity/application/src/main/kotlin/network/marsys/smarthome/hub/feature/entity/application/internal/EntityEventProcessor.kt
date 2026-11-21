@@ -10,6 +10,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionEvent
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionFinished
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
@@ -71,35 +72,29 @@ internal class EntityEventProcessor(
 
         return context(with = aggregate) {
             when (event) {
-                is EntityActionEvent -> ProcessEntityEvent.Result.Ignored
+                is CapabilityUpdated -> context(with = event) {
+                    processCapabilityUpdated()
+                }
 
-                is EntityProvisioned -> ProcessEntityEvent.Result.Rejected(
-                    reason = ProcessEntityEvent.Result.Rejected.Reason.AlreadyProvisioned,
-                )
+                is EntityActionAccepted -> ProcessEntityEvent.Result.Ignored
 
-                is EntityDiscovered ->
-                    processEntityDiscovered()
+                is EntityActionFinished -> context(with = event) {
+                    processEntityActionEvent()
+                }
 
                 is EntityBecameUnavailable ->
                     processEntityBecameUnavailable()
 
-                is CapabilityUpdated -> context(with = event) {
-                    processCapabilityUpdated()
-                }
+                is EntityDiscovered ->
+                    processEntityDiscovered()
+
+                is EntityProvisioned -> ProcessEntityEvent.Result.Rejected(
+                    reason = ProcessEntityEvent.Result.Rejected.Reason.AlreadyProvisioned,
+                )
             }
         }
     } catch (_: IllegalStateException) {
         ProcessEntityEvent.Result.Ignored
-    }
-
-    context(_: EntityAggregate)
-    private fun processEntityDiscovered(): ProcessEntityEvent.Result =
-        ProcessEntityEvent.Result.Accepted
-
-    context(aggregate: EntityAggregate)
-    private fun processEntityBecameUnavailable(): ProcessEntityEvent.Result = when (aggregate.entity.state) {
-        is Entity.State.Unknown -> ProcessEntityEvent.Result.Ignored
-        is Entity.State.Known -> ProcessEntityEvent.Result.Accepted
     }
 
     context(aggregate: EntityAggregate, event: CapabilityUpdated)
@@ -119,5 +114,25 @@ internal class EntityEventProcessor(
                 else -> ProcessEntityEvent.Result.Accepted
             }
         }
+    }
+
+    context(aggregate: EntityAggregate, event: EntityActionFinished)
+    private fun processEntityActionEvent(): ProcessEntityEvent.Result = when {
+        aggregate.pending.any {
+            it.action == event.accepted.action &&
+                it.acceptedAt == event.accepted.occurredAt
+        } -> ProcessEntityEvent.Result.Accepted
+
+        else -> ProcessEntityEvent.Result.Ignored
+    }
+
+    context(_: EntityAggregate)
+    private fun processEntityDiscovered(): ProcessEntityEvent.Result =
+        ProcessEntityEvent.Result.Accepted
+
+    context(aggregate: EntityAggregate)
+    private fun processEntityBecameUnavailable(): ProcessEntityEvent.Result = when (aggregate.entity.state) {
+        is Entity.State.Unknown -> ProcessEntityEvent.Result.Ignored
+        is Entity.State.Known -> ProcessEntityEvent.Result.Accepted
     }
 }

@@ -26,11 +26,14 @@ import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.En
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionCompleted
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionFailed
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.minutes
 
 val EntityEventProcessorTest by testSuite(
     name = "Entity event processor tests",
@@ -477,6 +480,136 @@ val EntityEventProcessorTest by testSuite(
 
             expectThat(publisher.updates)
                 .isEmpty()
+        }
+
+        test(name = "Processing an action completed event gets accepted when there is a matching pending action.") {
+            val instant = Clock.System.now()
+            val accepted = EntityActionAccepted(
+                action = OnOff.Toggle.On(
+                    entity = identifier,
+                ),
+                occurredAt = instant.minus(1.minutes),
+            )
+
+            val store = FakeEventStore(
+                history = listOf(
+                    provisioned,
+                    accepted,
+                ),
+            )
+
+            val publisher = RecordingEntityUpdatePublisher()
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = publisher,
+            )
+
+            val event = EntityActionCompleted(
+                accepted = accepted,
+                occurredAt = instant,
+            )
+
+            val result = processor.invoke(event = event)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Accepted>()
+        }
+
+        test(name = "Processing an action failed event gets accepted when there is a matching pending action.") {
+            val instant = Clock.System.now()
+            val accepted = EntityActionAccepted(
+                action = OnOff.Toggle.On(
+                    entity = identifier,
+                ),
+                occurredAt = instant.minus(1.minutes),
+            )
+
+            val store = FakeEventStore(
+                history = listOf(
+                    provisioned,
+                    accepted,
+                ),
+            )
+
+            val publisher = RecordingEntityUpdatePublisher()
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = publisher,
+            )
+
+            val event = EntityActionFailed(
+                accepted = accepted,
+                occurredAt = instant,
+            )
+
+            val result = processor.invoke(event = event)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Accepted>()
+        }
+
+        test(name = "Processing an action completed event gets ignored when there is no matching pending action.") {
+            val instant = Clock.System.now()
+            val accepted = EntityActionAccepted(
+                action = OnOff.Toggle.On(
+                    entity = identifier,
+                ),
+                occurredAt = instant.minus(1.minutes),
+            )
+
+            val store = FakeEventStore(history = listOf(provisioned))
+            val publisher = RecordingEntityUpdatePublisher()
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = publisher,
+            )
+
+            val event = EntityActionCompleted(
+                accepted = accepted,
+                occurredAt = instant,
+            )
+
+            val result = processor.invoke(event = event)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Ignored>()
+        }
+
+        test(name = "Processing an action failed event gets ignored when there is no matching pending action.") {
+            val instant = Clock.System.now()
+            val accepted = EntityActionAccepted(
+                action = OnOff.Toggle.On(
+                    entity = identifier,
+                ),
+                occurredAt = instant.minus(1.minutes),
+            )
+
+            val store = FakeEventStore(
+                history = listOf(
+                    provisioned,
+                    EntityActionAccepted(
+                        action = OnOff.Toggle.Off(
+                            entity = identifier,
+                        ),
+                        occurredAt = instant.minus(1.minutes),
+                    ),
+                ),
+            )
+            val publisher = RecordingEntityUpdatePublisher()
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = publisher,
+            )
+
+            val event = EntityActionFailed(
+                accepted = accepted,
+                occurredAt = instant,
+            )
+
+            val result = processor.invoke(event = event)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Ignored>()
         }
     }
 }
