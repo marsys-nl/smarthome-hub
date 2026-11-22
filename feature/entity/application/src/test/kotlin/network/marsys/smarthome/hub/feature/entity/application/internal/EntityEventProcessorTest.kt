@@ -21,6 +21,7 @@ import network.marsys.smarthome.domain.entity.EntityNaming
 import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.application.internal.EntityEventProcessor
+import network.marsys.smarthome.hub.feature.entity.application.internal.EntitySynchronization
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityUpdatePublisher
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
@@ -75,6 +76,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(provisioned)
@@ -95,6 +97,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = publisher,
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(discovered)
@@ -114,6 +117,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             processor.invoke(provisioned)
@@ -138,6 +142,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(discovered)
@@ -155,6 +160,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(discovered)
@@ -176,6 +182,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(becameUnavailable)
@@ -195,6 +202,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(becameUnavailable)
@@ -214,6 +222,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(becameUnavailable)
@@ -233,6 +242,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(capabilityUpdated)
@@ -252,6 +262,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(
@@ -280,6 +291,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(capabilityUpdated)
@@ -306,6 +318,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(capabilityUpdated)
@@ -327,6 +340,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(capabilityUpdated)
@@ -348,6 +362,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(becameUnavailable)
@@ -370,6 +385,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = publisher,
+                synchronization = EntitySynchronization(),
             )
 
             expectThat(publisher.updates)
@@ -393,6 +409,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = publisher,
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(capabilityUpdated)
@@ -420,6 +437,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = publisher,
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(discovered)
@@ -440,6 +458,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = publisher,
+                synchronization = EntitySynchronization(),
             )
 
             val result = processor.invoke(becameUnavailable)
@@ -464,6 +483,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = publisher,
+                synchronization = EntitySynchronization(),
             )
 
             val event = EntityActionAccepted(
@@ -502,6 +522,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = publisher,
+                synchronization = EntitySynchronization(),
             )
 
             val event = EntityActionCompleted(
@@ -535,6 +556,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = publisher,
+                synchronization = EntitySynchronization(),
             )
 
             val event = EntityActionFailed(
@@ -562,6 +584,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = publisher,
+                synchronization = EntitySynchronization(),
             )
 
             val event = EntityActionCompleted(
@@ -599,6 +622,7 @@ val EntityEventProcessorTest by testSuite(
             val processor = EntityEventProcessor(
                 store = store,
                 publisher = publisher,
+                synchronization = EntitySynchronization(),
             )
 
             val event = EntityActionFailed(
