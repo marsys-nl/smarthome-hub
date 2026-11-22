@@ -4,9 +4,9 @@ import network.marsys.smarthome.domain.entity.EntityIdentifier
 import kotlin.time.Instant
 
 data class EntityActionCompleted(
-    val accepted: EntityActionAccepted,
+    override val accepted: EntityActionAccepted,
     override val occurredAt: Instant,
-) : EntityActionEvent {
+) : EntityActionFinished {
     override val identifier: EntityIdentifier
         get() = accepted.action.entity
 }
