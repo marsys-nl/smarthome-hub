@@ -1,0 +1,29 @@
+package network.marsys.smarthome.hub.feature.entity.application.internal
+
+import network.marsys.smarthome.domain.entity.Entity
+import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ExecuteEntityAction
+import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
+import network.marsys.smarthome.hub.feature.entity.domain.EntityActionDecision
+import network.marsys.smarthome.hub.feature.entity.domain.EntityAggregate
+
+internal class ExecuteEntityActionImpl(
+    private val store: EventStore,
+    private val synchronization: EntitySynchronization,
+) : ExecuteEntityAction {
+    override suspend fun invoke(action: Entity.Action): Unit =
+        synchronization.withLock(entity = action.entity) {
+            val history = store.load(entity = action.entity)
+
+            if (history.isEmpty()) {
+                return@withLock
+            }
+
+            EntityAggregate(history = history)
+                .apply(action = action)
+                .also { result ->
+                    if (result is EntityActionDecision.Accepted) {
+                        store.append(*result.events.toTypedArray())
+                    }
+                }
+        }
+}

@@ -9,7 +9,6 @@ import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.Ev
 import network.marsys.smarthome.hub.feature.entity.domain.EntityAggregate
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
-import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionEvent
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionFinished
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityBecameUnavailable
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
@@ -21,42 +20,44 @@ private val logger = KotlinLogging.logger {}
 internal class EntityEventProcessor(
     private val store: EventStore,
     private val publisher: EntityUpdatePublisher,
+    private val synchronization: EntitySynchronization,
 ) : ProcessEntityEvent {
-    override suspend fun invoke(event: Event): ProcessEntityEvent.Result {
-        val history = store.load(entity = event.identifier)
+    override suspend fun invoke(event: Event): ProcessEntityEvent.Result =
+        synchronization.withLock(entity = event.identifier) {
+            val history = store.load(entity = event.identifier)
 
-        return process(event = event, history = history)
-            .also { result ->
-                when (result) {
-                    is ProcessEntityEvent.Result.Accepted -> {
-                        store.append(event)
+            process(event = event, history = history)
+                .also { result ->
+                    when (result) {
+                        is ProcessEntityEvent.Result.Accepted -> {
+                            store.append(event)
 
-                        val updated = EntityAggregate(
-                            history = history + event,
-                        )
+                            val updated = EntityAggregate(
+                                history = history + event,
+                            )
 
-                        publisher.publish(
-                            event = event,
-                            entity = updated.entity,
-                        )
-                    }
-
-                    is ProcessEntityEvent.Result.Ignored -> {
-                        logger.debug {
-                            "Event '${event::class.simpleName}' for entity '${event.identifier}' " +
-                                "was ${result::class.simpleName}."
+                            publisher.publish(
+                                event = event,
+                                entity = updated.entity,
+                            )
                         }
-                    }
 
-                    is ProcessEntityEvent.Result.Rejected -> {
-                        logger.warn {
-                            "Event '${event::class.simpleName}' for entity '${event.identifier}' " +
-                                "was ${result::class.simpleName}."
+                        is ProcessEntityEvent.Result.Ignored -> {
+                            logger.debug {
+                                "Event '${event::class.simpleName}' for entity '${event.identifier}' " +
+                                    "was ${result::class.simpleName}."
+                            }
+                        }
+
+                        is ProcessEntityEvent.Result.Rejected -> {
+                            logger.warn {
+                                "Event '${event::class.simpleName}' for entity '${event.identifier}' " +
+                                    "was ${result::class.simpleName}."
+                            }
                         }
                     }
                 }
-            }
-    }
+        }
 
     private fun process(event: Event, history: Collection<Event>): ProcessEntityEvent.Result = try {
         val aggregate = EntityAggregate(
