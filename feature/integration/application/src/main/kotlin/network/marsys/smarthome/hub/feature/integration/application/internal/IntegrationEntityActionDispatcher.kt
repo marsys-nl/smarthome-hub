@@ -4,12 +4,18 @@ import io.github.oshai.kotlinlogging.KotlinLogging
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityActionDispatcher
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationActionExecutor
+import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationQueries
 
 private val logger = KotlinLogging.logger {}
 
 internal class IntegrationEntityActionDispatcher(
-    private val executors: List<IntegrationActionExecutor>,
+    private val query: IntegrationQueries,
 ) : EntityActionDispatcher {
+    private val executors: List<IntegrationActionExecutor> get() =
+        query
+            .all()
+            .filterIsInstance<IntegrationActionExecutor>()
+
     override suspend fun dispatch(accepted: EntityActionAccepted): EntityActionDispatcher.Result {
         val claimed = executors.map { executor -> executor.execute(accepted) }
             .count { it is IntegrationActionExecutor.Result.Claimed }

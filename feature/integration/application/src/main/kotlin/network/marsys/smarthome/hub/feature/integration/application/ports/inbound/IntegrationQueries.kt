@@ -2,6 +2,6 @@ package network.marsys.smarthome.hub.feature.integration.application.ports.inbou
 
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 
-interface IntegrationQueries {
+fun interface IntegrationQueries {
     fun all(): Collection<Integration>
 }

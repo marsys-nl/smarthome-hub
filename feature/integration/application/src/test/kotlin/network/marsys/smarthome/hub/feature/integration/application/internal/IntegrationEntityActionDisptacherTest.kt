@@ -3,11 +3,15 @@ package network.marsys.smarthome.hub.feature.integration.application.internal
 import de.infix.testBalloon.framework.core.testSuite
 import dev.nmarsman.expect.api.expectThat
 import dev.nmarsman.expect.assertions.isA
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import network.marsys.smarthome.domain.capability.OnOff
 import network.marsys.smarthome.domain.entity.EntityIdentifier
+import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityActionDispatcher
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationActionExecutor
+import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import kotlin.time.Clock
 
 val IntegrationEntityActionDispatcherTest by testSuite(
@@ -15,7 +19,9 @@ val IntegrationEntityActionDispatcherTest by testSuite(
 ) {
     test(name = "Dispatching an action when no executor known should return Unclaimed") {
         val dispatcher = IntegrationEntityActionDispatcher(
-            executors = emptyList(),
+            query = {
+                emptyList()
+            },
         )
 
         val event = EntityActionAccepted(
@@ -31,11 +37,15 @@ val IntegrationEntityActionDispatcherTest by testSuite(
 
     test(name = "Dispatching an action when no executor claims it should return Unclaimed") {
         val dispatcher = IntegrationEntityActionDispatcher(
-            executors = listOf(
-                IntegrationActionExecutor {
-                    IntegrationActionExecutor.Result.NotResponsible
-                },
-            ),
+            query = {
+                listOf(
+                    FakeIntegration(
+                        executor = {
+                            IntegrationActionExecutor.Result.NotResponsible
+                        },
+                    ),
+                )
+            },
         )
 
         val event = EntityActionAccepted(
@@ -52,9 +62,13 @@ val IntegrationEntityActionDispatcherTest by testSuite(
     for (count in 1..10) {
         test(name = "Dispatching an action when $count executor(s) claim it should return claimed with count $count") {
             val dispatcher = IntegrationEntityActionDispatcher(
-                executors = List(count) {
-                    IntegrationActionExecutor {
-                        IntegrationActionExecutor.Result.Claimed
+                query = {
+                    List(count) {
+                        FakeIntegration(
+                            executor = {
+                                IntegrationActionExecutor.Result.Claimed
+                            },
+                        )
                     }
                 },
             )
@@ -70,4 +84,11 @@ val IntegrationEntityActionDispatcherTest by testSuite(
                 .isA<EntityActionDispatcher.Result.Claimed>()
         }
     }
+}
+
+class FakeIntegration(
+    private val executor: IntegrationActionExecutor,
+) : Integration, IntegrationActionExecutor by executor {
+    override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.fake")
+    override val status: StateFlow<Integration.Status> = MutableStateFlow(value = Integration.Status.Running)
 }

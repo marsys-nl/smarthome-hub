@@ -8,7 +8,7 @@ import org.koin.dsl.module
 fun integrationApplicationModule() = module {
     single {
         IntegrationEntityActionDispatcher(
-            executors = getAll(),
+            query = get(),
         )
     } binds arrayOf(
         EntityActionDispatcher::class,
