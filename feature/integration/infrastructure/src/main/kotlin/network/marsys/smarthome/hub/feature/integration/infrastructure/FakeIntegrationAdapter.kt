@@ -25,11 +25,15 @@ import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.percent
+import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionCompleted
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationLifecycleController
+import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationActionExecutor
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.seconds
@@ -37,7 +41,7 @@ import kotlin.time.Duration.Companion.seconds
 class FakeIntegrationAdapter(
     override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.fake"),
     initialStatus: Integration.Status = Integration.Status.Stopped,
-) : IntegrationAdapter {
+) : IntegrationAdapter, IntegrationActionExecutor {
     private val entities = listOf<Entity>(
         Light(
             identifier = EntityIdentifier("light.dining-table"),
@@ -201,6 +205,40 @@ class FakeIntegrationAdapter(
     override val events: Flow<Event> = eventChannel.receiveAsFlow()
 
     override val status: StateFlow<Integration.Status> = lifecycle.status
+
+    override suspend fun execute(action: EntityActionAccepted): IntegrationActionExecutor.Result {
+        val entity = entities
+            .firstOrNull { it.identifier == action.identifier }
+            ?: return IntegrationActionExecutor.Result.NotResponsible
+
+        val enabled = when (action.action) {
+            is OnOff.Toggle.On -> true
+            is OnOff.Toggle.Off -> false
+            else -> return IntegrationActionExecutor.Result.NotResponsible
+        }
+
+        val capability = entity.state.get(query = OnOff)
+            ?: return IntegrationActionExecutor.Result.NotResponsible
+
+        val updated = capability.updateWith(value = enabled)
+
+        eventChannel.trySend(
+            CapabilityUpdated(
+                identifier = entity.identifier,
+                capability = updated,
+                occurredAt = action.occurredAt,
+            ),
+        )
+
+        eventChannel.send(
+            EntityActionCompleted(
+                accepted = action,
+                occurredAt = Clock.System.now(),
+            ),
+        )
+
+        return IntegrationActionExecutor.Result.Claimed
+    }
 
     override suspend fun start() = lifecycle.start()
     override suspend fun stop() = lifecycle.stop()

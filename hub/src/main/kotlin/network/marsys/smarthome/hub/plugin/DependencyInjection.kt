@@ -8,6 +8,7 @@ import kotlinx.serialization.modules.SerializersModule
 import network.marsys.smarthome.api.apiModuleSerializersModule
 import network.marsys.smarthome.hub.feature.entity.infrastructure.di.entityFeatureModule
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationLifecycleManager
+import network.marsys.smarthome.hub.feature.integration.application.di.integrationApplicationModule
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationQueries
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.ManageIntegrationLifecycle
 import network.marsys.smarthome.hub.feature.integration.infrastructure.FakeIntegrationAdapter
@@ -42,6 +43,8 @@ internal val applicationModule = module {
 }
 
 private val integrationFeatureModule = module {
+    includes(integrationApplicationModule())
+
     val integrationLifecycleManager = IntegrationLifecycleManager(
         integrations = listOf(
             SystemInfoIntegrationAdapter(),
