@@ -17,6 +17,8 @@ fun entityApplicationModule() = module {
 
     single {
         ExecuteEntityActionImpl(
+            dispatcher = get(),
+            processor = get(),
             store = get(),
             synchronization = get(),
         )

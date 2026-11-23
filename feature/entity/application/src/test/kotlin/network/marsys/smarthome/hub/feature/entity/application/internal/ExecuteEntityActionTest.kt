@@ -2,6 +2,8 @@ package network.marsys.smarthome.hub.feature.entity.application.internal
 
 import de.infix.testBalloon.framework.core.testSuite
 import dev.nmarsman.expect.api.expectThat
+import dev.nmarsman.expect.api.expectThrows
+import dev.nmarsman.expect.assertions.contains
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEmpty
 import dev.nmarsman.expect.assertions.isEqualTo
@@ -16,8 +18,11 @@ import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.percent
+import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
+import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityActionDispatcher
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionFailed
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
@@ -29,6 +34,8 @@ val ExecuteEntityActionTest by testSuite(
         val store = FakeEventStore()
 
         val execute = ExecuteEntityActionImpl(
+            dispatcher = FakeEntityActionDispatcher(),
+            processor = FakeProcessEntityEvent(),
             store = store,
             synchronization = EntitySynchronization(),
         )
@@ -57,6 +64,8 @@ val ExecuteEntityActionTest by testSuite(
         )
 
         val execute = ExecuteEntityActionImpl(
+            dispatcher = FakeEntityActionDispatcher(),
+            processor = FakeProcessEntityEvent(),
             store = store,
             synchronization = EntitySynchronization(),
         )
@@ -95,6 +104,8 @@ val ExecuteEntityActionTest by testSuite(
         )
 
         val execute = ExecuteEntityActionImpl(
+            dispatcher = FakeEntityActionDispatcher(),
+            processor = FakeProcessEntityEvent(),
             store = store,
             synchronization = EntitySynchronization(),
         )
@@ -124,6 +135,8 @@ val ExecuteEntityActionTest by testSuite(
         )
 
         val execute = ExecuteEntityActionImpl(
+            dispatcher = FakeEntityActionDispatcher(),
+            processor = FakeProcessEntityEvent(),
             store = store,
             synchronization = EntitySynchronization(),
         )
@@ -138,17 +151,221 @@ val ExecuteEntityActionTest by testSuite(
         expectThat(store.appended)
             .single()
     }
+
+    test(name = "Accepted action is dispatched") {
+        val identifier = EntityIdentifier("light.living-room")
+
+        val dispatcher = FakeEntityActionDispatcher()
+
+        val store = FakeEventStore(
+            initial = listOf(
+                EntityProvisioned(
+                    identifier = identifier,
+                    type = Light,
+                    naming = Light.naming(),
+                ),
+            ),
+        )
+
+        val execute = ExecuteEntityActionImpl(
+            dispatcher = dispatcher,
+            processor = FakeProcessEntityEvent(),
+            store = store,
+            synchronization = EntitySynchronization(),
+        )
+
+        val action = OnOff.Toggle.On(
+            entity = identifier,
+        )
+
+        execute.invoke(action = action)
+
+        expectThat(dispatcher.dispatched)
+            .single()
+            .get(EntityActionAccepted::action)
+            .isEqualTo(action)
+    }
+
+    test(name = "Rejected action is not dispatched") {
+        val identifier = EntityIdentifier("light.living-room")
+
+        val dispatcher = FakeEntityActionDispatcher()
+
+        val store = FakeEventStore(
+            initial = listOf(
+                EntityProvisioned(
+                    identifier = identifier,
+                    type = Light,
+                    naming = Light.naming(),
+                ),
+                EntityDiscovered(
+                    identifier = identifier,
+                    state = Light.State.Known(
+                        onOff = required(OnOff(current = true)),
+                        brightness = optional(Brightness(current = 50.percent)),
+                    ),
+                ),
+            ),
+        )
+
+        val execute = ExecuteEntityActionImpl(
+            dispatcher = dispatcher,
+            processor = FakeProcessEntityEvent(),
+            store = store,
+            synchronization = EntitySynchronization(),
+        )
+
+        val action = TargetTemperature.SetTargetTemperature(
+            entity = identifier,
+            temperature = 20.celsius,
+        )
+
+        execute.invoke(action = action)
+
+        expectThat(dispatcher.dispatched)
+            .isEmpty()
+    }
+
+    test(name = "Action is dispatched after saving event") {
+        val identifier = EntityIdentifier("light.living-room")
+
+        val store = FakeEventStore(
+            initial = listOf(
+                EntityProvisioned(
+                    identifier = identifier,
+                    type = Light,
+                    naming = Light.naming(),
+                ),
+            ),
+        )
+
+        val dispatcher = EntityActionDispatcher { accepted ->
+            val history = store.load(entity = accepted.action.entity)
+
+            expectThat(history)
+                .contains(accepted)
+
+            EntityActionDispatcher.Result.Claimed(count = 1)
+        }
+
+        val execute = ExecuteEntityActionImpl(
+            dispatcher = dispatcher,
+            processor = FakeProcessEntityEvent(),
+            store = store,
+            synchronization = EntitySynchronization(),
+        )
+
+        val action = OnOff.Toggle.On(
+            entity = identifier,
+        )
+
+        execute.invoke(action = action)
+    }
+
+    test(name = "Action is not dispatched when saving event fails") {
+        val identifier = EntityIdentifier("light.living-room")
+
+        val store = FakeEventStore(
+            initial = listOf(
+                EntityProvisioned(
+                    identifier = identifier,
+                    type = Light,
+                    naming = Light.naming(),
+                ),
+            ),
+            appendingFailure = IllegalStateException("Some simulated failure occurred while appending events."),
+        )
+
+        val dispatcher = FakeEntityActionDispatcher()
+
+        val execute = ExecuteEntityActionImpl(
+            dispatcher = dispatcher,
+            processor = FakeProcessEntityEvent(),
+            store = store,
+            synchronization = EntitySynchronization(),
+        )
+
+        val action = OnOff.Toggle.On(
+            entity = identifier,
+        )
+
+        expectThrows<IllegalStateException> {
+            execute.invoke(action = action)
+        }
+
+        expectThat(dispatcher.dispatched)
+            .isEmpty()
+    }
+
+    test(name = "Action is marked as failed when dispatching is unclaimed") {
+        val identifier = EntityIdentifier("light.living-room")
+
+        val store = FakeEventStore(
+            initial = listOf(
+                EntityProvisioned(
+                    identifier = identifier,
+                    type = Light,
+                    naming = Light.naming(),
+                ),
+            ),
+        )
+
+        val processor = FakeProcessEntityEvent()
+        val dispatcher = EntityActionDispatcher { accepted ->
+            EntityActionDispatcher.Result.Unclaimed
+        }
+
+        val execute = ExecuteEntityActionImpl(
+            dispatcher = dispatcher,
+            processor = processor,
+            store = store,
+            synchronization = EntitySynchronization(),
+        )
+
+        val action = OnOff.Toggle.On(
+            entity = identifier,
+        )
+
+        execute.invoke(action = action)
+
+        expectThat(processor.processed)
+            .single()
+            .isA<EntityActionFailed>()
+            .get(EntityActionFailed::accepted)
+            .get(EntityActionAccepted::action)
+            .isEqualTo(action)
+    }
+}
+
+private class FakeEntityActionDispatcher : EntityActionDispatcher {
+    val dispatched = mutableListOf<EntityActionAccepted>()
+
+    override suspend fun dispatch(accepted: EntityActionAccepted): EntityActionDispatcher.Result {
+        dispatched += accepted
+        return EntityActionDispatcher.Result.Claimed(count = 1)
+    }
 }
 
 private class FakeEventStore(
     private val initial: Collection<Event> = emptyList(),
+    private val appendingFailure: Throwable? = null,
 ) : EventStore {
     val appended = mutableListOf<Event>()
 
     override suspend fun append(vararg events: Event) {
+        appendingFailure?.let { throw it }
         appended.addAll(elements = events.toList())
     }
 
     override suspend fun load(entity: EntityIdentifier): Collection<Event> =
         (initial + appended).filter { it.identifier == entity }
+}
+
+private class FakeProcessEntityEvent : ProcessEntityEvent {
+    val processed = mutableListOf<Event>()
+
+    override suspend fun invoke(event: Event): ProcessEntityEvent.Result {
+        processed += event
+        return ProcessEntityEvent.Result.Accepted
+    }
 }

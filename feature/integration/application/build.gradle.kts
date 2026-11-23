@@ -17,6 +17,9 @@ dependencies {
 
     implementation(libs.bundles.kotlin.logging)
 
+    implementation(project.dependencies.platform(libs.koin.bom))
+    implementation(libs.koin.core)
+
     implementation(libs.kotlin.coroutines)
 
     implementation(libs.smarthome.domain)
