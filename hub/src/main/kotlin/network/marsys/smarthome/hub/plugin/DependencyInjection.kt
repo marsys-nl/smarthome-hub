@@ -14,7 +14,6 @@ import network.marsys.smarthome.hub.feature.integration.application.ports.inboun
 import network.marsys.smarthome.hub.feature.integration.infrastructure.FakeIntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.infrastructure.SystemInfoIntegrationAdapter
 import network.marsys.smarthome.hub.feature.platform.infrastructure.di.platformFeatureModule
-import org.koin.core.qualifier.named
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
 
