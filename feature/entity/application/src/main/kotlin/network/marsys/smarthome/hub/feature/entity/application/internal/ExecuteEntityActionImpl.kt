@@ -17,7 +17,7 @@ internal class ExecuteEntityActionImpl(
     private val store: EventStore,
     private val synchronization: EntitySynchronization,
 ) : ExecuteEntityAction {
-    override suspend fun invoke(action: Entity.Action): EntityActionDecision =
+    override suspend fun invoke(action: Entity.Action): ExecuteEntityAction.Result =
         synchronization.withLock(entity = action.entity) {
             val history = store.load(entity = action.entity)
 
@@ -34,29 +34,39 @@ internal class ExecuteEntityActionImpl(
                         store.append(*result.events.toTypedArray())
                     }
                 }
-        }.also { decision ->
-            if (decision is EntityActionDecision.Accepted) {
-                dispatch(decision = decision)
+        }.let {
+            dispatch(decision = it)
+        }
+
+    private suspend fun dispatch(decision: EntityActionDecision): ExecuteEntityAction.Result =
+        when (decision) {
+            is EntityActionDecision.Accepted -> {
+                val event = decision.events
+                    .filterIsInstance<EntityActionAccepted>()
+                    .single()
+
+                val result = dispatcher.dispatch(accepted = event)
+
+                when (result) {
+                    is EntityActionDispatcher.Result.Unclaimed ->
+                        processor.invoke(
+                            event = EntityActionFailed(
+                                accepted = event,
+                                occurredAt = Clock.System.now(),
+                            ),
+                        ).let {
+                            ExecuteEntityAction.Result.NotFound
+                        }
+
+                    is EntityActionDispatcher.Result.Claimed -> ExecuteEntityAction.Result.Accepted
+                }
             }
+
+            is EntityActionDecision.Rejected ->
+                if (decision.reason is EntityActionDecision.Reason.MismatchedEntity) {
+                    ExecuteEntityAction.Result.NotFound
+                } else {
+                    ExecuteEntityAction.Result.Rejected(reason = decision.reason)
+                }
         }
-
-    private suspend fun dispatch(decision: EntityActionDecision.Accepted) {
-        val event = decision.events
-            .filterIsInstance<EntityActionAccepted>()
-            .single()
-
-        val result = dispatcher.dispatch(accepted = event)
-
-        when (result) {
-            is EntityActionDispatcher.Result.Unclaimed ->
-                processor.invoke(
-                    event = EntityActionFailed(
-                        accepted = event,
-                        occurredAt = Clock.System.now(),
-                    ),
-                )
-
-            is EntityActionDispatcher.Result.Claimed -> Unit
-        }
-    }
 }

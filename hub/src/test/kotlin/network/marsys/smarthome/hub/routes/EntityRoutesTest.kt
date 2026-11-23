@@ -3,13 +3,26 @@ package network.marsys.smarthome.hub.routes
 import de.infix.testBalloon.framework.core.testSuite
 import dev.nmarsman.expect.api.expectThat
 import dev.nmarsman.expect.assertions.isEqualTo
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.contentType
+import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonBuilder
+import kotlinx.serialization.modules.SerializersModule
+import network.marsys.smarthome.api.apiModuleSerializersModule
+import network.marsys.smarthome.api.mappers.entity.action.EntityActionApiMapper
+import network.marsys.smarthome.api.models.entity.action.EntityActionRequest
 import network.marsys.smarthome.domain.TranslationKey
 import network.marsys.smarthome.domain.capability.Brightness
 import network.marsys.smarthome.domain.capability.Capability.Companion.optional
@@ -28,7 +41,9 @@ import network.marsys.smarthome.domain.unit.Quantity
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.gibibytes
 import network.marsys.smarthome.domain.unit.percent
+import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ExecuteEntityAction
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.GetEntities
+import network.marsys.smarthome.hub.feature.entity.domain.EntityActionDecision
 import network.marsys.smarthome.hub.plugin.applicationModule
 import network.marsys.smarthome.hub.plugin.initializeSerialization
 import org.koin.dsl.module
@@ -480,6 +495,329 @@ val EntityRoutesTest by testSuite(
             }
         }
     }
+
+    testSuite(
+        name = "Executing entity actions",
+    ) {
+        test(name = "When an entity action is accepted the request returns http status accepted") {
+            testApplication {
+                initializeDependencyInjection(
+                    executeEntityAction = {
+                        ExecuteEntityAction.Result.Accepted
+                    },
+                )
+
+                application {
+                    initializeSerialization(builder = builder)
+                }
+
+                routing {
+                    entityRoutes()
+                }
+
+                val client = createClient {
+                    install(ContentNegotiation) {
+                        json(
+                            Json {
+                                serializersModule = SerializersModule {
+                                    include(apiModuleSerializersModule)
+                                }
+                            },
+                        )
+                    }
+                }
+
+                val response = client.post("/api/entities/actions") {
+                    contentType(ContentType.Application.Json)
+                    setBody<EntityActionRequest?>(
+                        body = EntityActionApiMapper.invoke(
+                            source = OnOff.Toggle.On(
+                                entity = EntityIdentifier("light.test"),
+                            ),
+                        ),
+                    )
+                }
+
+                expectThat(response)
+                    .get(HttpResponse::status)
+                    .isEqualTo(HttpStatusCode.Accepted)
+            }
+        }
+
+        test(name = "When an entity identifier is not found the request returns http status not found") {
+            testApplication {
+                initializeDependencyInjection(
+                    executeEntityAction = {
+                        ExecuteEntityAction.Result.NotFound
+                    },
+                )
+
+                application {
+                    initializeSerialization(builder = builder)
+                }
+
+                routing {
+                    entityRoutes()
+                }
+
+                val client = createClient {
+                    install(ContentNegotiation) {
+                        json(
+                            Json {
+                                serializersModule = SerializersModule {
+                                    include(apiModuleSerializersModule)
+                                }
+                            },
+                        )
+                    }
+                }
+
+                val response = client.post("/api/entities/actions") {
+                    contentType(ContentType.Application.Json)
+                    setBody<EntityActionRequest?>(
+                        body = EntityActionApiMapper.invoke(
+                            source = OnOff.Toggle.On(
+                                entity = EntityIdentifier("light.test"),
+                            ),
+                        ),
+                    )
+                }
+
+                expectThat(response)
+                    .get(HttpResponse::status)
+                    .isEqualTo(HttpStatusCode.NotFound)
+            }
+        }
+
+        test(name = "When an entity identifier is not matching the request returns http status not found") {
+            testApplication {
+                initializeDependencyInjection(
+                    executeEntityAction = {
+                        ExecuteEntityAction.Result.Rejected(
+                            reason = EntityActionDecision.Reason.MismatchedEntity,
+                        )
+                    },
+                )
+
+                application {
+                    initializeSerialization(builder = builder)
+                }
+
+                routing {
+                    entityRoutes()
+                }
+
+                val client = createClient {
+                    install(ContentNegotiation) {
+                        json(
+                            Json {
+                                serializersModule = SerializersModule {
+                                    include(apiModuleSerializersModule)
+                                }
+                            },
+                        )
+                    }
+                }
+
+                val response = client.post("/api/entities/actions") {
+                    contentType(ContentType.Application.Json)
+                    setBody<EntityActionRequest?>(
+                        body = EntityActionApiMapper.invoke(
+                            source = OnOff.Toggle.On(
+                                entity = EntityIdentifier("light.test"),
+                            ),
+                        ),
+                    )
+                }
+
+                expectThat(response)
+                    .get(HttpResponse::status)
+                    .isEqualTo(HttpStatusCode.NotFound)
+            }
+        }
+
+        test(name = "When an entity action is already pending the request returns http status conflict") {
+            testApplication {
+                initializeDependencyInjection(
+                    executeEntityAction = {
+                        ExecuteEntityAction.Result.Rejected(
+                            reason = EntityActionDecision.Reason.DuplicateAction,
+                        )
+                    },
+                )
+
+                application {
+                    initializeSerialization(builder = builder)
+                }
+
+                routing {
+                    entityRoutes()
+                }
+
+                val client = createClient {
+                    install(ContentNegotiation) {
+                        json(
+                            Json {
+                                serializersModule = SerializersModule {
+                                    include(apiModuleSerializersModule)
+                                }
+                            },
+                        )
+                    }
+                }
+
+                val response = client.post("/api/entities/actions") {
+                    contentType(ContentType.Application.Json)
+                    setBody<EntityActionRequest?>(
+                        body = EntityActionApiMapper.invoke(
+                            source = OnOff.Toggle.On(
+                                entity = EntityIdentifier("light.test"),
+                            ),
+                        ),
+                    )
+                }
+
+                expectThat(response)
+                    .get(HttpResponse::status)
+                    .isEqualTo(HttpStatusCode.Conflict)
+            }
+        }
+
+        test(name = "When an entity action is obsolete (state already reached) the request returns http status not acceptable") {
+            testApplication {
+                initializeDependencyInjection(
+                    executeEntityAction = {
+                        ExecuteEntityAction.Result.Rejected(
+                            reason = EntityActionDecision.Reason.DuplicateState,
+                        )
+                    },
+                )
+
+                application {
+                    initializeSerialization(builder = builder)
+                }
+
+                routing {
+                    entityRoutes()
+                }
+
+                val client = createClient {
+                    install(ContentNegotiation) {
+                        json(
+                            Json {
+                                serializersModule = SerializersModule {
+                                    include(apiModuleSerializersModule)
+                                }
+                            },
+                        )
+                    }
+                }
+
+                val response = client.post("/api/entities/actions") {
+                    contentType(ContentType.Application.Json)
+                    setBody<EntityActionRequest?>(
+                        body = EntityActionApiMapper.invoke(
+                            source = OnOff.Toggle.On(
+                                entity = EntityIdentifier("light.test"),
+                            ),
+                        ),
+                    )
+                }
+
+                expectThat(response)
+                    .get(HttpResponse::status)
+                    .isEqualTo(HttpStatusCode.NotAcceptable)
+            }
+        }
+
+        test(name = "When an entity action is unsupported the request returns http status unprocessable entity") {
+            testApplication {
+                initializeDependencyInjection(
+                    executeEntityAction = {
+                        ExecuteEntityAction.Result.Rejected(
+                            reason = EntityActionDecision.Reason.Unsupported,
+                        )
+                    },
+                )
+
+                application {
+                    initializeSerialization(builder = builder)
+                }
+
+                routing {
+                    entityRoutes()
+                }
+
+                val client = createClient {
+                    install(ContentNegotiation) {
+                        json(
+                            Json {
+                                serializersModule = SerializersModule {
+                                    include(apiModuleSerializersModule)
+                                }
+                            },
+                        )
+                    }
+                }
+
+                val response = client.post("/api/entities/actions") {
+                    contentType(ContentType.Application.Json)
+                    setBody<EntityActionRequest?>(
+                        body = EntityActionApiMapper.invoke(
+                            source = OnOff.Toggle.On(
+                                entity = EntityIdentifier("light.test"),
+                            ),
+                        ),
+                    )
+                }
+
+                expectThat(response)
+                    .get(HttpResponse::status)
+                    .isEqualTo(HttpStatusCode.UnprocessableEntity)
+            }
+        }
+
+        test(name = "When an invalid json is sent the request returns http status bad request") {
+            testApplication {
+                initializeDependencyInjection(
+                    executeEntityAction = {
+                        ExecuteEntityAction.Result.Accepted
+                    },
+                )
+
+                application {
+                    initializeSerialization(builder = builder)
+                }
+
+                routing {
+                    entityRoutes()
+                }
+
+                val client = createClient {
+                    install(ContentNegotiation) {
+                        json(
+                            Json {
+                                serializersModule = SerializersModule {
+                                    include(apiModuleSerializersModule)
+                                }
+                            },
+                        )
+                    }
+                }
+
+                val response = client.post("/api/entities/actions") {
+                    contentType(ContentType.Application.Json)
+                    setBody(
+                        body = "{}",
+                    )
+                }
+
+                expectThat(response)
+                    .get(HttpResponse::status)
+                    .isEqualTo(HttpStatusCode.BadRequest)
+            }
+        }
+    }
 }
 
 private fun ApplicationTestBuilder.initializeDependencyInjection(
@@ -495,6 +833,20 @@ private fun ApplicationTestBuilder.initializeDependencyInjection(
                         entities
                     }
                 }
+            },
+        )
+    }
+}
+
+private fun ApplicationTestBuilder.initializeDependencyInjection(
+    executeEntityAction: ExecuteEntityAction,
+) {
+    install(Koin) {
+        modules(
+            applicationModule,
+
+            module {
+                single<ExecuteEntityAction> { executeEntityAction }
             },
         )
     }
