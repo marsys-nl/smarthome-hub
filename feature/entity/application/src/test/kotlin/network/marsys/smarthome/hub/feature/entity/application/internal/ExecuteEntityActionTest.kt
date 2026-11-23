@@ -8,7 +8,6 @@ import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEmpty
 import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.single
-import jdk.internal.vm.vector.VectorSupport.store
 import network.marsys.smarthome.domain.capability.Brightness
 import network.marsys.smarthome.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.domain.capability.Capability.Companion.required
@@ -19,9 +18,11 @@ import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.domain.unit.celsius
 import network.marsys.smarthome.domain.unit.percent
+import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityActionDispatcher
 import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EventStore
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionFailed
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
@@ -34,6 +35,7 @@ val ExecuteEntityActionTest by testSuite(
 
         val execute = ExecuteEntityActionImpl(
             dispatcher = FakeEntityActionDispatcher(),
+            processor = FakeProcessEntityEvent(),
             store = store,
             synchronization = EntitySynchronization(),
         )
@@ -63,6 +65,7 @@ val ExecuteEntityActionTest by testSuite(
 
         val execute = ExecuteEntityActionImpl(
             dispatcher = FakeEntityActionDispatcher(),
+            processor = FakeProcessEntityEvent(),
             store = store,
             synchronization = EntitySynchronization(),
         )
@@ -102,6 +105,7 @@ val ExecuteEntityActionTest by testSuite(
 
         val execute = ExecuteEntityActionImpl(
             dispatcher = FakeEntityActionDispatcher(),
+            processor = FakeProcessEntityEvent(),
             store = store,
             synchronization = EntitySynchronization(),
         )
@@ -132,6 +136,7 @@ val ExecuteEntityActionTest by testSuite(
 
         val execute = ExecuteEntityActionImpl(
             dispatcher = FakeEntityActionDispatcher(),
+            processor = FakeProcessEntityEvent(),
             store = store,
             synchronization = EntitySynchronization(),
         )
@@ -164,6 +169,7 @@ val ExecuteEntityActionTest by testSuite(
 
         val execute = ExecuteEntityActionImpl(
             dispatcher = dispatcher,
+            processor = FakeProcessEntityEvent(),
             store = store,
             synchronization = EntitySynchronization(),
         )
@@ -204,6 +210,7 @@ val ExecuteEntityActionTest by testSuite(
 
         val execute = ExecuteEntityActionImpl(
             dispatcher = dispatcher,
+            processor = FakeProcessEntityEvent(),
             store = store,
             synchronization = EntitySynchronization(),
         )
@@ -237,10 +244,13 @@ val ExecuteEntityActionTest by testSuite(
 
             expectThat(history)
                 .contains(accepted)
+
+            EntityActionDispatcher.Result.Claimed(count = 1)
         }
 
         val execute = ExecuteEntityActionImpl(
             dispatcher = dispatcher,
+            processor = FakeProcessEntityEvent(),
             store = store,
             synchronization = EntitySynchronization(),
         )
@@ -270,6 +280,7 @@ val ExecuteEntityActionTest by testSuite(
 
         val execute = ExecuteEntityActionImpl(
             dispatcher = dispatcher,
+            processor = FakeProcessEntityEvent(),
             store = store,
             synchronization = EntitySynchronization(),
         )
@@ -285,13 +296,53 @@ val ExecuteEntityActionTest by testSuite(
         expectThat(dispatcher.dispatched)
             .isEmpty()
     }
+
+    test(name = "Action is marked as failed when dispatching is unclaimed") {
+        val identifier = EntityIdentifier("light.living-room")
+
+        val store = FakeEventStore(
+            initial = listOf(
+                EntityProvisioned(
+                    identifier = identifier,
+                    type = Light,
+                    naming = Light.naming(),
+                ),
+            ),
+        )
+
+        val processor = FakeProcessEntityEvent()
+        val dispatcher = EntityActionDispatcher { accepted ->
+            EntityActionDispatcher.Result.Unclaimed
+        }
+
+        val execute = ExecuteEntityActionImpl(
+            dispatcher = dispatcher,
+            processor = processor,
+            store = store,
+            synchronization = EntitySynchronization(),
+        )
+
+        val action = OnOff.Toggle.On(
+            entity = identifier,
+        )
+
+        execute.invoke(action = action)
+
+        expectThat(processor.processed)
+            .single()
+            .isA<EntityActionFailed>()
+            .get(EntityActionFailed::accepted)
+            .get(EntityActionAccepted::action)
+            .isEqualTo(action)
+    }
 }
 
 private class FakeEntityActionDispatcher : EntityActionDispatcher {
     val dispatched = mutableListOf<EntityActionAccepted>()
 
-    override suspend fun dispatch(accepted: EntityActionAccepted) {
+    override suspend fun dispatch(accepted: EntityActionAccepted): EntityActionDispatcher.Result {
         dispatched += accepted
+        return EntityActionDispatcher.Result.Claimed(count = 1)
     }
 }
 
@@ -308,4 +359,13 @@ private class FakeEventStore(
 
     override suspend fun load(entity: EntityIdentifier): Collection<Event> =
         (initial + appended).filter { it.identifier == entity }
+}
+
+private class FakeProcessEntityEvent : ProcessEntityEvent {
+    val processed = mutableListOf<Event>()
+
+    override suspend fun invoke(event: Event): ProcessEntityEvent.Result {
+        processed += event
+        return ProcessEntityEvent.Result.Accepted
+    }
 }

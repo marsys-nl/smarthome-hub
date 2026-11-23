@@ -5,19 +5,10 @@ import network.marsys.smarthome.hub.feature.entity.application.internal.EntitySy
 import network.marsys.smarthome.hub.feature.entity.application.internal.ExecuteEntityActionImpl
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ExecuteEntityAction
 import network.marsys.smarthome.hub.feature.entity.application.ports.inbound.ProcessEntityEvent
-import network.marsys.smarthome.hub.feature.entity.application.ports.outbound.EntityActionDispatcher
 import org.koin.dsl.binds
 import org.koin.dsl.module
 
 fun entityApplicationModule() = module {
-    single {
-        EntityActionDispatcher {
-            // No-op for now.
-        }
-    } binds arrayOf(
-        EntityActionDispatcher::class,
-    )
-
     single {
         EntitySynchronization()
     } binds arrayOf(
@@ -27,6 +18,7 @@ fun entityApplicationModule() = module {
     single {
         ExecuteEntityActionImpl(
             dispatcher = get(),
+            processor = get(),
             store = get(),
             synchronization = get(),
         )
