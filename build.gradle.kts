@@ -11,7 +11,7 @@ plugins {
     alias(libs.plugins.test.balloon) apply false
 }
 
-val ktlint: Configuration by configurations.creating
+val ktlint = configurations.create("ktlint")
 
 dependencies {
     ktlint(libs.ktlint) {
