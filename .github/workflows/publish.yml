@@ -55,9 +55,7 @@ jobs:
                 password: ${{ secrets.DOCKERHUB_TOKEN }}
 
             - name: Build JAR
-              run: ./gradlew :hub:buildFatJar \
-                --refresh-dependencies \
-                --no-build-cache
+              run: ./gradlew :hub:buildFatJar --refresh-dependencies --no-build-cache
 
             - name: Set up QEMU
               uses: docker/setup-qemu-action@v4
