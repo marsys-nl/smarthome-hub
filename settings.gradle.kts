@@ -39,6 +39,7 @@ dependencyResolutionManagement {
 }
 
 include(
+    ":common:annotations",
     ":feature:entity:application",
     ":feature:entity:domain",
     ":feature:entity:infrastructure",

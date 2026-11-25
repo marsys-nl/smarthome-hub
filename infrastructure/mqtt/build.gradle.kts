@@ -17,6 +17,8 @@ kotlin {
 }
 
 dependencies {
+    compileOnly(projects.common.annotations)
+
     implementation(libs.bundles.kotlin.logging)
 
     implementation(libs.eclipse.paho.mqtt.client)

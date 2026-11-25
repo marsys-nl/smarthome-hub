@@ -141,4 +141,44 @@ val MqttClientIntegrationTest by testSuite(
             }
         }
     }
+
+    test(name = "Publishes message to broker and receives it on subscription") {
+        runBlocking {
+            withBroker { broker ->
+                MqttClient(
+                    MqttClientConfiguration(
+                        broker = broker.uri,
+                        client = UUID.randomUUID().toString(),
+                    ),
+                ).use { client ->
+                    val topic = "home/living-room/temperature"
+                    val payload = "22.5".toByteArray()
+
+                    val collector = launch {
+                        client.subscribe(topic)
+                            .collect()
+                    }
+
+                    try {
+                        withTimeout(10.seconds) {
+                            client.state.first {
+                                it == ConnectionState.Connected
+                            }
+                        }
+
+                        client.publish(topic, payload)
+
+                        withTimeout(30.seconds) {
+                            client.subscribe(topic)
+                                .first { message ->
+                                    message.payload.contentEquals(payload)
+                                }
+                        }
+                    } finally {
+                        collector.cancelAndJoin()
+                    }
+                }
+            }
+        }
+    }
 }
