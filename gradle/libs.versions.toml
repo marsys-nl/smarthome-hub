@@ -30,6 +30,7 @@ oshi = "7.8.0"
 slf4j = "2.0.20"
 
 test-balloon = "1.0.1-K2.4.0"
+test-containers = "2.0.5"
 
 turbine = "1.2.1"
 
@@ -69,6 +70,7 @@ smarthome-api = { group = "network.marsys.smarthome", name = "smarthome-api", ve
 smarthome-domain = { group = "network.marsys.smarthome", name = "smarthome-domain", version.ref = "smarthome-domain" }
 
 test-balloon-core = { group = "de.infix.testBalloon", name = "testBalloon-framework-core", version.ref = "test-balloon" }
+test-containers = { module = "org.testcontainers:testcontainers", version.ref = "test-containers" }
 
 turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 

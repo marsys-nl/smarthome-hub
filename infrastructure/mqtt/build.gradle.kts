@@ -8,6 +8,12 @@ version = libs.versions.smarthome.hub.get()
 
 kotlin {
     jvmToolchain(libs.versions.jvm.toolchain.get().toInt())
+
+    sourceSets {
+        test {
+            kotlin.srcDir("src/integration/kotlin")
+        }
+    }
 }
 
 dependencies {
@@ -20,4 +26,5 @@ dependencies {
     testImplementation(libs.kotlin.expect.core)
 
     testImplementation(libs.test.balloon.core)
+    testImplementation(libs.test.containers)
 }
