@@ -48,4 +48,5 @@ include(
     ":feature:platform:application",
     ":feature:platform:infrastructure",
     ":hub",
+    ":infrastructure:mqtt",
 )

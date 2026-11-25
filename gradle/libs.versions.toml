@@ -7,6 +7,8 @@ buildconfig = "6.1.2"
 
 detekt = "2.0.0-alpha.6"
 
+eclipse-paho-mqtt = "1.2.5"
+
 jvm-toolchain = "21"
 
 logback = "1.6.8"
@@ -32,6 +34,8 @@ test-balloon = "1.0.1-K2.4.0"
 turbine = "1.2.1"
 
 [libraries]
+eclipse-paho-mqtt-client = { group = "org.eclipse.paho", name = "org.eclipse.paho.mqttv5.client", version.ref = "eclipse-paho-mqtt" }
+
 koin-bom = { group = "io.insert-koin", name = "koin-bom", version.ref = "koin" }
 koin-core = { group = "io.insert-koin", name = "koin-core" }
 koin-ktor = { group = "io.insert-koin", name = "koin-ktor" }
