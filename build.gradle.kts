@@ -36,11 +36,22 @@ kover {
         allProjects {
             it.buildFile.exists()
         }
+
+        instrumentation {
+            disabledForTestTasks.add("integrationTest")
+        }
+
+        sources {
+            excludedSourceSets.add("integrationTest")
+        }
     }
 
     reports {
         filters {
             excludes {
+                // Exclude code annotated by @ExcludeFromCoverage
+                annotatedBy("*.ExcludeFromCoverage")
+
                 // Exclude main entry point — tested indirectly via integration tests
                 classes("network.marsys.smarthome.hub.ApplicationKt*")
 

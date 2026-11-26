@@ -39,6 +39,7 @@ dependencyResolutionManagement {
 }
 
 include(
+    ":common:annotations",
     ":feature:entity:application",
     ":feature:entity:domain",
     ":feature:entity:infrastructure",
@@ -48,4 +49,5 @@ include(
     ":feature:platform:application",
     ":feature:platform:infrastructure",
     ":hub",
+    ":infrastructure:mqtt",
 )

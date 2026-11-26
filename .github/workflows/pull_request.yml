@@ -13,7 +13,7 @@ concurrency:
 jobs:
     build:
         name: Validate and build application
-        runs-on: macos-latest
+        runs-on: ubuntu-latest
 
         steps:
             - name: Checkout
@@ -40,3 +40,15 @@ jobs:
             - name: Build project
               id: build
               run: ./gradlew build
+
+            - name: Upload reports
+              if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: test-reports
+                  path: |
+                      **/build/reports/tests/**
+                      **/build/reports/detekt/**
+                      **/build/reports/kover/**
+                      **/build/test-results**/**
+                  retention-days: 7
