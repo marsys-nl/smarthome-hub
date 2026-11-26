@@ -5,6 +5,7 @@ import dev.nmarsman.expect.api.expectThat
 import dev.nmarsman.expect.api.expectThrows
 import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.isFalse
+import dev.nmarsman.expect.assertions.isSameInstanceAs
 import dev.nmarsman.expect.assertions.isTrue
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -16,6 +17,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.eclipse.paho.mqttv5.client.MqttActionListener
 import org.eclipse.paho.mqttv5.client.MqttToken
+import org.eclipse.paho.mqttv5.common.MqttException
 
 @OptIn(ExperimentalCoroutinesApi::class)
 val PahoExtensionTest by testSuite(
@@ -107,5 +109,16 @@ val PahoExtensionTest by testSuite(
                 .with(Job::isCancelled) { isTrue() }
                 .with(Job::isActive) { isFalse() }
         }
+    }
+
+    test(name = "Await propagates exception received through failure callback") {
+        val token = MqttToken()
+        val exception = MqttException(0)
+
+        expectThrows<MqttException> {
+            await { listener ->
+                listener.onFailure(token, exception)
+            }
+        }.isSameInstanceAs(exception)
     }
 }

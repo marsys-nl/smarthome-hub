@@ -36,6 +36,14 @@ kover {
         allProjects {
             it.buildFile.exists()
         }
+
+        instrumentation {
+            disabledForTestTasks.add("integrationTest")
+        }
+
+        sources {
+            excludedSourceSets.add("integrationTest")
+        }
     }
 
     reports {

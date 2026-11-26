@@ -1,3 +1,5 @@
+@file:Suppress("RunBlockingInSuspendFunction")
+
 package network.marsys.smarthome.hub.infrastructure.mqtt
 
 import de.infix.testBalloon.framework.core.testSuite
@@ -14,7 +16,6 @@ import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.withTimeout
 import network.marsys.smarthome.hub.infrastructure.mqtt.helper.use
 import network.marsys.smarthome.hub.infrastructure.mqtt.helper.withBroker
-import network.marsys.smarthome.hub.infrastructure.mqtt.internal.ClientClosedException
 import java.util.UUID
 import kotlin.time.Duration.Companion.seconds
 
@@ -128,7 +129,7 @@ val MqttClientIntegrationTest by testSuite(
 
                         client.close()
 
-                        expectThrows<ClientClosedException> {
+                        expectThrows<IllegalStateException> {
                             withTimeout(5.seconds) {
                                 collector.await()
                             }
@@ -168,7 +169,7 @@ val MqttClientIntegrationTest by testSuite(
 
                         client.publish(topic, payload)
 
-                        withTimeout(30.seconds) {
+                        withTimeout(10.seconds) {
                             client.subscribe(topic)
                                 .first { message ->
                                     message.payload.contentEquals(payload)

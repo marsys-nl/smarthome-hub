@@ -30,185 +30,33 @@ import kotlin.time.Duration.Companion.seconds
 val ConnectionManagerTest by testSuite(
     name = "Connection manager tests",
 ) {
-    test(name = "Does not connect without demand") {
-        runTest {
-            val connection = FakeConnection()
-            val demander = ConnectionDemander()
-
-            val manager = ConnectionManager(
-                connection = connection,
-                demander = demander,
-                idleTimeout = Duration.ZERO,
-            )
-
-            backgroundScope.launch {
-                manager.run {
-                    // No-op
-                }
-            }
-
-            runCurrent()
-
-            expectThat(connection.connects)
-                .isEqualTo(0)
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Disconnected)
-        }
-    }
-
-    test(name = "Connects when demand becomes active") {
-        runTest {
-            val connection = FakeConnection()
-            val demander = ConnectionDemander()
-
-            val manager = ConnectionManager(
-                connection = connection,
-                demander = demander,
-                idleTimeout = Duration.ZERO,
-            )
-
-            backgroundScope.launch {
-                manager.run {
-                    // No-op
-                }
-            }
-
-            val consumer = launch {
-                demander.demand {
-                    awaitCancellation()
-                }
-            }
-
-            runCurrent()
-
-            expectThat(connection.connects)
-                .isEqualTo(1)
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Connected)
-
-            consumer.cancelAndJoin()
-        }
-    }
-
-    test(name = "Disconnects when last consumer completes") {
-        runTest {
-            val connection = FakeConnection()
-            val demander = ConnectionDemander()
-
-            val manager = ConnectionManager(
-                connection = connection,
-                demander = demander,
-                idleTimeout = Duration.ZERO,
-            )
-
-            backgroundScope.launch {
-                manager.run {
-                    // No-op
-                }
-            }
-
-            val first = launch {
-                demander.demand {
-                    awaitCancellation()
-                }
-            }
-
-            val second = launch {
-                demander.demand {
-                    awaitCancellation()
-                }
-            }
-
-            runCurrent()
-
-            expectThat(connection.connects)
-                .isEqualTo(1)
-
-            first.cancelAndJoin()
-            runCurrent()
-
-            expectThat(connection.disconnects)
-                .isEqualTo(0)
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Connected)
-
-            second.cancelAndJoin()
-            runCurrent()
-
-            expectThat(connection.disconnects)
-                .isEqualTo(1)
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Disconnected)
-        }
-    }
-
-    test(name = "Disconnects when demand disappears during connection attempt") {
-        runTest {
-            val completed = CompletableDeferred<Unit>()
-
-            val demander = ConnectionDemander()
-            val connection = FakeConnection(
-                onConnect = {
-                    completed.await()
-                },
-            )
-
-            val manager = ConnectionManager(
-                connection = connection,
-                demander = demander,
-                idleTimeout = Duration.ZERO,
-            )
-
-            backgroundScope.launch {
-                manager.run {
-                    // No-op
-                }
-            }
-
-            val consumer = launch {
-                demander.demand {
-                    awaitCancellation()
-                }
-            }
-
-            runCurrent()
-
-            expectThat(connection.connects)
-                .isEqualTo(1)
-
-            expectThat(connection.connected.value)
-                .isFalse()
-
-            consumer.cancelAndJoin()
-            runCurrent()
-
-            completed.complete(Unit)
-            runCurrent()
-
-            expectThat(connection.connected.value)
-                .isFalse()
-
-            expectThat(connection.disconnects)
-                .isEqualTo(1)
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Disconnected)
-        }
-    }
-
-    test(name = "Remains connected when disconnect fails") {
-        runTest {
-            supervisorScope {
-                val demander = ConnectionDemander()
-                val connection = FakeConnection(
-                    onDisconnect = {
-                        throw IllegalStateException("Disconnect failed")
-                    },
+    testSuite(name = "Configuration") {
+        test(name = "Instantiating with a infinite idle timeout throws an exception") {
+            expectThrows<IllegalArgumentException> {
+                ConnectionManager(
+                    connection = FakeConnection(),
+                    demander = ConnectionDemander(),
+                    idleTimeout = Duration.INFINITE,
                 )
+            }.hasMessage("Idle timeout must be finite")
+        }
+
+        test(name = "Instantiating with a negative idle timeout throws an exception") {
+            expectThrows<IllegalArgumentException> {
+                ConnectionManager(
+                    connection = FakeConnection(),
+                    demander = ConnectionDemander(),
+                    idleTimeout = (-1).seconds,
+                )
+            }.hasMessage("Idle timeout must be greater than or equal to 0, but was -1s")
+        }
+    }
+
+    testSuite(name = "Connection management") {
+        test(name = "Does not connect without demand") {
+            runTest {
+                val connection = FakeConnection()
+                val demander = ConnectionDemander()
 
                 val manager = ConnectionManager(
                     connection = connection,
@@ -216,7 +64,34 @@ val ConnectionManagerTest by testSuite(
                     idleTimeout = Duration.ZERO,
                 )
 
-                val job = async {
+                backgroundScope.launch {
+                    manager.run {
+                        // No-op
+                    }
+                }
+
+                runCurrent()
+
+                expectThat(connection.connects)
+                    .isEqualTo(0)
+
+                expectThat(manager.state.value)
+                    .isEqualTo(ConnectionState.Disconnected)
+            }
+        }
+
+        test(name = "Connects when demand becomes active") {
+            runTest {
+                val connection = FakeConnection()
+                val demander = ConnectionDemander()
+
+                val manager = ConnectionManager(
+                    connection = connection,
+                    demander = demander,
+                    idleTimeout = Duration.ZERO,
+                )
+
+                backgroundScope.launch {
                     manager.run {
                         // No-op
                     }
@@ -229,112 +104,79 @@ val ConnectionManagerTest by testSuite(
                 }
 
                 runCurrent()
+
+                expectThat(connection.connects)
+                    .isEqualTo(1)
 
                 expectThat(manager.state.value)
                     .isEqualTo(ConnectionState.Connected)
 
                 consumer.cancelAndJoin()
+            }
+        }
+
+        test(name = "Disconnects when last consumer completes") {
+            runTest {
+                val connection = FakeConnection()
+                val demander = ConnectionDemander()
+
+                val manager = ConnectionManager(
+                    connection = connection,
+                    demander = demander,
+                    idleTimeout = Duration.ZERO,
+                )
+
+                backgroundScope.launch {
+                    manager.run {
+                        // No-op
+                    }
+                }
+
+                val first = launch {
+                    demander.demand {
+                        awaitCancellation()
+                    }
+                }
+
+                val second = launch {
+                    demander.demand {
+                        awaitCancellation()
+                    }
+                }
+
                 runCurrent()
 
-                expectThrows<IllegalStateException> {
-                    job.await()
-                }
+                expectThat(connection.connects)
+                    .isEqualTo(1)
+
+                first.cancelAndJoin()
+                runCurrent()
+
+                expectThat(connection.disconnects)
+                    .isEqualTo(0)
+
+                expectThat(manager.state.value)
+                    .isEqualTo(ConnectionState.Connected)
+
+                second.cancelAndJoin()
+                runCurrent()
 
                 expectThat(connection.disconnects)
                     .isEqualTo(1)
 
                 expectThat(manager.state.value)
-                    .isEqualTo(ConnectionState.Connected)
+                    .isEqualTo(ConnectionState.Disconnected)
             }
         }
-    }
 
-    test(name = "Retry delay resets after successful connection") {
-        runTest {
-            var available = false
+        test(name = "Disconnects when demand disappears during connection attempt") {
+            runTest {
+                val completed = CompletableDeferred<Unit>()
 
-            val demander = ConnectionDemander()
-            val connection = FakeConnection(
-                onConnect = {
-                    if (!available) {
-                        throw ConnectionException("Broker unavailable")
-                    }
-                },
-            )
-
-            val manager = ConnectionManager(
-                connection = connection,
-                demander = demander,
-                idleTimeout = Duration.ZERO,
-            )
-
-            backgroundScope.launch {
-                manager.run {
-                    // No-op
-                }
-            }
-
-            val consumer = launch {
-                demander.demand {
-                    awaitCancellation()
-                }
-            }
-
-            runCurrent()
-
-            expectThat(connection.connects)
-                .isEqualTo(1)
-
-            advanceTimeBy(1.seconds)
-            runCurrent()
-
-            expectThat(connection.connects)
-                .isEqualTo(2)
-
-            available = true
-
-            advanceTimeBy(2.seconds)
-            runCurrent()
-
-            expectThat(connection.connects)
-                .isEqualTo(3)
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Connected)
-
-            available = false
-
-            connection.simulateConnectionLoss()
-            runCurrent()
-
-            expectThat(connection.connects)
-                .isEqualTo(4)
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Disconnected)
-
-            available = true
-
-            advanceTimeBy(1.seconds)
-            runCurrent()
-
-            expectThat(connection.connects)
-                .isEqualTo(5)
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Connected)
-
-            consumer.cancelAndJoin()
-        }
-    }
-
-    test(name = "Unexpected exceptions terminate connection management") {
-        runTest {
-            supervisorScope {
                 val demander = ConnectionDemander()
                 val connection = FakeConnection(
                     onConnect = {
-                        throw IllegalStateException("Unexpected failure")
+                        completed.await()
                     },
                 )
 
@@ -344,7 +186,7 @@ val ConnectionManagerTest by testSuite(
                     idleTimeout = Duration.ZERO,
                 )
 
-                val job = async {
+                backgroundScope.launch {
                     manager.run {
                         // No-op
                     }
@@ -358,8 +200,338 @@ val ConnectionManagerTest by testSuite(
 
                 runCurrent()
 
-                expectThrows<IllegalStateException> { job.await() }
-                    .hasMessage("Unexpected failure")
+                expectThat(connection.connects)
+                    .isEqualTo(1)
+
+                expectThat(connection.connected.value)
+                    .isFalse()
+
+                consumer.cancelAndJoin()
+                runCurrent()
+
+                completed.complete(Unit)
+                runCurrent()
+
+                expectThat(connection.connected.value)
+                    .isFalse()
+
+                expectThat(connection.disconnects)
+                    .isEqualTo(1)
+
+                expectThat(manager.state.value)
+                    .isEqualTo(ConnectionState.Disconnected)
+            }
+        }
+
+        test(name = "Remains connected when disconnect fails") {
+            runTest {
+                supervisorScope {
+                    val demander = ConnectionDemander()
+                    val connection = FakeConnection(
+                        onDisconnect = {
+                            throw IllegalStateException("Disconnect failed")
+                        },
+                    )
+
+                    val manager = ConnectionManager(
+                        connection = connection,
+                        demander = demander,
+                        idleTimeout = Duration.ZERO,
+                    )
+
+                    val job = async {
+                        manager.run {
+                            // No-op
+                        }
+                    }
+
+                    val consumer = launch {
+                        demander.demand {
+                            awaitCancellation()
+                        }
+                    }
+
+                    runCurrent()
+
+                    expectThat(manager.state.value)
+                        .isEqualTo(ConnectionState.Connected)
+
+                    consumer.cancelAndJoin()
+                    runCurrent()
+
+                    expectThrows<IllegalStateException> {
+                        job.await()
+                    }
+
+                    expectThat(connection.disconnects)
+                        .isEqualTo(1)
+
+                    expectThat(manager.state.value)
+                        .isEqualTo(ConnectionState.Connected)
+                }
+            }
+        }
+
+        test(name = "Retry delay resets after successful connection") {
+            runTest {
+                var available = false
+
+                val demander = ConnectionDemander()
+                val connection = FakeConnection(
+                    onConnect = {
+                        if (!available) {
+                            throw ConnectionException("Broker unavailable")
+                        }
+                    },
+                )
+
+                val manager = ConnectionManager(
+                    connection = connection,
+                    demander = demander,
+                    idleTimeout = Duration.ZERO,
+                )
+
+                backgroundScope.launch {
+                    manager.run {
+                        // No-op
+                    }
+                }
+
+                val consumer = launch {
+                    demander.demand {
+                        awaitCancellation()
+                    }
+                }
+
+                runCurrent()
+
+                expectThat(connection.connects)
+                    .isEqualTo(1)
+
+                advanceTimeBy(1.seconds)
+                runCurrent()
+
+                expectThat(connection.connects)
+                    .isEqualTo(2)
+
+                available = true
+
+                advanceTimeBy(2.seconds)
+                runCurrent()
+
+                expectThat(connection.connects)
+                    .isEqualTo(3)
+
+                expectThat(manager.state.value)
+                    .isEqualTo(ConnectionState.Connected)
+
+                available = false
+
+                connection.simulateConnectionLoss()
+                runCurrent()
+
+                expectThat(connection.connects)
+                    .isEqualTo(4)
+
+                expectThat(manager.state.value)
+                    .isEqualTo(ConnectionState.Disconnected)
+
+                available = true
+
+                advanceTimeBy(1.seconds)
+                runCurrent()
+
+                expectThat(connection.connects)
+                    .isEqualTo(5)
+
+                expectThat(manager.state.value)
+                    .isEqualTo(ConnectionState.Connected)
+
+                consumer.cancelAndJoin()
+            }
+        }
+
+        test(name = "Unexpected exceptions terminate connection management") {
+            runTest {
+                supervisorScope {
+                    val demander = ConnectionDemander()
+                    val connection = FakeConnection(
+                        onConnect = {
+                            throw IllegalStateException("Unexpected failure")
+                        },
+                    )
+
+                    val manager = ConnectionManager(
+                        connection = connection,
+                        demander = demander,
+                        idleTimeout = Duration.ZERO,
+                    )
+
+                    val job = async {
+                        manager.run {
+                            // No-op
+                        }
+                    }
+
+                    val consumer = launch {
+                        demander.demand {
+                            awaitCancellation()
+                        }
+                    }
+
+                    runCurrent()
+
+                    expectThrows<IllegalStateException> { job.await() }
+                        .hasMessage("Unexpected failure")
+
+                    expectThat(connection.connects)
+                        .isEqualTo(1)
+
+                    expectThat(connection.disconnects)
+                        .isEqualTo(0)
+
+                    expectThat(manager.state.value)
+                        .isEqualTo(ConnectionState.Disconnected)
+
+                    consumer.cancelAndJoin()
+                }
+            }
+        }
+
+        test(name = "Disconnects when manager is cancelled") {
+            runTest {
+                val demander = ConnectionDemander()
+                val connection = FakeConnection()
+
+                val manager = ConnectionManager(
+                    connection = connection,
+                    demander = demander,
+                    idleTimeout = Duration.ZERO,
+                )
+
+                val job = launch {
+                    manager.run {
+                        // No-op
+                    }
+                }
+
+                val consumer = launch {
+                    demander.demand {
+                        awaitCancellation()
+                    }
+                }
+
+                runCurrent()
+
+                expectThat(manager.state.value)
+                    .isEqualTo(ConnectionState.Connected)
+
+                job.cancelAndJoin()
+
+                expectThat(connection.disconnects)
+                    .isEqualTo(1)
+
+                expectThat(connection.connected.value)
+                    .isFalse()
+
+                expectThat(manager.state.value)
+                    .isEqualTo(ConnectionState.Disconnected)
+
+                consumer.cancelAndJoin()
+            }
+        }
+
+        test(name = "Disconnects after idle timeout") {
+            runTest {
+                val connection = FakeConnection()
+                val demander = ConnectionDemander()
+
+                val manager = ConnectionManager(
+                    connection = connection,
+                    demander = demander,
+                    idleTimeout = 5.seconds,
+                )
+
+                backgroundScope.launch {
+                    manager.run {
+                        // No-op
+                    }
+                }
+
+                val consumer = launch {
+                    demander.demand {
+                        awaitCancellation()
+                    }
+                }
+
+                runCurrent()
+
+                expectThat(connection.connects)
+                    .isEqualTo(1)
+
+                consumer.cancelAndJoin()
+                runCurrent()
+
+                advanceTimeBy(4999.milliseconds)
+                runCurrent()
+
+                expectThat(connection.disconnects)
+                    .isEqualTo(0)
+
+                expectThat(manager.state.value)
+                    .isEqualTo(ConnectionState.Connected)
+
+                advanceTimeBy(1.milliseconds)
+                runCurrent()
+
+                expectThat(connection.disconnects)
+                    .isEqualTo(1)
+
+                expectThat(manager.state.value)
+                    .isEqualTo(ConnectionState.Disconnected)
+            }
+        }
+
+        test(name = "Retains connection when demand returns during idle timeout") {
+            runTest {
+                val connection = FakeConnection()
+                val demander = ConnectionDemander()
+
+                val manager = ConnectionManager(
+                    connection = connection,
+                    demander = demander,
+                    idleTimeout = 5.seconds,
+                )
+
+                backgroundScope.launch {
+                    manager.run {
+                        // No-op
+                    }
+                }
+
+                val first = launch {
+                    demander.demand {
+                        awaitCancellation()
+                    }
+                }
+
+                runCurrent()
+
+                first.cancelAndJoin()
+                runCurrent()
+
+                advanceTimeBy(3.seconds)
+
+                val second = launch {
+                    demander.demand {
+                        awaitCancellation()
+                    }
+                }
+
+                runCurrent()
+
+                advanceTimeBy(10.seconds)
+                runCurrent()
 
                 expectThat(connection.connects)
                     .isEqualTo(1)
@@ -368,277 +540,109 @@ val ConnectionManagerTest by testSuite(
                     .isEqualTo(0)
 
                 expectThat(manager.state.value)
-                    .isEqualTo(ConnectionState.Disconnected)
+                    .isEqualTo(ConnectionState.Connected)
+
+                second.cancelAndJoin()
+                runCurrent()
+
+                advanceTimeBy(5.seconds)
+                runCurrent()
+
+                expectThat(connection.disconnects)
+                    .isEqualTo(1)
+            }
+        }
+
+        test(name = "Does not reconnect when connection is lost during idle timeout") {
+            runTest {
+                val connection = FakeConnection()
+                val demander = ConnectionDemander()
+
+                val manager = ConnectionManager(
+                    connection = connection,
+                    demander = demander,
+                    idleTimeout = 5.seconds,
+                )
+
+                backgroundScope.launch {
+                    manager.run {
+                        // No-op
+                    }
+                }
+
+                val consumer = launch {
+                    demander.demand {
+                        awaitCancellation()
+                    }
+                }
+
+                runCurrent()
 
                 consumer.cancelAndJoin()
+                runCurrent()
+
+                advanceTimeBy(2.seconds)
+
+                connection.simulateConnectionLoss()
+                runCurrent()
+
+                expectThat(manager.state.value)
+                    .isEqualTo(ConnectionState.Disconnected)
+
+                expectThat(connection.connects)
+                    .isEqualTo(1)
+
+                advanceTimeBy(10.seconds)
+                runCurrent()
+
+                expectThat(connection.connects)
+                    .isEqualTo(1)
             }
         }
-    }
 
-    test(name = "Disconnects when manager is cancelled") {
-        runTest {
-            val demander = ConnectionDemander()
-            val connection = FakeConnection()
+        test(name = "Ignores idle timeout when manager is cancelled") {
+            runTest {
+                val connection = FakeConnection()
+                val demander = ConnectionDemander()
 
-            val manager = ConnectionManager(
-                connection = connection,
-                demander = demander,
-                idleTimeout = Duration.ZERO,
-            )
+                val manager = ConnectionManager(
+                    connection = connection,
+                    demander = demander,
+                    idleTimeout = 5.seconds,
+                )
 
-            val job = launch {
-                manager.run {
-                    // No-op
+                val job = launch {
+                    manager.run {
+                        // No-op
+                    }
                 }
-            }
 
-            val consumer = launch {
-                demander.demand {
-                    awaitCancellation()
+                val consumer = launch {
+                    demander.demand {
+                        awaitCancellation()
+                    }
                 }
+
+                runCurrent()
+
+                consumer.cancelAndJoin()
+                runCurrent()
+
+                expectThat(connection.connected.value)
+                    .isTrue()
+
+                job.cancelAndJoin()
+
+                expectThat(connection.disconnects)
+                    .isEqualTo(1)
+
+                expectThat(manager.state.value)
+                    .isEqualTo(ConnectionState.Disconnected)
+
+                expectThat(currentTime)
+                    .isEqualTo(0L)
             }
-
-            runCurrent()
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Connected)
-
-            job.cancelAndJoin()
-
-            expectThat(connection.disconnects)
-                .isEqualTo(1)
-
-            expectThat(connection.connected.value)
-                .isFalse()
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Disconnected)
-
-            consumer.cancelAndJoin()
         }
-    }
-
-    test(name = "Disconnects after idle timeout") {
-        runTest {
-            val connection = FakeConnection()
-            val demander = ConnectionDemander()
-
-            val manager = ConnectionManager(
-                connection = connection,
-                demander = demander,
-                idleTimeout = 5.seconds,
-            )
-
-            backgroundScope.launch {
-                manager.run {
-                    // No-op
-                }
-            }
-
-            val consumer = launch {
-                demander.demand {
-                    awaitCancellation()
-                }
-            }
-
-            runCurrent()
-
-            expectThat(connection.connects)
-                .isEqualTo(1)
-
-            consumer.cancelAndJoin()
-            runCurrent()
-
-            advanceTimeBy(4999.milliseconds)
-            runCurrent()
-
-            expectThat(connection.disconnects)
-                .isEqualTo(0)
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Connected)
-
-            advanceTimeBy(1.milliseconds)
-            runCurrent()
-
-            expectThat(connection.disconnects)
-                .isEqualTo(1)
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Disconnected)
-        }
-    }
-
-    test(name = "Retains connection when demand returns during idle timeout") {
-        runTest {
-            val connection = FakeConnection()
-            val demander = ConnectionDemander()
-
-            val manager = ConnectionManager(
-                connection = connection,
-                demander = demander,
-                idleTimeout = 5.seconds,
-            )
-
-            backgroundScope.launch {
-                manager.run {
-                    // No-op
-                }
-            }
-
-            val first = launch {
-                demander.demand {
-                    awaitCancellation()
-                }
-            }
-
-            runCurrent()
-
-            first.cancelAndJoin()
-            runCurrent()
-
-            advanceTimeBy(3.seconds)
-
-            val second = launch {
-                demander.demand {
-                    awaitCancellation()
-                }
-            }
-
-            runCurrent()
-
-            advanceTimeBy(10.seconds)
-            runCurrent()
-
-            expectThat(connection.connects)
-                .isEqualTo(1)
-
-            expectThat(connection.disconnects)
-                .isEqualTo(0)
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Connected)
-
-            second.cancelAndJoin()
-            runCurrent()
-
-            advanceTimeBy(5.seconds)
-            runCurrent()
-
-            expectThat(connection.disconnects)
-                .isEqualTo(1)
-        }
-    }
-
-    test(name = "Does not reconnect when connection is lost during idle timeout") {
-        runTest {
-            val connection = FakeConnection()
-            val demander = ConnectionDemander()
-
-            val manager = ConnectionManager(
-                connection = connection,
-                demander = demander,
-                idleTimeout = 5.seconds,
-            )
-
-            backgroundScope.launch {
-                manager.run {
-                    // No-op
-                }
-            }
-
-            val consumer = launch {
-                demander.demand {
-                    awaitCancellation()
-                }
-            }
-
-            runCurrent()
-
-            consumer.cancelAndJoin()
-            runCurrent()
-
-            advanceTimeBy(2.seconds)
-
-            connection.simulateConnectionLoss()
-            runCurrent()
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Disconnected)
-
-            expectThat(connection.connects)
-                .isEqualTo(1)
-
-            advanceTimeBy(10.seconds)
-            runCurrent()
-
-            expectThat(connection.connects)
-                .isEqualTo(1)
-        }
-    }
-
-    test(name = "Ignores idle timeout when manager is cancelled") {
-        runTest {
-            val connection = FakeConnection()
-            val demander = ConnectionDemander()
-
-            val manager = ConnectionManager(
-                connection = connection,
-                demander = demander,
-                idleTimeout = 5.seconds,
-            )
-
-            val job = launch {
-                manager.run {
-                    // No-op
-                }
-            }
-
-            val consumer = launch {
-                demander.demand {
-                    awaitCancellation()
-                }
-            }
-
-            runCurrent()
-
-            consumer.cancelAndJoin()
-            runCurrent()
-
-            expectThat(connection.connected.value)
-                .isTrue()
-
-            job.cancelAndJoin()
-
-            expectThat(connection.disconnects)
-                .isEqualTo(1)
-
-            expectThat(manager.state.value)
-                .isEqualTo(ConnectionState.Disconnected)
-
-            expectThat(currentTime)
-                .isEqualTo(0L)
-        }
-    }
-
-    test(name = "Instantiating with a infinite idle timeout throws an exception") {
-        expectThrows<IllegalArgumentException> {
-            ConnectionManager(
-                connection = FakeConnection(),
-                demander = ConnectionDemander(),
-                idleTimeout = Duration.INFINITE,
-            )
-        }.hasMessage("Idle timeout must be finite")
-    }
-
-    test(name = "Instantiating with a negative idle timeout throws an exception") {
-        expectThrows<IllegalArgumentException> {
-            ConnectionManager(
-                connection = FakeConnection(),
-                demander = ConnectionDemander(),
-                idleTimeout = (-1).seconds,
-            )
-        }.hasMessage("Idle timeout must be greater than or equal to 0, but was -1s")
     }
 
     testSuite(
