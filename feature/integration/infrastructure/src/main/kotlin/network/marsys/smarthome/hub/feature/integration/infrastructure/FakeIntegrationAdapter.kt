@@ -1,5 +1,6 @@
 package network.marsys.smarthome.hub.feature.integration.infrastructure
 
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -41,6 +42,7 @@ import kotlin.time.Duration.Companion.seconds
 class FakeIntegrationAdapter(
     override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.fake"),
     initialStatus: Integration.Status = Integration.Status.Stopped,
+    scope: CoroutineScope,
 ) : IntegrationAdapter, IntegrationActionExecutor {
     private val entities = listOf<Entity>(
         Light(
@@ -191,6 +193,7 @@ class FakeIntegrationAdapter(
     )
 
     private val lifecycle = IntegrationLifecycleController(
+        scope = scope,
         initialStatus = initialStatus,
         onStart = {
             eventChannel.trySendProvisioned(entities = entities)
@@ -242,6 +245,7 @@ class FakeIntegrationAdapter(
 
     override suspend fun start() = lifecycle.start()
     override suspend fun stop() = lifecycle.stop()
+    override suspend fun restart() = lifecycle.restart()
 
     private fun Channel<Event>.trySendProvisioned(entities: Collection<Entity>) {
         val now = Clock.System.now()

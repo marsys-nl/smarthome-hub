@@ -37,6 +37,7 @@ tasks.withType(Zip::class).all {
 }
 
 dependencies {
+    implementation(projects.common.annotations)
     implementation(projects.feature.entity.application)
     implementation(projects.feature.entity.domain)
     implementation(projects.feature.entity.infrastructure)
@@ -45,6 +46,7 @@ dependencies {
     implementation(projects.feature.integration.infrastructure)
     implementation(projects.feature.platform.application)
     implementation(projects.feature.platform.infrastructure)
+    implementation(projects.infrastructure.mqtt)
 
     implementation(libs.bundles.kotlin.logging)
 

@@ -76,6 +76,7 @@ val IntegrationRoutesTest by testSuite(
                                 FakeIntegrationAdapter(
                                     identifier = identifier,
                                     initialStatus = status,
+                                    scope = this@test,
                                 ),
                             ),
                         ),

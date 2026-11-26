@@ -1,6 +1,7 @@
 package network.marsys.smarthome.hub.feature.integration.application
 
 import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
@@ -12,90 +13,74 @@ import network.marsys.smarthome.hub.feature.integration.application.ports.inboun
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import kotlin.time.Duration.Companion.seconds
 
-private val logger = KotlinLogging.logger {}
-
 class IntegrationLifecycleManager(
     private val integrations: List<IntegrationAdapter>,
 ) : IntegrationQueries, ManageIntegrationLifecycle {
+    private val logger = KotlinLogging.logger {}
+
     override fun all(): Collection<IntegrationAdapter> = integrations
 
-    override suspend fun restart(identifier: IntegrationIdentifier) {
-        val integration = integrations.find { it.identifier == identifier }
-            ?: throw IntegrationNotFoundException(identifier)
+    override suspend fun start(identifier: IntegrationIdentifier) =
+        start(
+            integration = integrations.find(identifier = identifier),
+        )
 
-        if (integration.status.value == Integration.Status.Running) {
-            stop(integration = integration)
-        }
+    override suspend fun stop(identifier: IntegrationIdentifier) =
+        stop(
+            integration = integrations.find(identifier = identifier),
+        )
 
-        start(integration = integration)
-    }
+    override suspend fun restart(identifier: IntegrationIdentifier) =
+        restart(
+            integration = integrations.find(identifier = identifier),
+        )
 
     suspend fun start() {
-        val startableIntegrations = integrations
-            .filter { it.status.value == Integration.Status.Stopped }
+        logger.info { "Starting ${integrations.size} integrations." }
 
-        logger.info { "Starting ${startableIntegrations.size} integrations." }
-        startableIntegrations.forEach { integration ->
-            start(integration = integration)
+        integrations.forEach { integration ->
+            try {
+                start(integration = integration)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                logger.error(exception) {
+                    "Failed to start integration '${integration.identifier}'. See exception for more information."
+                }
+            }
         }
-    }
-
-    override suspend fun start(identifier: IntegrationIdentifier) {
-        val integration = integrations.find { it.identifier == identifier }
-            ?: throw IntegrationNotFoundException(identifier)
-
-        start(integration = integration)
     }
 
     suspend fun stop() = supervisorScope {
-        integrations
-            .filter { it.status.value == Integration.Status.Running }
-            .map { integration ->
-                async {
-                    stop(integration = integration)
+        integrations.forEach { integration ->
+            try {
+                stop(integration = integration)
+            } catch (exception: CancellationException) {
+                throw exception
+            } catch (exception: Exception) {
+                logger.error(exception) {
+                    "Failed to stop integration '${integration.identifier}'. See exception for more information."
                 }
             }
-            .awaitAll()
-
-        logger.info { "Finished stopping integrations." }
-    }
-
-    override suspend fun stop(identifier: IntegrationIdentifier) {
-        val integration = integrations.find { it.identifier == identifier }
-            ?: throw IntegrationNotFoundException(identifier)
-
-        if (integration.status.value == Integration.Status.Running) {
-            stop(integration = integration)
         }
     }
 
-    private suspend fun start(integration: IntegrationAdapter) = try {
-        check(integration.status.value == Integration.Status.Stopped) {
-            "Can't start integration '${integration.identifier}', as it is already running."
-        }
-
+    private suspend fun start(integration: IntegrationAdapter) {
         logger.info { "Starting integration '${integration.identifier}'." }
-
         integration.start()
-    } catch (exception: RuntimeException) {
-        logger.info(exception) {
-            "Failed to start integration '${integration.identifier}'. See exception for more information."
-        }
     }
 
-    private suspend fun stop(integration: IntegrationAdapter) = try {
-        check(integration.status.value == Integration.Status.Running) {
-            "Can't stop integration '${integration.identifier}', as it is already stopped."
-        }
-
+    private suspend fun stop(integration: IntegrationAdapter) {
         logger.info { "Stopping integration '${integration.identifier}'." }
-
-        withTimeout(30.seconds) {
-            integration.stop()
-        }
-    } catch (exception: RuntimeException) {
-        logger.info(exception) {
-            "Failed to stop integration '${integration.identifier}'. See exception for more information."
-        }
+        integration.stop()
     }
+
+    private suspend fun restart(integration: IntegrationAdapter) {
+        logger.info { "Restarting integration '${integration.identifier}'." }
+        integration.restart()
+    }
+
+    private fun List<IntegrationAdapter>.find(identifier: IntegrationIdentifier): IntegrationAdapter =
+        find { it.identifier == identifier }
+            ?: throw IntegrationNotFoundException(identifier)
 }

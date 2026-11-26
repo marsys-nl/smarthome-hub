@@ -14,6 +14,9 @@ dependencies {
     implementation(projects.feature.entity.domain)
     implementation(projects.feature.integration.application)
     implementation(projects.feature.integration.domain)
+    implementation(projects.infrastructure.mqtt)
+
+    implementation(libs.bundles.kotlin.logging)
 
     implementation(libs.kotlin.coroutines)
 

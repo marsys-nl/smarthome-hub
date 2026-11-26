@@ -1,5 +1,6 @@
 package network.marsys.smarthome.hub.infrastructure.mqtt.internal
 
+import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.coroutineScope
@@ -23,6 +24,8 @@ internal class ConnectionManager(
     private val demander: ConnectionDemander,
     private val idleTimeout: Duration = 5.seconds,
 ) {
+    private val logger = KotlinLogging.logger { }
+
     val state: StateFlow<ConnectionState>
         field = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected)
 
@@ -76,7 +79,9 @@ internal class ConnectionManager(
 
                 try {
                     connect()
-                } catch (_: ConnectionException) {
+                } catch (exception: ConnectionException) {
+                    logger.error(exception) { "Error occurred when connecting to MQTT broker." }
+
                     updateConnectionState()
 
                     delay(duration = ReconnectDelay.calculate(connectionAttempt))
