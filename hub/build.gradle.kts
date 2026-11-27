@@ -47,6 +47,7 @@ dependencies {
     implementation(projects.feature.platform.application)
     implementation(projects.feature.platform.infrastructure)
     implementation(projects.infrastructure.mqtt)
+    implementation(projects.integration.zigbee)
 
     implementation(libs.bundles.kotlin.logging)
 

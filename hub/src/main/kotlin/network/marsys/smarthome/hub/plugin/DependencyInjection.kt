@@ -19,10 +19,10 @@ import network.marsys.smarthome.hub.feature.integration.application.ports.inboun
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.ManageIntegrationLifecycle
 import network.marsys.smarthome.hub.feature.integration.infrastructure.FakeIntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.infrastructure.SystemInfoIntegrationAdapter
-import network.marsys.smarthome.hub.feature.integration.infrastructure.ZigbeeIntegrationAdapter
 import network.marsys.smarthome.hub.feature.platform.infrastructure.di.platformFeatureModule
 import network.marsys.smarthome.hub.infrastructure.mqtt.MqttClient
 import network.marsys.smarthome.hub.infrastructure.mqtt.MqttClientConfiguration
+import network.marsys.smarthome.hub.integration.zigbee.di.zigbeeIntegrationModule
 import org.koin.core.qualifier.named
 import org.koin.dsl.binds
 import org.koin.dsl.module
@@ -57,8 +57,6 @@ internal val applicationModule = module {
 private fun Application.integrationFeatureModule(
     integrationCoroutineScope: CoroutineScope,
 ) = module {
-    includes(integrationApplicationModule())
-
     single<MqttClient> {
         val broker = environment.config.property("smarthome.mqtt.broker.host").getString()
         val username = environment.config.propertyOrNull("smarthome.mqtt.broker.username")?.getString()
@@ -80,6 +78,13 @@ private fun Application.integrationFeatureModule(
         integrationCoroutineScope
     }
 
+    includes(
+        module = arrayOf(
+            integrationApplicationModule(),
+            zigbeeIntegrationModule(),
+        ),
+    )
+
     single<IntegrationAdapter>(qualifier = named("integration.fake")) {
         FakeIntegrationAdapter(
             identifier = IntegrationIdentifier("integration.fake"),
@@ -90,14 +95,6 @@ private fun Application.integrationFeatureModule(
     single<IntegrationAdapter>(qualifier = named("integration.system")) {
         SystemInfoIntegrationAdapter(
             identifier = IntegrationIdentifier("integration.system"),
-            scope = get(coroutineQualifier),
-        )
-    }
-
-    single<IntegrationAdapter>(qualifier = named("integration.zigbee")) {
-        ZigbeeIntegrationAdapter(
-            identifier = IntegrationIdentifier("integration.zigbee"),
-            client = get<MqttClient>(),
             scope = get(coroutineQualifier),
         )
     }

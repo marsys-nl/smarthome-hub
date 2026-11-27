@@ -1,4 +1,4 @@
-package network.marsys.smarthome.hub.feature.integration.infrastructure
+package network.marsys.smarthome.hub.integration.zigbee
 
 import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.CoroutineScope
