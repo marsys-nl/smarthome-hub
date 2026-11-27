@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.test.balloon)
 }
 
@@ -22,6 +23,7 @@ dependencies {
     implementation(libs.koin.core)
 
     implementation(libs.kotlin.coroutines)
+    implementation(libs.kotlin.serialization.json)
 
     implementation(libs.smarthome.domain)
 
