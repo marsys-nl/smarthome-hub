@@ -27,6 +27,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.binds
 import org.koin.dsl.module
 import org.koin.ktor.plugin.Koin
+import kotlin.time.Clock
 
 fun Application.initializeDependencyInjection() {
     install(Koin) {
@@ -57,6 +58,10 @@ internal val applicationModule = module {
 private fun Application.integrationFeatureModule(
     integrationCoroutineScope: CoroutineScope,
 ) = module {
+    single<Clock> {
+        Clock.System
+    }
+
     single<MqttClient> {
         val broker = environment.config.property("smarthome.mqtt.broker.host").getString()
         val username = environment.config.propertyOrNull("smarthome.mqtt.broker.username")?.getString()

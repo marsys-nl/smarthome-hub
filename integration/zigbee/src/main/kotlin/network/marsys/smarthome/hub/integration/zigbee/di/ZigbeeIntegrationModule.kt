@@ -15,6 +15,7 @@ fun zigbeeIntegrationModule() = module {
         ZigbeeIntegrationAdapter(
             identifier = IntegrationIdentifier("integration.zigbee"),
             client = get<MqttClient>(),
+            clock = get(),
             scope = get(named("integrationCoroutineScope")),
         )
     } binds arrayOf(

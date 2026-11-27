@@ -12,6 +12,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(projects.common.annotations)
     implementation(projects.feature.integration.application)
     implementation(projects.feature.integration.domain)
     implementation(projects.feature.entity.domain)
@@ -30,4 +31,6 @@ dependencies {
     testImplementation(libs.kotlin.expect.core)
 
     testImplementation(libs.test.balloon.core)
+
+    testImplementation(libs.turbine)
 }
