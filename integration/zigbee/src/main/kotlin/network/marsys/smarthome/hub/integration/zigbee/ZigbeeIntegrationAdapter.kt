@@ -39,8 +39,6 @@ class ZigbeeIntegrationAdapter(
         initialStatus = Integration.Status.Stopped,
         onStart = {
             launch {
-                println("Starting zigbee")
-
                 client.subscribe("zigbee2mqtt/#")
                     .collect { process(it) }
             }

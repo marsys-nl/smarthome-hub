@@ -51,7 +51,7 @@ kover {
         filters {
             excludes {
                 // Exclude code annotated by @ExcludeFromCoverage
-                annotatedBy("*.ExcludeFromCoverage")
+                annotatedBy("*.ExcludeFromCoverage", "*.Serializable")
 
                 // Exclude main entry point — tested indirectly via integration tests
                 classes("network.marsys.smarthome.hub.ApplicationKt*")
