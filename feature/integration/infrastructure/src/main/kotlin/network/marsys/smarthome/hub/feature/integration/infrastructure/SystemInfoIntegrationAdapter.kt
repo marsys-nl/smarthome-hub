@@ -41,13 +41,14 @@ class SystemInfoIntegrationAdapter(
     initialStatus: Integration.Status = Integration.Status.Stopped,
     private val applicationStartedAt: Long = ManagementFactory.getRuntimeMXBean().startTime,
     private val systemInfo: SystemInfo = SystemInfo(),
-    private val scope: CoroutineScope = CoroutineScope(SupervisorJob()),
+    scope: CoroutineScope,
 ) : IntegrationAdapter {
     private val entityIdentifier = identifier.entity("smarthome")
 
     private var job: Job? = null
 
     private val lifecycle = IntegrationLifecycleController(
+        scope = scope,
         initialStatus = initialStatus,
         onStart = {
             job = scope.launch {
@@ -68,6 +69,7 @@ class SystemInfoIntegrationAdapter(
 
     override suspend fun start() = lifecycle.start()
     override suspend fun stop() = lifecycle.stop()
+    override suspend fun restart() = lifecycle.restart()
 
     private suspend fun initialize() {
         eventChannel.trySend(

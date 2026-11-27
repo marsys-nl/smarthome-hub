@@ -3,4 +3,5 @@ package network.marsys.smarthome.hub.feature.integration.application.ports.outbo
 interface IntegrationRuntime {
     suspend fun start()
     suspend fun stop()
+    suspend fun restart()
 }

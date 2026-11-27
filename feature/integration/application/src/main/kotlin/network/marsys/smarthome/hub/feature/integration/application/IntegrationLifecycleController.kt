@@ -1,77 +1,138 @@
 package network.marsys.smarthome.hub.feature.integration.application
 
+import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.IntegrationRuntime
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import kotlin.coroutines.cancellation.CancellationException
 
 class IntegrationLifecycleController(
+    private val scope: CoroutineScope,
     initialStatus: Integration.Status = Integration.Status.Stopped,
-    private val onStart: suspend () -> Unit = {},
-    private val onPrepareStop: suspend () -> Unit = {},
+    private val onStart: suspend CoroutineScope.() -> Unit = {},
     private val onStop: suspend () -> Unit = {},
 ) : IntegrationRuntime {
-    private val statusStateFlow = MutableStateFlow(value = initialStatus)
-    val status: StateFlow<Integration.Status> = statusStateFlow.asStateFlow()
+    private val logger = KotlinLogging.logger { }
 
-    private var lifecycleJob: Job? = null
+    val status: StateFlow<Integration.Status>
+        field = MutableStateFlow(value = initialStatus)
 
-    override suspend fun start() = coroutineScope {
-        if (status.isRunning) {
-            return@coroutineScope
+    private val mutex = Mutex()
+    private var job: Job? = null
+
+    override suspend fun start() = mutex
+        .withLock {
+            startInternal()
+        }
+        .await()
+
+    override suspend fun stop() = mutex
+        .withLock {
+            stopInternal()
         }
 
-        statusStateFlow.update { Integration.Status.Starting }
+    override suspend fun restart() = mutex
+        .withLock {
+            stopInternal()
+            startInternal()
+        }
+        .await()
 
-        lifecycleJob = launch {
+    private suspend fun startInternal(): Deferred<Unit> {
+        if (
+            status.value is Integration.Status.Failed ||
+            status.value == Integration.Status.Degraded
+        ) {
+            stopInternal()
+        }
+
+        if (status.value != Integration.Status.Stopped) {
+            return CompletableDeferred(Unit)
+        }
+
+        currentCoroutineContext().ensureActive()
+        scope.ensureActive()
+
+        val deferred = CompletableDeferred<Unit>()
+
+        status.value = Integration.Status.Starting
+
+        job = scope.launch {
             try {
-                onStart.invoke()
-                statusStateFlow.update { Integration.Status.Running }
-            } catch (_: CancellationException) {
-                // Whenever the lifecycle job is canceled, we don't want to set
-                // the status to failed, because it was a controlled cancellation.
+                coroutineScope {
+                    onStart.invoke(this)
+
+                    if (
+                        status.compareAndSet(
+                            expect = Integration.Status.Starting,
+                            update = Integration.Status.Running,
+                        )
+                    ) {
+                        deferred.complete(Unit)
+                    }
+
+                    awaitCancellation()
+                }
             } catch (throwable: Throwable) {
-                statusStateFlow.update { Integration.Status.Failed(throwable) }
+                status.update { current ->
+                    if (current == Integration.Status.Stopping) {
+                        current
+                    } else {
+                        Integration.Status.Failed(throwable)
+                    }
+                }
+
+                deferred.completeExceptionally(exception = throwable)
+
+                if (throwable is CancellationException) {
+                    throw throwable
+                }
+            }
+        }.also { job ->
+            job.invokeOnCompletion { cause ->
+                deferred.completeExceptionally(exception = cause ?: return@invokeOnCompletion)
+            }
+        }
+
+        return deferred
+    }
+
+    private suspend fun stopInternal() {
+        when (status.value) {
+            Integration.Status.Stopped, Integration.Status.Stopping -> return
+            else -> Unit
+        }
+
+        status.value = Integration.Status.Stopping
+
+        withContext(NonCancellable) {
+            try {
+                job?.cancelAndJoin()
+                job = null
+
+                onStop.invoke()
+
+                status.value = Integration.Status.Stopped
+            } catch (throwable: Throwable) {
+                status.value = Integration.Status.Failed(throwable)
                 throw throwable
             }
         }
     }
-
-    override suspend fun stop() {
-        if (status.isStopping) {
-            return
-        }
-
-        statusStateFlow.update { Integration.Status.Stopping }
-
-        try {
-            onPrepareStop.invoke()
-
-            lifecycleJob?.cancelAndJoin()
-            lifecycleJob = null
-
-            onStop.invoke()
-
-            statusStateFlow.update { Integration.Status.Stopped }
-        } catch (throwable: Throwable) {
-            statusStateFlow.update { Integration.Status.Failed(throwable) }
-            throw throwable
-        }
-    }
-
-    private val StateFlow<Integration.Status>.isRunning: Boolean
-        get() = value !is Integration.Status.Stopped &&
-            value !is Integration.Status.Failed
-
-    private val StateFlow<Integration.Status>.isStopping: Boolean
-        get() = value is Integration.Status.Stopping ||
-            value is Integration.Status.Stopped ||
-            value is Integration.Status.Failed
 }

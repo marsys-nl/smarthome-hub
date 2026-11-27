@@ -230,6 +230,10 @@ private class TestActionIntegrationAdapter(
         channel.close()
     }
 
+    override suspend fun restart() {
+        channel.close()
+    }
+
     override suspend fun execute(
         action: EntityActionAccepted,
     ): IntegrationActionExecutor.Result {

@@ -10,3 +10,9 @@ smarthome:
             realm: ${ENV_AUTH_JWT_REALM:smarthome-app}
             issuer: ${ENV_AUTH_JWT_ISSUER:}
             jwk-url: ${ENV_AUTH_JWT_JWK_URL:}
+
+    mqtt:
+        broker:
+            host: ${ENV_MQTT_BROKER_HOST:tcp://localhost:1883}
+            username: ${ENV_MQTT_BROKER_USERNAME:}
+            password: ${ENV_MQTT_BROKER_PASSWORD:}
