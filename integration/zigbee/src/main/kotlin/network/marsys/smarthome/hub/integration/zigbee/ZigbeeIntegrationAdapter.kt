@@ -100,7 +100,7 @@ class ZigbeeIntegrationAdapter(
         registry.reconcile(snapshot = devices)
 
         devices
-            .mapNotNull(::provisionedEventFor)
+            .mapNotNull { provisionedEventFor(it) }
             .forEach { event ->
                 eventChannel.send(event)
             }
@@ -143,14 +143,20 @@ class ZigbeeIntegrationAdapter(
             else -> type.naming()
         }
 
-    private fun provisionedEventFor(
+    private suspend fun provisionedEventFor(
         device: ZigbeeDevice,
     ): EntityProvisioned? {
         val type = recognizer.recognize(device)
             ?: return null
 
+        val identifier = entityIdentifierOf(device)
+
+        if (query.findByIdentifier(identifier = identifier) != null) {
+            return null
+        }
+
         return EntityProvisioned(
-            identifier = entityIdentifierOf(device),
+            identifier = identifier,
             type = type,
             naming = entityNamingOf(device, type),
             occurredAt = clock.now(),

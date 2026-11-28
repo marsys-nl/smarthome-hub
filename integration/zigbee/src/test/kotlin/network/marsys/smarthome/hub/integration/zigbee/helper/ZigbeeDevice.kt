@@ -1,6 +1,9 @@
 package network.marsys.smarthome.hub.integration.zigbee.helper
 
 import kotlinx.serialization.json.JsonPrimitive
+import network.marsys.smarthome.domain.entity.EntityIdentifier
+import network.marsys.smarthome.domain.entity.Light
+import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.hub.integration.zigbee.api.CompositeZigbeeDeviceCapability
 import network.marsys.smarthome.hub.integration.zigbee.api.GenericZigbeeDeviceCapability
 import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDevice
@@ -73,4 +76,13 @@ internal fun light(
         ),
 ): ZigbeeDevice = device(
     exposes = exposes,
+)
+
+internal fun entity(
+    ieeeAddress: String = "0x943469fffeb3c843",
+    state: Light.State = Light.State.Unknown,
+): Light = Light(
+    identifier = EntityIdentifier("zigbee.$ieeeAddress"),
+    naming = Light.naming(),
+    state = state,
 )

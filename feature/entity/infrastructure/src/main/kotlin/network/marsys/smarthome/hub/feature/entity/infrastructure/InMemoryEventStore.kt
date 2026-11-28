@@ -26,9 +26,6 @@ class InMemoryEventStore : EventStore, FindEntity, GetEntities {
             }
         }
 
-    private suspend fun append(event: Event): Unit =
-        append(events = arrayOf(event))
-
     override suspend fun load(entity: EntityIdentifier): Collection<Event> =
         mutex.withLock {
             events.getOrDefault(entity, emptyList()).toList()

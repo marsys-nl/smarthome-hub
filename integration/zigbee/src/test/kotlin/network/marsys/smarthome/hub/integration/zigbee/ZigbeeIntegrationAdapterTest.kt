@@ -13,14 +13,22 @@ import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import network.marsys.smarthome.domain.TranslationKey
+import network.marsys.smarthome.domain.capability.Brightness
+import network.marsys.smarthome.domain.capability.Capability.Companion.optional
+import network.marsys.smarthome.domain.capability.Capability.Companion.required
+import network.marsys.smarthome.domain.capability.OnOff
+import network.marsys.smarthome.domain.entity.Entity
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
 import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
+import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
+import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityQuery
 import network.marsys.smarthome.hub.integration.zigbee.helper.FakeMqttClient
+import network.marsys.smarthome.hub.integration.zigbee.helper.entity
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -217,7 +225,7 @@ val ZigbeeIntegrationAdapterTest by testSuite(
         }
     }
 
-    test(name = "Renaming a device should not change the entity identifier") {
+    test(name = "Renaming an unprovisioned device should not change the entity identifier") {
         runTest {
             withZigbeeIntegrationAdapter { client, _ ->
                 client.receive(
@@ -277,7 +285,7 @@ val ZigbeeIntegrationAdapterTest by testSuite(
         }
     }
 
-    test(name = "Receiving an identical snapshot should propose provisioning again") {
+    test(name = "Receiving an identical snapshot before successful provisioning should propose provisioning again") {
         runTest {
             withZigbeeIntegrationAdapter { client, _ ->
                 val device = light()
@@ -288,7 +296,8 @@ val ZigbeeIntegrationAdapterTest by testSuite(
                 client.receive(device)
                 val second = awaitItem()
 
-                expectThat(second).isEqualTo(first)
+                expectThat(second)
+                    .isEqualTo(first)
 
                 runCurrent()
                 expectNoEvents()
@@ -361,6 +370,140 @@ val ZigbeeIntegrationAdapterTest by testSuite(
             }
         }
     }
+
+    test(name = "Receiving an already provisioned device should not provision an entity") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(entity = entity())
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(devices = arrayOf(light()))
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving an already discovered device should not provision an entity") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(
+                    entity = entity(
+                        state = Light.State.Known(
+                            onOff = required(OnOff(current = true)),
+                            brightness = optional(Brightness(current = 50.0.percent)),
+                        ),
+                    ),
+                )
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(light())
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving provisioned and unprovisioned devices should only provision unknown entities") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(entity = entity(ieeeAddress = "0x001"))
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(
+                    devices = arrayOf(
+                        light(
+                            ieeeAddress = "0x001",
+                            friendlyName = "light.kitchen",
+                        ),
+                        light(
+                            ieeeAddress = "0x002",
+                            friendlyName = "light.living-room",
+                        ),
+                    ),
+                )
+
+                expectThat(awaitItem())
+                    .isEqualTo(
+                        EntityProvisioned(
+                            identifier = EntityIdentifier("zigbee.0x002"),
+                            type = Light,
+                            naming = EntityNaming(
+                                key = TranslationKey("light.living-room"),
+                            ),
+                            occurredAt = instant,
+                        ),
+                    )
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving an identical snapshot after successful provisioning should not propose provisioning again") {
+        runTest {
+            val query = FakeEntityQuery()
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                val device = light()
+
+                client.receive(device)
+
+                expectThat(awaitItem())
+                    .isEqualTo(
+                        EntityProvisioned(
+                            identifier = EntityIdentifier("zigbee.0x943469fffeb3c843"),
+                            type = Light,
+                            naming = EntityNaming(
+                                key = TranslationKey("light.kitchen"),
+                            ),
+                            occurredAt = instant,
+                        ),
+                    )
+
+                query.register(entity = entity())
+
+                client.receive(device)
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Renaming a provisioned device should not propose provisioning again") {
+        runTest {
+            val query = FakeEntityQuery()
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(
+                    light(
+                        friendlyName = "light.kitchen",
+                    ),
+                )
+
+                expectThat(awaitItem())
+                    .isA<EntityProvisioned>()
+
+                query.register(entity = entity())
+
+                client.receive(
+                    light(
+                        friendlyName = "light.kitchen-ceiling",
+                    ),
+                )
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
 }
 
 private val identifier =
@@ -370,6 +513,7 @@ private val instant: Instant =
     Instant.parse("2026-01-01T12:00:00Z")
 
 private suspend fun TestScope.withZigbeeIntegrationAdapter(
+    query: EntityQuery = FakeEntityQuery(),
     block: suspend ReceiveTurbine<Event>.(FakeMqttClient, ZigbeeIntegrationAdapter) -> Unit,
 ) {
     val client = FakeMqttClient()
@@ -377,9 +521,7 @@ private suspend fun TestScope.withZigbeeIntegrationAdapter(
     val adapter = ZigbeeIntegrationAdapter(
         identifier = identifier,
         client = client,
-        query = {
-            null
-        },
+        query = query,
         scope = backgroundScope,
         clock = object : Clock {
             override fun now(): Instant = instant
@@ -474,3 +616,15 @@ private fun thermostat(
         }
     }
 """.trimIndent()
+
+private class FakeEntityQuery : EntityQuery {
+
+    private val entities = mutableMapOf<EntityIdentifier, Entity>()
+
+    fun register(entity: Entity) {
+        entities[entity.identifier] = entity
+    }
+
+    override suspend fun findByIdentifier(identifier: EntityIdentifier): Entity? =
+        entities[identifier]
+}
