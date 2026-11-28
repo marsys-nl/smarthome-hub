@@ -19,6 +19,8 @@ import network.marsys.smarthome.domain.entity.Entity
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
 import network.marsys.smarthome.domain.entity.Light
+import network.marsys.smarthome.domain.entity.Thermostat
+import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.application.internal.EntityEventProcessor
 import network.marsys.smarthome.hub.feature.entity.application.internal.EntitySynchronization
@@ -111,7 +113,7 @@ val EntityEventProcessorTest by testSuite(
                 .isA<Light.State.Known>()
         }
 
-        test(name = "Processing an entity provisioned event is rejected if the entity already has a provisioned event processed.") {
+        test(name = "Processing an entity provisioned event returns ignored if already is provisioned - same provisioning.") {
             val store = FakeEventStore()
 
             val processor = EntityEventProcessor(
@@ -122,6 +124,60 @@ val EntityEventProcessorTest by testSuite(
 
             processor.invoke(provisioned)
             val result = processor.invoke(provisioned)
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Ignored>()
+
+            expectThat(store.load(entity = identifier))
+                .filter { it == provisioned }
+                .count()
+                .isEqualTo(1)
+        }
+
+        test(name = "Processing an entity provisioned event returns ignored if already is provisioned - different type.") {
+            val store = FakeEventStore()
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
+            )
+
+            processor.invoke(provisioned)
+            val result = processor.invoke(
+                event = provisioned.copy(
+                    type = Thermostat,
+                ),
+            )
+
+            expectThat(result)
+                .isA<ProcessEntityEvent.Result.Rejected>()
+                .get(ProcessEntityEvent.Result.Rejected::reason)
+                .isA<ProcessEntityEvent.Result.Rejected.Reason.AlreadyProvisioned>()
+
+            expectThat(store.load(entity = identifier))
+                .filter { it == provisioned }
+                .count()
+                .isEqualTo(1)
+        }
+
+        test(name = "Processing an entity provisioned event returns ignored if already is provisioned - different naming.") {
+            val store = FakeEventStore()
+
+            val processor = EntityEventProcessor(
+                store = store,
+                publisher = { _, _ -> },
+                synchronization = EntitySynchronization(),
+            )
+
+            processor.invoke(provisioned)
+            val result = processor.invoke(
+                event = provisioned.copy(
+                    naming = Light.naming(
+                        key = TranslationKey("entity-naming-different"),
+                    ),
+                ),
+            )
 
             expectThat(result)
                 .isA<ProcessEntityEvent.Result.Rejected>()

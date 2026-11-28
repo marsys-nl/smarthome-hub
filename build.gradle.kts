@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.detekt) apply true
     alias(libs.plugins.kotlin.jvm) apply false
     alias(libs.plugins.kotlin.kover) apply true
+    alias(libs.plugins.kotlin.serialization) apply false
     alias(libs.plugins.ktor) apply false
     alias(libs.plugins.test.balloon) apply false
 }
@@ -50,7 +51,7 @@ kover {
         filters {
             excludes {
                 // Exclude code annotated by @ExcludeFromCoverage
-                annotatedBy("*.ExcludeFromCoverage")
+                annotatedBy("*.ExcludeFromCoverage", "*.Serializable")
 
                 // Exclude main entry point — tested indirectly via integration tests
                 classes("network.marsys.smarthome.hub.ApplicationKt*")

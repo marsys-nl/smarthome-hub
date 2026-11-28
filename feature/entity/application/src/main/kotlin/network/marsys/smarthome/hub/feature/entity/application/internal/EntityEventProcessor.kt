@@ -73,15 +73,18 @@ internal class EntityEventProcessor(
 
         return context(with = aggregate) {
             when (event) {
-                is CapabilityUpdated -> context(with = event) {
-                    processCapabilityUpdated()
-                }
+                is CapabilityUpdated ->
+                    context(with = event) {
+                        processCapabilityUpdated()
+                    }
 
-                is EntityActionAccepted -> ProcessEntityEvent.Result.Ignored
+                is EntityActionAccepted ->
+                    ProcessEntityEvent.Result.Ignored
 
-                is EntityActionFinished -> context(with = event) {
-                    processEntityActionEvent()
-                }
+                is EntityActionFinished ->
+                    context(with = event) {
+                        processEntityActionEvent()
+                    }
 
                 is EntityBecameUnavailable ->
                     processEntityBecameUnavailable()
@@ -89,9 +92,10 @@ internal class EntityEventProcessor(
                 is EntityDiscovered ->
                     processEntityDiscovered()
 
-                is EntityProvisioned -> ProcessEntityEvent.Result.Rejected(
-                    reason = ProcessEntityEvent.Result.Rejected.Reason.AlreadyProvisioned,
-                )
+                is EntityProvisioned ->
+                    context(with = event) {
+                        processEntityProvisioned()
+                    }
             }
         }
     } catch (_: IllegalStateException) {
@@ -136,4 +140,14 @@ internal class EntityEventProcessor(
         is Entity.State.Unknown -> ProcessEntityEvent.Result.Ignored
         is Entity.State.Known -> ProcessEntityEvent.Result.Accepted
     }
+
+    context(aggregate: EntityAggregate, event: EntityProvisioned)
+    private fun processEntityProvisioned(): ProcessEntityEvent.Result =
+        if (aggregate.entity.type == event.type && aggregate.entity.naming == event.naming) {
+            ProcessEntityEvent.Result.Ignored
+        } else {
+            ProcessEntityEvent.Result.Rejected(
+                reason = ProcessEntityEvent.Result.Rejected.Reason.AlreadyProvisioned,
+            )
+        }
 }
