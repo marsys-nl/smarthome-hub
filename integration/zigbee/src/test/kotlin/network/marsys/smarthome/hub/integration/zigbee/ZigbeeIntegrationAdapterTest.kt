@@ -14,6 +14,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import network.marsys.smarthome.domain.TranslationKey
 import network.marsys.smarthome.domain.capability.Brightness
+import network.marsys.smarthome.domain.capability.Capability
 import network.marsys.smarthome.domain.capability.Capability.Companion.optional
 import network.marsys.smarthome.domain.capability.Capability.Companion.required
 import network.marsys.smarthome.domain.capability.OnOff
@@ -21,9 +22,11 @@ import network.marsys.smarthome.domain.entity.Entity
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
 import network.marsys.smarthome.domain.entity.Light
+import network.marsys.smarthome.domain.entity.System
 import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 import network.marsys.smarthome.domain.unit.percent
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityQuery
@@ -497,6 +500,452 @@ val ZigbeeIntegrationAdapterTest by testSuite(
                     light(
                         friendlyName = "light.kitchen-ceiling",
                     ),
+                )
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving state for a provisioned light should discover the entity") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(entity())
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(light())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """
+                        {
+                            "state": "ON",
+                            "brightness": 127
+                        }
+                    """.trimIndent(),
+                )
+
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+                    .get(EntityDiscovered::state)
+                    .isA<Light.State.Known>()
+                    .with(Light.State.Known::onOff) {
+                        isA<Capability.Required<OnOff>>()
+                    }
+                    .with(Light.State.Known::brightness) {
+                        isA<Capability.Available<Brightness>>()
+                    }
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving state without an optional capability should discover the entity") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(entity())
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(light())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"state": "ON"}""",
+                )
+
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+                    .get(EntityDiscovered::state)
+                    .isA<Light.State.Known>()
+                    .with(Light.State.Known::onOff) {
+                        isA<Capability.Required<OnOff>>()
+                    }
+                    .with(Light.State.Known::brightness) {
+                        isA<Capability.Unsupported>()
+                    }
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving state without a required capability should not discover the entity") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(entity())
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(light())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"brightness": 127}""",
+                )
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving complementary partial states should discover the entity when all required capabilities become available") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(entity())
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(light())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"brightness": 127}""",
+                )
+
+                runCurrent()
+                expectNoEvents()
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"state": "ON"}""",
+                )
+
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+                    .get(EntityDiscovered::state)
+                    .isA<Light.State.Known>()
+                    .with(Light.State.Known::onOff) {
+                        isA<Capability.Required<OnOff>>()
+                    }
+                    .with(Light.State.Known::brightness) {
+                        isA<Capability.Available<Brightness>>()
+                    }
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving state before successful provisioning should postpone discovery") {
+        runTest {
+            val query = FakeEntityQuery()
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(light())
+
+                expectThat(awaitItem())
+                    .isA<EntityProvisioned>()
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"state": "ON"}""",
+                )
+
+                runCurrent()
+                expectNoEvents()
+
+                query.register(entity())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"brightness": 127}""",
+                )
+
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+                    .get(EntityDiscovered::state)
+                    .isA<Light.State.Known>()
+                    .with(Light.State.Known::onOff) {
+                        isA<Capability.Required<OnOff>>()
+                    }
+                    .with(Light.State.Known::brightness) {
+                        isA<Capability.Available<Brightness>>()
+                    }
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving state for an already discovered entity should not discover the entity again") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(
+                    entity(
+                        state = Light.State.Known(
+                            onOff = required(OnOff(current = true)),
+                            brightness = optional(Brightness(current = 50.0.percent)),
+                        ),
+                    ),
+                )
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(light())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """
+                        {
+                            "state": "OFF",
+                            "brightness": 254
+                        }
+                    """.trimIndent(),
+                )
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving invalid device state should preserve previously received state and not stop message processing") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(entity())
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(light())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"brightness": 127}""",
+                )
+
+                runCurrent()
+                expectNoEvents()
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = "invalid-json",
+                )
+
+                runCurrent()
+                expectNoEvents()
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"state": "ON"}""",
+                )
+
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+                    .get(EntityDiscovered::state)
+                    .isA<Light.State.Known>()
+                    .with(Light.State.Known::onOff) {
+                        isA<Capability.Required<OnOff>>()
+                    }
+                    .with(Light.State.Known::brightness) {
+                        isA<Capability.Available<Brightness>>()
+                    }
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving state for an unknown device should not register its state") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(entity())
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"brightness": 127}""",
+                )
+
+                runCurrent()
+                expectNoEvents()
+
+                client.receive(light())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"state": "ON"}""",
+                )
+
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+                    .get(EntityDiscovered::state)
+                    .isA<Light.State.Known>()
+                    .with(Light.State.Known::onOff) {
+                        isA<Capability.Required<OnOff>>()
+                    }
+                    .with(Light.State.Known::brightness) {
+                        isA<Capability.Unsupported>()
+                    }
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving state for an unsupported device should not discover the entity") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(entity())
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(
+                    light(supported = false),
+                )
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """
+                        {
+                            "state": "ON",
+                            "brightness": 127
+                        }
+                    """.trimIndent(),
+                )
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Rediscovering a removed device should not use previously received device state") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(entity())
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(light())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"brightness": 127}""",
+                )
+
+                runCurrent()
+                expectNoEvents()
+
+                // Remove all devices from the snapshot.
+                client.receive()
+
+                runCurrent()
+                expectNoEvents()
+
+                // Register the device again.
+                client.receive(light())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"state": "ON"}""",
+                )
+
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+                    .get(EntityDiscovered::state)
+                    .isA<Light.State.Known>()
+                    .with(Light.State.Known::onOff) {
+                        isA<Capability.Required<OnOff>>()
+                    }
+                    .with(Light.State.Known::brightness) {
+                        isA<Capability.Unsupported>()
+                    }
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Restarting the integration should discard previously received device state") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(entity())
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, adapter ->
+                client.receive(light())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"brightness": 127}""",
+                )
+
+                runCurrent()
+                expectNoEvents()
+
+                adapter.restart()
+
+                expectThat(client.subscription.await())
+                    .containsExactly("zigbee2mqtt/#")
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"state": "OFF"}""",
+                )
+
+                runCurrent()
+                expectNoEvents()
+
+                client.receive(light())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """{"state": "ON"}""",
+                )
+
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+                    .get(EntityDiscovered::state)
+                    .isA<Light.State.Known>()
+                    .with(Light.State.Known::onOff) {
+                        isA<Capability.Required<OnOff>>()
+                    }
+                    .with(Light.State.Known::brightness) {
+                        isA<Capability.Unsupported>()
+                    }
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving state for an entity of a mismatched type should not discover the entity") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(
+                    System(
+                        identifier = EntityIdentifier("zigbee.0x943469fffeb3c843"),
+                        naming = System.naming(),
+                        state = System.State.Unknown,
+                    ),
+                )
+            }
+
+            withZigbeeIntegrationAdapter(query = query) { client, _ ->
+                client.receive(light())
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """
+                        {
+                            "state": "ON",
+                            "brightness": 127
+                        }
+                    """.trimIndent(),
                 )
 
                 runCurrent()

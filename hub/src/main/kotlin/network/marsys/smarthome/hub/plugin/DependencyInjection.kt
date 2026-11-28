@@ -100,12 +100,12 @@ private fun Application.integrationFeatureModule(
         ),
     )
 
-    single<IntegrationAdapter>(qualifier = named("integration.fake")) {
-        FakeIntegrationAdapter(
-            identifier = IntegrationIdentifier("integration.fake"),
-            scope = get(coroutineQualifier),
-        )
-    }
+//    single<IntegrationAdapter>(qualifier = named("integration.fake")) {
+//        FakeIntegrationAdapter(
+//            identifier = IntegrationIdentifier("integration.fake"),
+//            scope = get(coroutineQualifier),
+//        )
+//    }
 
     single<IntegrationAdapter>(qualifier = named("integration.system")) {
         SystemInfoIntegrationAdapter(

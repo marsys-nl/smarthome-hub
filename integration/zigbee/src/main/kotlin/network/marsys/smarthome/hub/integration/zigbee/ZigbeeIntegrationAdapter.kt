@@ -15,10 +15,12 @@ import network.marsys.smarthome.domain.TranslationKey
 import network.marsys.smarthome.domain.entity.Entity
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.EntityNaming
+import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.domain.entity.naming
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 import network.marsys.smarthome.hub.common.annotations.ExcludeFromCoverage
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityActionAccepted
+import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationAdapter
@@ -32,7 +34,10 @@ import network.marsys.smarthome.hub.integration.zigbee.ZigbeeIntegrationAdapter.
 import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDevice
 import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDeviceState
 import network.marsys.smarthome.hub.integration.zigbee.internal.ZigbeeDeviceRegistry
+import network.marsys.smarthome.hub.integration.zigbee.internal.ZigbeeDeviceStateRegistry
 import network.marsys.smarthome.hub.integration.zigbee.internal.ZigbeeEntityRecognizer
+import network.marsys.smarthome.hub.integration.zigbee.internal.mapper.state.ZigbeeEntityStateMapper
+import network.marsys.smarthome.hub.integration.zigbee.internal.mapper.state.ZigbeeLightStateMapper
 import kotlin.time.Clock
 
 class ZigbeeIntegrationAdapter(
@@ -48,10 +53,17 @@ class ZigbeeIntegrationAdapter(
         ignoreUnknownKeys = true
     }
 
+    private val entityRecognizer = ZigbeeEntityRecognizer()
+    private val deviceRegistry = ZigbeeDeviceRegistry()
+    private val deviceStateRegistry = ZigbeeDeviceStateRegistry()
+
     private val lifecycle = IntegrationLifecycleController(
         scope = scope,
         initialStatus = Integration.Status.Stopped,
         onStart = {
+            deviceRegistry.reconcile(snapshot = emptyList())
+            deviceStateRegistry.clear()
+
             launch {
                 client.subscribe("zigbee2mqtt/#")
                     .collect { process(it) }
@@ -64,9 +76,6 @@ class ZigbeeIntegrationAdapter(
     override val events: Flow<Event> = eventChannel.receiveAsFlow()
 
     override val status: StateFlow<Integration.Status> = lifecycle.status
-
-    private val recognizer = ZigbeeEntityRecognizer()
-    private val registry = ZigbeeDeviceRegistry()
 
     @ExcludeFromCoverage(reason = "Not yet used in production code")
     override suspend fun execute(action: EntityActionAccepted): IntegrationActionExecutor.Result =
@@ -97,7 +106,11 @@ class ZigbeeIntegrationAdapter(
             return
         }
 
-        registry.reconcile(snapshot = devices)
+        val changes = deviceRegistry.reconcile(snapshot = devices)
+
+        changes.removed.forEach { device ->
+            deviceStateRegistry.remove(ieeeAddress = device.ieeeAddress)
+        }
 
         devices
             .mapNotNull { provisionedEventFor(it) }
@@ -108,7 +121,7 @@ class ZigbeeIntegrationAdapter(
 
     @OptIn(ExperimentalSerializationApi::class)
     private suspend fun processPotentialDeviceState(message: Message) {
-        val device = registry.findByTopic(topic = message.topic)
+        val device = deviceRegistry.findByTopic(topic = message.topic)
             ?: return
 
         val state = try {
@@ -124,7 +137,17 @@ class ZigbeeIntegrationAdapter(
     }
 
     private suspend fun processDeviceState(device: ZigbeeDevice, state: ZigbeeDeviceState) {
-        logger.info { "Received state update for Zigbee device '${device.friendlyName}': $state" }
+        val state = deviceStateRegistry.update(
+            ieeeAddress = device.ieeeAddress,
+            state = state,
+        )
+
+        discoveredEventFor(
+            device = device,
+            state = state,
+        )?.let { event ->
+            eventChannel.send(event)
+        }
     }
 
     private fun entityIdentifierOf(device: ZigbeeDevice): EntityIdentifier =
@@ -146,7 +169,7 @@ class ZigbeeIntegrationAdapter(
     private suspend fun provisionedEventFor(
         device: ZigbeeDevice,
     ): EntityProvisioned? {
-        val type = recognizer.recognize(device)
+        val type = entityRecognizer.recognize(device)
             ?: return null
 
         val identifier = entityIdentifierOf(device)
@@ -159,6 +182,43 @@ class ZigbeeIntegrationAdapter(
             identifier = identifier,
             type = type,
             naming = entityNamingOf(device, type),
+            occurredAt = clock.now(),
+        )
+    }
+
+    private suspend fun discoveredEventFor(
+        device: ZigbeeDevice,
+        state: ZigbeeDeviceState,
+    ): EntityDiscovered? {
+        val type = entityRecognizer.recognize(device)
+            ?: return null
+
+        val identifier = entityIdentifierOf(device)
+
+        val entity = query.findByIdentifier(identifier = identifier)
+            ?: return null
+
+//        val discovered = when (type) {
+//            Light if entity is Light && entity.state is Light.State.Unknown -> ZigbeeLightStateMapper.map(
+//                device = device,
+//                state = state,
+//            )
+//
+//            else -> return null
+//        }
+
+        val discovered = if (entity.state is Light.State.Unknown) {
+            ZigbeeLightStateMapper.map(
+                device = device,
+                state = state,
+            )
+        } else {
+            return null
+        }
+
+        return EntityDiscovered(
+            identifier = identifier,
+            state = discovered ?: return null,
             occurredAt = clock.now(),
         )
     }
