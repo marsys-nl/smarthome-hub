@@ -143,14 +143,12 @@ private fun device(
 private val light = CompositeZigbeeDeviceCapability(
     type = "light",
     features = listOf(
-        GenericZigbeeDeviceCapability(
-            type = "binary",
+        GenericZigbeeDeviceCapability.Binary(
             access = 7,
             name = "state",
             property = "state",
         ),
-        GenericZigbeeDeviceCapability(
-            type = "numeric",
+        GenericZigbeeDeviceCapability.Numeric(
             access = 7,
             name = "brightness",
             property = "brightness",
@@ -158,15 +156,13 @@ private val light = CompositeZigbeeDeviceCapability(
     ),
 )
 
-private val power = GenericZigbeeDeviceCapability(
-    type = "numeric",
+private val power = GenericZigbeeDeviceCapability.Numeric(
     access = 5,
     name = "power",
     property = "power",
 )
 
-private val linkQuality = GenericZigbeeDeviceCapability(
-    type = "numeric",
+private val linkQuality = GenericZigbeeDeviceCapability.Numeric(
     access = 1,
     name = "linkquality",
     property = "linkquality",

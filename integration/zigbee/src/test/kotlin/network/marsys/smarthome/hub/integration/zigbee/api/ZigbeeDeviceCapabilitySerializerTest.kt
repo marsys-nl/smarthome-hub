@@ -9,6 +9,7 @@ import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.single
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonPrimitive
 
 val ZigbeeDeviceCapabilitySerializerTest by testSuite(
     name = "Zigbee device capability serializer tests",
@@ -34,40 +35,11 @@ val ZigbeeDeviceCapabilitySerializerTest by testSuite(
 
         expectThat(capability)
             .isEqualTo(
-                GenericZigbeeDeviceCapability(
-                    type = "binary",
+                GenericZigbeeDeviceCapability.Binary(
                     access = 1,
                     name = "smoke",
                     label = "Smoke",
                     property = "smoke",
-                ),
-            )
-    }
-
-    test(name = "Deserializing a generic capability should ignore unknown properties") {
-        val payload = """
-            {
-                "type": "numeric",
-                "access": 7,
-                "name": "brightness",
-                "property": "brightness",
-                "value_min": 0,
-                "value_max": 254,
-                "value_step": 1
-            }
-        """.trimIndent()
-
-        val capability = json.decodeFromString<ZigbeeDeviceCapability>(
-            string = payload,
-        )
-
-        expectThat(capability)
-            .isEqualTo(
-                GenericZigbeeDeviceCapability(
-                    type = "numeric",
-                    access = 7,
-                    name = "brightness",
-                    property = "brightness",
                 ),
             )
     }
@@ -104,14 +76,14 @@ val ZigbeeDeviceCapabilitySerializerTest by testSuite(
                 CompositeZigbeeDeviceCapability(
                     type = "light",
                     features = listOf(
-                        GenericZigbeeDeviceCapability(
-                            type = "binary",
+                        GenericZigbeeDeviceCapability.Binary(
                             access = 7,
                             name = "state",
                             property = "state",
+                            valueOn = JsonPrimitive("ON"),
+                            valueOff = JsonPrimitive("OFF"),
                         ),
-                        GenericZigbeeDeviceCapability(
-                            type = "numeric",
+                        GenericZigbeeDeviceCapability.Numeric(
                             access = 7,
                             name = "brightness",
                             property = "brightness",
@@ -196,14 +168,12 @@ val ZigbeeDeviceCapabilitySerializerTest by testSuite(
                             name = "color_xy",
                             property = "color",
                             features = listOf(
-                                GenericZigbeeDeviceCapability(
-                                    type = "numeric",
+                                GenericZigbeeDeviceCapability.Numeric(
                                     name = "x",
                                     property = "x",
                                     access = 7,
                                 ),
-                                GenericZigbeeDeviceCapability(
-                                    type = "numeric",
+                                GenericZigbeeDeviceCapability.Numeric(
                                     name = "y",
                                     property = "y",
                                     access = 7,
@@ -249,19 +219,18 @@ val ZigbeeDeviceCapabilitySerializerTest by testSuite(
                     CompositeZigbeeDeviceCapability(
                         type = "light",
                         features = listOf(
-                            GenericZigbeeDeviceCapability(
-                                type = "binary",
+                            GenericZigbeeDeviceCapability.Binary(
                                 name = "state",
                                 property = "state",
                                 access = 7,
                             ),
                         ),
                     ),
-                    GenericZigbeeDeviceCapability(
-                        type = "numeric",
+                    GenericZigbeeDeviceCapability.Numeric(
                         name = "power",
                         property = "power",
                         access = 5,
+                        unit = "W",
                     ),
                 ),
             )
