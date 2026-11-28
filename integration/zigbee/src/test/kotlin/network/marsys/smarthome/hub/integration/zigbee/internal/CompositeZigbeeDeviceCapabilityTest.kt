@@ -8,6 +8,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import network.marsys.smarthome.domain.capability.OnOff
 import network.marsys.smarthome.hub.integration.zigbee.api.CompositeZigbeeDeviceCapability
 import network.marsys.smarthome.hub.integration.zigbee.api.GenericZigbeeDeviceCapability
+import network.marsys.smarthome.hub.integration.zigbee.helper.brightness
+import network.marsys.smarthome.hub.integration.zigbee.helper.onOff
 import network.marsys.smarthome.hub.integration.zigbee.internal.mapper.ZigbeeOnOffMapper
 
 val CompositeZigbeeDeviceCapabilityTest by testSuite(
@@ -87,20 +89,3 @@ val CompositeZigbeeDeviceCapabilityTest by testSuite(
             .isNull()
     }
 }
-
-private val onOff = GenericZigbeeDeviceCapability.Binary(
-    access = 7,
-    name = "state",
-    property = "state",
-    valueOn = JsonPrimitive("ON"),
-    valueOff = JsonPrimitive("OFF"),
-    valueToggle = JsonPrimitive("TOGGLE"),
-)
-
-private val brightness = GenericZigbeeDeviceCapability.Numeric(
-    access = 7,
-    name = "brightness",
-    property = "brightness",
-    valueMin = 0.0,
-    valueMax = 254.0,
-)

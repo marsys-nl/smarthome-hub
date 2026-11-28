@@ -11,6 +11,7 @@ import dev.nmarsman.expect.assertions.isTrue
 import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDevice
 import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDeviceDefinition
 import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeInterviewState
+import network.marsys.smarthome.hub.integration.zigbee.helper.device
 import kotlin.collections.listOf
 
 val ZigbeeDeviceRegistryTest by testSuite(
@@ -448,16 +449,3 @@ val ZigbeeDeviceRegistryTest by testSuite(
             .isNull()
     }
 }
-
-private fun device(
-    ieeeAddress: String,
-    friendlyName: String = ieeeAddress,
-): ZigbeeDevice = ZigbeeDevice(
-    ieeeAddress = ieeeAddress,
-    friendlyName = friendlyName,
-    disabled = false,
-    supported = true,
-    description = null,
-    definition = null,
-    interviewState = ZigbeeInterviewState.SUCCESSFUL,
-)

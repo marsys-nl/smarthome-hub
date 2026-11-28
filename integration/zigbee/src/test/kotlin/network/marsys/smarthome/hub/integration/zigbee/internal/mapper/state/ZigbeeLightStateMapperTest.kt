@@ -12,11 +12,9 @@ import network.marsys.smarthome.domain.capability.OnOff
 import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.integration.zigbee.api.CompositeZigbeeDeviceCapability
-import network.marsys.smarthome.hub.integration.zigbee.api.GenericZigbeeDeviceCapability
-import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDevice
-import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDeviceCapability
-import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDeviceDefinition
-import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeInterviewState
+import network.marsys.smarthome.hub.integration.zigbee.helper.brightness
+import network.marsys.smarthome.hub.integration.zigbee.helper.light
+import network.marsys.smarthome.hub.integration.zigbee.helper.onOff
 
 val ZigbeeLightStateMapperTest by testSuite(
     name = "Zigbee light state mapper tests",
@@ -254,45 +252,3 @@ val ZigbeeLightStateMapperTest by testSuite(
             .isNull()
     }
 }
-
-private val onOff = GenericZigbeeDeviceCapability.Binary(
-    access = 7,
-    name = "state",
-    property = "state",
-    valueOn = JsonPrimitive("ON"),
-    valueOff = JsonPrimitive("OFF"),
-    valueToggle = JsonPrimitive("TOGGLE"),
-)
-
-private val brightness = GenericZigbeeDeviceCapability.Numeric(
-    access = 7,
-    name = "brightness",
-    property = "brightness",
-    valueMin = 0.0,
-    valueMax = 254.0,
-)
-
-private fun light(
-    features: List<ZigbeeDeviceCapability> =
-        listOf(onOff, brightness),
-    exposes: List<ZigbeeDeviceCapability> =
-        listOf(
-            CompositeZigbeeDeviceCapability(
-                type = "light",
-                features = features,
-            ),
-        ),
-): ZigbeeDevice = ZigbeeDevice(
-    ieeeAddress = "0x943469fffeb3c843",
-    friendlyName = "light.kitchen",
-    disabled = false,
-    supported = true,
-    description = null,
-    definition = ZigbeeDeviceDefinition(
-        model = "TEST",
-        vendor = "TEST",
-        description = "Test light",
-        exposes = exposes,
-    ),
-    interviewState = ZigbeeInterviewState.SUCCESSFUL,
-)

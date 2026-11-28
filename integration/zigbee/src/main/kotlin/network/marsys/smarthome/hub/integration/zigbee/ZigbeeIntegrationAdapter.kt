@@ -27,7 +27,9 @@ import network.marsys.smarthome.hub.feature.integration.application.ports.inboun
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import network.marsys.smarthome.hub.infrastructure.mqtt.Message
 import network.marsys.smarthome.hub.infrastructure.mqtt.MqttClient
+import network.marsys.smarthome.hub.integration.zigbee.ZigbeeIntegrationAdapter.Companion.BASE_TOPIC
 import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDevice
+import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDeviceState
 import network.marsys.smarthome.hub.integration.zigbee.internal.ZigbeeDeviceRegistry
 import network.marsys.smarthome.hub.integration.zigbee.internal.ZigbeeEntityRecognizer
 import kotlin.time.Clock
@@ -74,8 +76,11 @@ class ZigbeeIntegrationAdapter(
 
     private suspend fun process(message: Message) {
         when (message.topic) {
-            "zigbee2mqtt/bridge/devices" ->
+            "$BASE_TOPIC/bridge/devices" ->
                 processDevices(message)
+
+            else ->
+                processPotentialDeviceState(message)
         }
     }
 
@@ -97,6 +102,27 @@ class ZigbeeIntegrationAdapter(
             .forEach { event ->
                 eventChannel.send(event)
             }
+    }
+
+    @OptIn(ExperimentalSerializationApi::class)
+    private suspend fun processPotentialDeviceState(message: Message) {
+        val device = registry.findByTopic(topic = message.topic)
+            ?: return
+
+        val state = try {
+            json.decodeFromStream<ZigbeeDeviceState>(stream = message.payload.inputStream())
+        } catch (exception: SerializationException) {
+            logger.warn(exception) {
+                "Failed to deserialize Zigbee device state for device '${device.ieeeAddress}'."
+            }
+            return
+        }
+
+        processDeviceState(device, state)
+    }
+
+    private suspend fun processDeviceState(device: ZigbeeDevice, state: ZigbeeDeviceState) {
+        logger.info { "Received state update for Zigbee device '${device.friendlyName}': $state" }
     }
 
     private fun entityIdentifierOf(device: ZigbeeDevice): EntityIdentifier =
@@ -128,4 +154,20 @@ class ZigbeeIntegrationAdapter(
             occurredAt = clock.now(),
         )
     }
+
+    companion object {
+        internal const val BASE_TOPIC = "zigbee2mqtt"
+    }
+}
+
+internal fun ZigbeeDeviceRegistry.findByTopic(topic: String): ZigbeeDevice? {
+    val prefix = "${BASE_TOPIC}/"
+
+    if (!topic.startsWith(prefix)) {
+        return null
+    }
+
+    return findByFriendlyName(
+        friendlyName = topic.removePrefix(prefix),
+    )
 }

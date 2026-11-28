@@ -6,11 +6,11 @@ import dev.nmarsman.expect.assertions.isEqualTo
 import dev.nmarsman.expect.assertions.isNull
 import network.marsys.smarthome.domain.entity.Light
 import network.marsys.smarthome.hub.integration.zigbee.api.CompositeZigbeeDeviceCapability
-import network.marsys.smarthome.hub.integration.zigbee.api.GenericZigbeeDeviceCapability
-import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDevice
-import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDeviceCapability
-import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeDeviceDefinition
 import network.marsys.smarthome.hub.integration.zigbee.api.ZigbeeInterviewState
+import network.marsys.smarthome.hub.integration.zigbee.helper.device
+import network.marsys.smarthome.hub.integration.zigbee.helper.light
+import network.marsys.smarthome.hub.integration.zigbee.helper.linkQuality
+import network.marsys.smarthome.hub.integration.zigbee.helper.power
 
 val ZigbeeEntityRecognizerTest by testSuite(
     name = "Zigbee entity recognizer tests",
@@ -122,48 +122,3 @@ val ZigbeeEntityRecognizerTest by testSuite(
             .isNull()
     }
 }
-
-private fun device(
-    exposes: List<ZigbeeDeviceCapability> = emptyList(),
-): ZigbeeDevice = ZigbeeDevice(
-    ieeeAddress = "0x943469fffeb3c843",
-    friendlyName = "test-device",
-    disabled = false,
-    supported = true,
-    description = null,
-    definition = ZigbeeDeviceDefinition(
-        model = "TEST",
-        vendor = "Test vendor",
-        description = "Test device",
-        exposes = exposes,
-    ),
-    interviewState = ZigbeeInterviewState.SUCCESSFUL,
-)
-
-private val light = CompositeZigbeeDeviceCapability(
-    type = "light",
-    features = listOf(
-        GenericZigbeeDeviceCapability.Binary(
-            access = 7,
-            name = "state",
-            property = "state",
-        ),
-        GenericZigbeeDeviceCapability.Numeric(
-            access = 7,
-            name = "brightness",
-            property = "brightness",
-        ),
-    ),
-)
-
-private val power = GenericZigbeeDeviceCapability.Numeric(
-    access = 5,
-    name = "power",
-    property = "power",
-)
-
-private val linkQuality = GenericZigbeeDeviceCapability.Numeric(
-    access = 1,
-    name = "linkquality",
-    property = "linkquality",
-)
