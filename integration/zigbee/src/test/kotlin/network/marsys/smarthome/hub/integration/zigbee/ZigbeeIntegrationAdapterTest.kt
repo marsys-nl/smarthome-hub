@@ -377,6 +377,9 @@ private suspend fun TestScope.withZigbeeIntegrationAdapter(
     val adapter = ZigbeeIntegrationAdapter(
         identifier = identifier,
         client = client,
+        query = {
+            null
+        },
         scope = backgroundScope,
         clock = object : Clock {
             override fun now(): Instant = instant

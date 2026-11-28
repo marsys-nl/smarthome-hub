@@ -5,8 +5,10 @@ import dev.nmarsman.expect.api.expectThat
 import dev.nmarsman.expect.assertions.all
 import dev.nmarsman.expect.assertions.doesNotContain
 import dev.nmarsman.expect.assertions.hasSize
+import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEmpty
 import dev.nmarsman.expect.assertions.isEqualTo
+import dev.nmarsman.expect.assertions.isNull
 import dev.nmarsman.expect.assertions.none
 import network.marsys.smarthome.domain.entity.EntityIdentifier
 import network.marsys.smarthome.domain.entity.Light
@@ -82,6 +84,36 @@ val InMemoryEventStoreTest by testSuite(
                     get(Event::identifier)
                         .isEqualTo(identifier)
                 }
+        }
+    }
+
+    testSuite(
+        name = "Finding entities by identifier",
+    ) {
+        test(name = "Finding an existing entity should return the entity") {
+            val store = InMemoryEventStore()
+            val identifier = EntityIdentifier("light.living-room")
+
+            val events = listOf(
+                EntityProvisioned(
+                    identifier = identifier,
+                    type = Light,
+                    naming = Light.naming(),
+                ),
+            )
+
+            store.append(*events.toTypedArray())
+
+            expectThat(store.invoke(identifier))
+                .isA<Light>()
+        }
+
+        test(name = "Finding an unknown entity should return null") {
+            val store = InMemoryEventStore()
+            val identifier = EntityIdentifier("light.living-room")
+
+            expectThat(store.invoke(identifier))
+                .isNull()
         }
     }
 }

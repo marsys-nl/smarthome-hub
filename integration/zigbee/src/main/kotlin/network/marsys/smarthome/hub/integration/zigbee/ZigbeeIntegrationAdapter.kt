@@ -24,6 +24,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationLifecycleController
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationActionExecutor
+import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityQuery
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import network.marsys.smarthome.hub.infrastructure.mqtt.Message
 import network.marsys.smarthome.hub.infrastructure.mqtt.MqttClient
@@ -37,6 +38,7 @@ import kotlin.time.Clock
 class ZigbeeIntegrationAdapter(
     override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.zigbee"),
     private val client: MqttClient,
+    private val query: EntityQuery,
     private val clock: Clock,
     scope: CoroutineScope,
 ) : IntegrationAdapter, IntegrationActionExecutor {

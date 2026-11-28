@@ -11,12 +11,14 @@ import kotlinx.serialization.modules.SerializersModule
 import network.marsys.smarthome.api.apiModuleSerializersModule
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 import network.marsys.smarthome.hub.common.annotations.ExcludeFromCoverage
+import network.marsys.smarthome.hub.entity.EntityQueryAdapter
 import network.marsys.smarthome.hub.feature.entity.infrastructure.di.entityFeatureModule
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationLifecycleManager
 import network.marsys.smarthome.hub.feature.integration.application.di.integrationApplicationModule
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationQueries
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.ManageIntegrationLifecycle
+import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityQuery
 import network.marsys.smarthome.hub.feature.integration.infrastructure.FakeIntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.infrastructure.SystemInfoIntegrationAdapter
 import network.marsys.smarthome.hub.feature.platform.infrastructure.di.platformFeatureModule
@@ -82,6 +84,14 @@ private fun Application.integrationFeatureModule(
     single(qualifier = coroutineQualifier) {
         integrationCoroutineScope
     }
+
+    single {
+        EntityQueryAdapter(
+            finder = get(),
+        )
+    } binds arrayOf(
+        EntityQuery::class,
+    )
 
     includes(
         module = arrayOf(
