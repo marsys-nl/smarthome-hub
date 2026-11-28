@@ -45,6 +45,7 @@ import network.marsys.smarthome.hub.feature.integration.application.IntegrationA
 import network.marsys.smarthome.hub.feature.integration.application.di.integrationApplicationModule
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationActionExecutor
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationQueries
+import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityEventPublisher
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import network.marsys.smarthome.hub.feature.platform.infrastructure.di.platformFeatureModule
 import org.koin.dsl.koinApplication
@@ -87,8 +88,10 @@ val EntityActionExecutionIntegrationTest by testSuite(
                 occurredAt = now,
             )
 
+            val publisher = FakeEntityEventPublisher()
             val integration = TestActionIntegrationAdapter(
                 entity = identifier,
+                publisher = publisher,
             )
 
             val application = koinApplication {
@@ -115,7 +118,7 @@ val EntityActionExecutionIntegrationTest by testSuite(
             val consumer = backgroundScope.launch(
                 start = CoroutineStart.UNDISPATCHED,
             ) {
-                integration.events.collect { event ->
+                publisher.events.collect { event ->
                     processor.invoke(event = event)
                 }
             }
@@ -211,6 +214,7 @@ private suspend fun awaitEvent(
 }
 private class TestActionIntegrationAdapter(
     private val entity: EntityIdentifier,
+    private val publisher: EntityEventPublisher,
 ) : IntegrationAdapter, IntegrationActionExecutor {
 
     override val identifier =
@@ -219,20 +223,9 @@ private class TestActionIntegrationAdapter(
     override val status: StateFlow<Integration.Status> =
         MutableStateFlow(Integration.Status.Running)
 
-    private val channel = Channel<Event>(Channel.BUFFERED)
-
-    override val events: Flow<Event> =
-        channel.receiveAsFlow()
-
     override suspend fun start() = Unit
-
-    override suspend fun stop() {
-        channel.close()
-    }
-
-    override suspend fun restart() {
-        channel.close()
-    }
+    override suspend fun stop() = Unit
+    override suspend fun restart() = Unit
 
     override suspend fun execute(
         action: EntityActionAccepted,
@@ -243,7 +236,7 @@ private class TestActionIntegrationAdapter(
 
         return when (action.action) {
             is OnOff.Toggle.On -> {
-                channel.send(
+                publisher.publish(
                     CapabilityUpdated(
                         identifier = entity,
                         capability = OnOff(current = true),
@@ -251,7 +244,7 @@ private class TestActionIntegrationAdapter(
                     ),
                 )
 
-                channel.send(
+                publisher.publish(
                     EntityActionCompleted(
                         accepted = action,
                         occurredAt = Clock.System.now(),
@@ -265,4 +258,21 @@ private class TestActionIntegrationAdapter(
                 IntegrationActionExecutor.Result.NotResponsible
         }
     }
+}
+
+internal class FakeEntityEventPublisher(
+    private val processor: suspend (Event) -> EntityEventPublisher.Result = {
+        EntityEventPublisher.Result.Accepted
+    },
+) : EntityEventPublisher {
+
+    private val channel = Channel<Event>(Channel.UNLIMITED)
+    val events: Flow<Event> = channel.receiveAsFlow()
+
+    override suspend fun publish(
+        event: Event,
+    ): EntityEventPublisher.Result =
+        processor(event).also {
+            channel.send(element = event)
+        }
 }

@@ -15,6 +15,7 @@ fun zigbeeIntegrationModule() = module {
         ZigbeeIntegrationAdapter(
             identifier = IntegrationIdentifier("integration.zigbee"),
             client = get<MqttClient>(),
+            publisher = get(),
             query = get(),
             clock = get(),
             scope = get(named("integrationCoroutineScope")),

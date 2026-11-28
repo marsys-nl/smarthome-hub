@@ -8,7 +8,11 @@ import dev.nmarsman.expect.assertions.contains
 import dev.nmarsman.expect.assertions.containsExactly
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEqualTo
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -29,6 +33,7 @@ import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
+import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityEventPublisher
 import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityQuery
 import network.marsys.smarthome.hub.integration.zigbee.helper.FakeMqttClient
 import network.marsys.smarthome.hub.integration.zigbee.helper.entity
@@ -953,6 +958,145 @@ val ZigbeeIntegrationAdapterTest by testSuite(
             }
         }
     }
+
+    test(name = "Receiving state during provisioning should discover the entity after provisioning has completed") {
+        runTest {
+            val query = FakeEntityQuery()
+
+            val started = CompletableDeferred<Unit>()
+            val completed = CompletableDeferred<Unit>()
+
+            val publisher = FakeEntityEventPublisher { event ->
+                if (event is EntityProvisioned) {
+                    started.complete(Unit)
+                    completed.await()
+                    query.register(entity())
+                }
+
+                EntityEventPublisher.Result.Accepted
+            }
+
+            withZigbeeIntegrationAdapter(
+                query = query,
+                publisher = publisher,
+            ) { client, _ ->
+                client.receive(light())
+
+                started.await()
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = """
+                        {
+                            "state": "ON",
+                            "brightness": 127
+                        }
+                    """.trimIndent(),
+                )
+
+                runCurrent()
+                expectNoEvents()
+
+                completed.complete(Unit)
+
+                expectThat(awaitItem())
+                    .isA<EntityProvisioned>()
+
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+                    .get(EntityDiscovered::state)
+                    .isA<Light.State.Known>()
+                    .with(Light.State.Known::onOff) {
+                        isA<Capability.Required<OnOff>>()
+                    }
+                    .with(Light.State.Known::brightness) {
+                        isA<Capability.Available<Brightness>>()
+                    }
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
+
+    test(name = "Receiving state during discovery should not discover the entity again after discovery has completed") {
+        runTest {
+            val query = FakeEntityQuery().apply {
+                register(entity())
+            }
+
+            val started = CompletableDeferred<Unit>()
+            val completed = CompletableDeferred<Unit>()
+
+            val state = Light.State.Known(
+                onOff = required(OnOff(current = true)),
+                brightness = optional(
+                    Brightness(current = 50.0.percent),
+                ),
+            )
+
+            val publisher = FakeEntityEventPublisher { event ->
+                if (event is EntityDiscovered) {
+                    started.complete(Unit)
+
+                    completed.await()
+
+                    query.register(
+                        entity = entity(
+                            state = state,
+                        ),
+                    )
+                }
+
+                EntityEventPublisher.Result.Accepted
+            }
+
+            withZigbeeIntegrationAdapter(
+                query = query,
+                publisher = publisher,
+            ) { client, _ ->
+                client.receive(light())
+
+                val payload = """
+                    {
+                        "state": "ON",
+                        "brightness": 127
+                    }
+                """.trimIndent()
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = payload,
+                )
+
+                started.await()
+
+                client.receive(
+                    topic = "zigbee2mqtt/light.kitchen",
+                    payload = payload,
+                )
+
+                runCurrent()
+                expectNoEvents()
+
+                completed.complete(Unit)
+
+                expectThat(awaitItem())
+                    .isA<EntityDiscovered>()
+                    .get(EntityDiscovered::state)
+                    .isA<Light.State.Known>()
+                    .with(Light.State.Known::onOff) {
+                        isA<Capability.Required<OnOff>>()
+                    }
+                    .with(Light.State.Known::brightness) {
+                        isA<Capability.Available<Brightness>>()
+                    }
+
+                runCurrent()
+                expectNoEvents()
+            }
+        }
+    }
 }
 
 private val identifier =
@@ -963,6 +1107,7 @@ private val instant: Instant =
 
 private suspend fun TestScope.withZigbeeIntegrationAdapter(
     query: EntityQuery = FakeEntityQuery(),
+    publisher: FakeEntityEventPublisher = FakeEntityEventPublisher(),
     block: suspend ReceiveTurbine<Event>.(FakeMqttClient, ZigbeeIntegrationAdapter) -> Unit,
 ) {
     val client = FakeMqttClient()
@@ -971,13 +1116,14 @@ private suspend fun TestScope.withZigbeeIntegrationAdapter(
         identifier = identifier,
         client = client,
         query = query,
+        publisher = publisher,
         scope = backgroundScope,
         clock = object : Clock {
             override fun now(): Instant = instant
         },
     )
 
-    adapter.events.test {
+    publisher.events.test {
         try {
             adapter.start()
 
@@ -1065,6 +1211,23 @@ private fun thermostat(
         }
     }
 """.trimIndent()
+
+internal class FakeEntityEventPublisher(
+    private val processor: suspend (Event) -> EntityEventPublisher.Result = {
+        EntityEventPublisher.Result.Accepted
+    },
+) : EntityEventPublisher {
+
+    private val channel = Channel<Event>(Channel.UNLIMITED)
+    val events: Flow<Event> = channel.receiveAsFlow()
+
+    override suspend fun publish(
+        event: Event,
+    ): EntityEventPublisher.Result =
+        processor(event).also {
+            channel.send(element = event)
+        }
+}
 
 private class FakeEntityQuery : EntityQuery {
 

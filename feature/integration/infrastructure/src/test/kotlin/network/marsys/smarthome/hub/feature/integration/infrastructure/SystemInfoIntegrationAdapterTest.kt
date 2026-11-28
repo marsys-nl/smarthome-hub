@@ -6,6 +6,9 @@ import dev.nmarsman.expect.api.expectThat
 import dev.nmarsman.expect.assertions.isA
 import dev.nmarsman.expect.assertions.isEqualTo
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.test.runTest
 import network.marsys.smarthome.domain.capability.Capability
 import network.marsys.smarthome.domain.capability.Capability.Context.Empty.contains
@@ -19,6 +22,8 @@ import network.marsys.smarthome.domain.unit.percent
 import network.marsys.smarthome.hub.feature.entity.domain.event.CapabilityUpdated
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityDiscovered
 import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisioned
+import network.marsys.smarthome.hub.feature.entity.domain.event.Event
+import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityEventPublisher
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import oshi.SystemInfo
 import oshi.hardware.Baseboard
@@ -54,11 +59,13 @@ val SystemInfoIntegrationAdapterTest by testSuite(
 ) {
     test("SystemInfoIntegrationAdapter should be able to start") {
         runTest {
+            val publisher = FakeEntityEventPublisher()
             val adapter = SystemInfoIntegrationAdapter(
+                publisher = publisher,
                 scope = backgroundScope,
             )
 
-            adapter.events.test {
+            publisher.events.test {
                 adapter.start()
 
                 expectThat(awaitItem())
@@ -74,11 +81,13 @@ val SystemInfoIntegrationAdapterTest by testSuite(
 
     test("SystemInfoIntegrationAdapter should be able to stop when started") {
         runTest {
+            val publisher = FakeEntityEventPublisher()
             val adapter = SystemInfoIntegrationAdapter(
+                publisher = publisher,
                 scope = backgroundScope,
             )
 
-            adapter.events.test {
+            publisher.events.test {
                 adapter.start()
 
                 expectThat(awaitItem())
@@ -98,11 +107,13 @@ val SystemInfoIntegrationAdapterTest by testSuite(
 
     test("SystemInfoIntegrationAdapter should be able to stop when not started") {
         runTest {
+            val publisher = FakeEntityEventPublisher()
             val adapter = SystemInfoIntegrationAdapter(
+                publisher = publisher,
                 scope = backgroundScope,
             )
 
-            adapter.events.test {
+            publisher.events.test {
                 adapter.stop()
 
                 expectNoEvents()
@@ -112,12 +123,14 @@ val SystemInfoIntegrationAdapterTest by testSuite(
 
     test("SystemInfoIntegrationAdapter should be able to stop when running") {
         runTest {
+            val publisher = FakeEntityEventPublisher()
             val adapter = SystemInfoIntegrationAdapter(
                 initialStatus = Integration.Status.Running,
+                publisher = publisher,
                 scope = backgroundScope,
             )
 
-            adapter.events.test {
+            publisher.events.test {
                 adapter.stop()
 
                 expectNoEvents()
@@ -127,7 +140,9 @@ val SystemInfoIntegrationAdapterTest by testSuite(
 
     test("SystemInfoIntegrationAdapter sets cpu temperature correctly") {
         runTest {
+            val publisher = FakeEntityEventPublisher()
             val adapter = SystemInfoIntegrationAdapter(
+                publisher = publisher,
                 applicationStartedAt = Clock.System.now().epochSeconds,
                 systemInfo = FakeSystemInfo(
                     hardware = FakeHardwareAbstractionLayer(
@@ -139,7 +154,7 @@ val SystemInfoIntegrationAdapterTest by testSuite(
                 scope = backgroundScope,
             )
 
-            adapter.events.test {
+            publisher.events.test {
                 adapter.start()
 
                 expectThat(awaitItem())
@@ -165,7 +180,9 @@ val SystemInfoIntegrationAdapterTest by testSuite(
 
     test("SystemInfoIntegrationAdapter sets cpu temperature as unsupported if no temperature is provided") {
         runTest {
+            val publisher = FakeEntityEventPublisher()
             val adapter = SystemInfoIntegrationAdapter(
+                publisher = publisher,
                 applicationStartedAt = Clock.System.now().epochSeconds,
                 systemInfo = FakeSystemInfo(
                     hardware = FakeHardwareAbstractionLayer(
@@ -177,7 +194,7 @@ val SystemInfoIntegrationAdapterTest by testSuite(
                 scope = backgroundScope,
             )
 
-            adapter.events.test {
+            publisher.events.test {
                 adapter.start()
 
                 expectThat(awaitItem())
@@ -200,7 +217,9 @@ val SystemInfoIntegrationAdapterTest by testSuite(
 
     test("SystemInfoIntegrationAdapter sends processor updates") {
         runTest {
+            val publisher = FakeEntityEventPublisher()
             val adapter = SystemInfoIntegrationAdapter(
+                publisher = publisher,
                 applicationStartedAt = Clock.System.now().epochSeconds,
                 systemInfo = FakeSystemInfo(
                     hardware = FakeHardwareAbstractionLayer(
@@ -215,7 +234,7 @@ val SystemInfoIntegrationAdapterTest by testSuite(
                 scope = backgroundScope,
             )
 
-            adapter.events.test(timeout = 10.seconds) {
+            publisher.events.test(timeout = 10.seconds) {
                 adapter.start()
 
                 expectThat(awaitItem()).isA<EntityProvisioned>()
@@ -242,7 +261,9 @@ val SystemInfoIntegrationAdapterTest by testSuite(
 
     test("SystemInfoIntegrationAdapter doesnt send processor temperature if it doesn't have one") {
         runTest {
+            val publisher = FakeEntityEventPublisher()
             val adapter = SystemInfoIntegrationAdapter(
+                publisher = publisher,
                 applicationStartedAt = Clock.System.now().epochSeconds,
                 systemInfo = FakeSystemInfo(
                     hardware = FakeHardwareAbstractionLayer(
@@ -257,7 +278,7 @@ val SystemInfoIntegrationAdapterTest by testSuite(
                 scope = backgroundScope,
             )
 
-            adapter.events.test(timeout = 10.seconds) {
+            publisher.events.test(timeout = 10.seconds) {
                 adapter.start()
 
                 expectThat(awaitItem()).isA<EntityProvisioned>()
@@ -282,7 +303,9 @@ val SystemInfoIntegrationAdapterTest by testSuite(
 
     test("SystemInfoIntegrationAdapter sends memory updates") {
         runTest {
+            val publisher = FakeEntityEventPublisher()
             val adapter = SystemInfoIntegrationAdapter(
+                publisher = publisher,
                 applicationStartedAt = Clock.System.now().epochSeconds,
                 systemInfo = FakeSystemInfo(
                     hardware = FakeHardwareAbstractionLayer(
@@ -297,7 +320,7 @@ val SystemInfoIntegrationAdapterTest by testSuite(
                 scope = backgroundScope,
             )
 
-            adapter.events.test(timeout = 10.seconds) {
+            publisher.events.test(timeout = 10.seconds) {
                 adapter.start()
 
                 expectThat(awaitItem()).isA<EntityProvisioned>()
@@ -548,4 +571,21 @@ private class FakeNetworkParams : NetworkParams {
     override fun getDnsServers(): Array<out String> = arrayOf()
     override fun getIpv4DefaultGateway(): String = "192.168.1.254"
     override fun getIpv6DefaultGateway(): String = "2001:db8::1"
+}
+
+internal class FakeEntityEventPublisher(
+    private val processor: suspend (Event) -> EntityEventPublisher.Result = {
+        EntityEventPublisher.Result.Accepted
+    },
+) : EntityEventPublisher {
+
+    private val channel = Channel<Event>(Channel.UNLIMITED)
+    val events: Flow<Event> = channel.receiveAsFlow()
+
+    override suspend fun publish(
+        event: Event,
+    ): EntityEventPublisher.Result =
+        processor(event).also {
+            channel.send(element = event)
+        }
 }

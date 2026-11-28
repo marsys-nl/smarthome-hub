@@ -11,6 +11,7 @@ import kotlinx.serialization.modules.SerializersModule
 import network.marsys.smarthome.api.apiModuleSerializersModule
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
 import network.marsys.smarthome.hub.common.annotations.ExcludeFromCoverage
+import network.marsys.smarthome.hub.entity.EntityEventPublisherAdapter
 import network.marsys.smarthome.hub.entity.EntityQueryAdapter
 import network.marsys.smarthome.hub.feature.entity.infrastructure.di.entityFeatureModule
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationAdapter
@@ -18,8 +19,8 @@ import network.marsys.smarthome.hub.feature.integration.application.IntegrationL
 import network.marsys.smarthome.hub.feature.integration.application.di.integrationApplicationModule
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationQueries
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.ManageIntegrationLifecycle
+import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityEventPublisher
 import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityQuery
-import network.marsys.smarthome.hub.feature.integration.infrastructure.FakeIntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.infrastructure.SystemInfoIntegrationAdapter
 import network.marsys.smarthome.hub.feature.platform.infrastructure.di.platformFeatureModule
 import network.marsys.smarthome.hub.infrastructure.mqtt.MqttClient
@@ -46,6 +47,22 @@ fun Application.initializeDependencyInjection() {
 }
 
 internal val applicationModule = module {
+    single {
+        EntityQueryAdapter(
+            finder = get(),
+        )
+    } binds arrayOf(
+        EntityQuery::class,
+    )
+
+    single {
+        EntityEventPublisherAdapter(
+            processor = get(),
+        )
+    } binds arrayOf(
+        EntityEventPublisher::class,
+    )
+
     factory<Json> { (builder: JsonBuilder.() -> Unit) ->
         Json {
             builder.invoke(this)
@@ -85,14 +102,6 @@ private fun Application.integrationFeatureModule(
         integrationCoroutineScope
     }
 
-    single {
-        EntityQueryAdapter(
-            finder = get(),
-        )
-    } binds arrayOf(
-        EntityQuery::class,
-    )
-
     includes(
         module = arrayOf(
             integrationApplicationModule(),
@@ -100,16 +109,10 @@ private fun Application.integrationFeatureModule(
         ),
     )
 
-//    single<IntegrationAdapter>(qualifier = named("integration.fake")) {
-//        FakeIntegrationAdapter(
-//            identifier = IntegrationIdentifier("integration.fake"),
-//            scope = get(coroutineQualifier),
-//        )
-//    }
-
     single<IntegrationAdapter>(qualifier = named("integration.system")) {
         SystemInfoIntegrationAdapter(
             identifier = IntegrationIdentifier("integration.system"),
+            publisher = get(),
             scope = get(coroutineQualifier),
         )
     }

@@ -14,16 +14,18 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.server.testing.ApplicationTestBuilder
 import io.ktor.server.testing.testApplication
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import network.marsys.smarthome.api.apiModuleSerializersModule
 import network.marsys.smarthome.api.models.integration.IntegrationResponse
 import network.marsys.smarthome.domain.identifiers.IntegrationIdentifier
+import network.marsys.smarthome.hub.feature.integration.application.IntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.application.exception.IntegrationNotFoundException
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationQueries
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.ManageIntegrationLifecycle
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
-import network.marsys.smarthome.hub.feature.integration.infrastructure.FakeIntegrationAdapter
 import network.marsys.smarthome.hub.plugin.applicationModule
 import network.marsys.smarthome.hub.plugin.initializeSerialization
 import org.koin.dsl.module
@@ -76,7 +78,6 @@ val IntegrationRoutesTest by testSuite(
                                 FakeIntegrationAdapter(
                                     identifier = identifier,
                                     initialStatus = status,
-                                    scope = this@test,
                                 ),
                             ),
                         ),
@@ -379,8 +380,8 @@ private fun ApplicationTestBuilder.initializeDependencyInjection(
 
 private fun integrationQueries(
     integrations: Collection<Integration> = emptyList(),
-) = object : IntegrationQueries {
-    override fun all(): Collection<Integration> = integrations
+) = IntegrationQueries {
+    integrations
 }
 
 private fun integrationLifecycleManager(
@@ -391,4 +392,20 @@ private fun integrationLifecycleManager(
     override suspend fun start(identifier: IntegrationIdentifier) = start.invoke(identifier)
     override suspend fun stop(identifier: IntegrationIdentifier) = stop.invoke(identifier)
     override suspend fun restart(identifier: IntegrationIdentifier) = restart.invoke(identifier)
+}
+
+private class FakeIntegrationAdapter(
+    private val start: suspend () -> Unit = {},
+    private val stop: suspend () -> Unit = {},
+    private val restart: suspend () -> Unit = {},
+    override val identifier: IntegrationIdentifier =
+        IntegrationIdentifier("integration.fake-integration"),
+    initialStatus: Integration.Status = Integration.Status.Stopped,
+) : IntegrationAdapter {
+    override val status: StateFlow<Integration.Status>
+        field = MutableStateFlow(initialStatus)
+
+    override suspend fun start() = start.invoke()
+    override suspend fun stop() = stop.invoke()
+    override suspend fun restart() = restart.invoke()
 }

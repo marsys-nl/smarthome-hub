@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.ExperimentalSerializationApi
@@ -26,6 +27,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationLifecycleController
 import network.marsys.smarthome.hub.feature.integration.application.ports.inbound.IntegrationActionExecutor
+import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityEventPublisher
 import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityQuery
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import network.marsys.smarthome.hub.infrastructure.mqtt.Message
@@ -43,6 +45,7 @@ import kotlin.time.Clock
 class ZigbeeIntegrationAdapter(
     override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.zigbee"),
     private val client: MqttClient,
+    private val publisher: EntityEventPublisher,
     private val query: EntityQuery,
     private val clock: Clock,
     scope: CoroutineScope,
@@ -71,9 +74,6 @@ class ZigbeeIntegrationAdapter(
         },
         onStop = {},
     )
-
-    private val eventChannel = Channel<Event>(Channel.BUFFERED)
-    override val events: Flow<Event> = eventChannel.receiveAsFlow()
 
     override val status: StateFlow<Integration.Status> = lifecycle.status
 
@@ -112,11 +112,11 @@ class ZigbeeIntegrationAdapter(
             deviceStateRegistry.remove(ieeeAddress = device.ieeeAddress)
         }
 
-        devices
-            .mapNotNull { provisionedEventFor(it) }
-            .forEach { event ->
-                eventChannel.send(event)
+        devices.forEach { device ->
+            provisionedEventFor(device = device)?.let { event ->
+                publisher.publish(event = event)
             }
+        }
     }
 
     @OptIn(ExperimentalSerializationApi::class)
@@ -142,12 +142,12 @@ class ZigbeeIntegrationAdapter(
             state = state,
         )
 
-        discoveredEventFor(
-            device = device,
-            state = state,
-        )?.let { event ->
-            eventChannel.send(event)
-        }
+        publisher.publish(
+            event = discoveredEventFor(
+                device = device,
+                state = state,
+            ) ?: return,
+        )
     }
 
     private fun entityIdentifierOf(device: ZigbeeDevice): EntityIdentifier =
