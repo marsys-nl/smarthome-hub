@@ -314,8 +314,6 @@ private class FakeIntegration(
         IntegrationIdentifier("integration.fake-integration"),
     initialStatus: Integration.Status = Integration.Status.Stopped,
 ) : IntegrationAdapter {
-    override val events: Flow<Event> = emptyFlow()
-
     override val status: StateFlow<Integration.Status>
         field = MutableStateFlow(initialStatus)
 

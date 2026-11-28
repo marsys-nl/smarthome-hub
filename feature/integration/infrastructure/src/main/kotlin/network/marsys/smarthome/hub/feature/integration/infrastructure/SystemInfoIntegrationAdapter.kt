@@ -26,6 +26,7 @@ import network.marsys.smarthome.hub.feature.entity.domain.event.EntityProvisione
 import network.marsys.smarthome.hub.feature.entity.domain.event.Event
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationAdapter
 import network.marsys.smarthome.hub.feature.integration.application.IntegrationLifecycleController
+import network.marsys.smarthome.hub.feature.integration.application.ports.outbound.EntityEventPublisher
 import network.marsys.smarthome.hub.feature.integration.domain.Integration
 import network.marsys.smarthome.hub.feature.integration.domain.entity
 import oshi.SystemInfo
@@ -39,6 +40,7 @@ import kotlin.time.Duration.Companion.seconds
 class SystemInfoIntegrationAdapter(
     override val identifier: IntegrationIdentifier = IntegrationIdentifier("integration.system"),
     initialStatus: Integration.Status = Integration.Status.Stopped,
+    private val publisher: EntityEventPublisher,
     private val applicationStartedAt: Long = ManagementFactory.getRuntimeMXBean().startTime,
     private val systemInfo: SystemInfo = SystemInfo(),
     scope: CoroutineScope,
@@ -62,9 +64,6 @@ class SystemInfoIntegrationAdapter(
         },
     )
 
-    private val eventChannel = Channel<Event>(Channel.BUFFERED)
-    override val events: Flow<Event> = eventChannel.receiveAsFlow()
-
     override val status: StateFlow<Integration.Status> = lifecycle.status
 
     override suspend fun start() = lifecycle.start()
@@ -72,7 +71,7 @@ class SystemInfoIntegrationAdapter(
     override suspend fun restart() = lifecycle.restart()
 
     private suspend fun initialize() {
-        eventChannel.trySend(
+        publisher.publish(
             EntityProvisioned(
                 identifier = entityIdentifier,
                 type = System,
@@ -80,7 +79,7 @@ class SystemInfoIntegrationAdapter(
             ),
         )
 
-        eventChannel.trySend(
+        publisher.publish(
             EntityDiscovered(
                 identifier = entityIdentifier,
                 state = systemState(),
@@ -123,7 +122,7 @@ class SystemInfoIntegrationAdapter(
 
     context(hardware: HardwareAbstractionLayer)
     private suspend fun sendProcessorLoadUpdatedEvent() {
-        eventChannel.trySend(
+        publisher.publish(
             CapabilityUpdated(
                 identifier = entityIdentifier,
                 capability = measureProcessorLoad(),
@@ -132,10 +131,10 @@ class SystemInfoIntegrationAdapter(
     }
 
     context(hardware: HardwareAbstractionLayer)
-    private fun sendProcessorTemperatureUpdatedEvent() {
+    private suspend fun sendProcessorTemperatureUpdatedEvent() {
         val updatedTemperature = measureProcessorTemperature() ?: return
 
-        eventChannel.trySend(
+        publisher.publish(
             CapabilityUpdated(
                 identifier = entityIdentifier,
                 capability = updatedTemperature,
@@ -144,15 +143,15 @@ class SystemInfoIntegrationAdapter(
     }
 
     context(hardware: HardwareAbstractionLayer)
-    private fun sendMemoryUsageUpdateEvents() {
-        eventChannel.trySend(
+    private suspend fun sendMemoryUsageUpdateEvents() {
+        publisher.publish(
             CapabilityUpdated(
                 identifier = entityIdentifier,
                 capability = MeasureDataSize(hardware.memory.available.bytes) with System.MemoryType.Available,
             ),
         )
 
-        eventChannel.trySend(
+        publisher.publish(
             CapabilityUpdated(
                 identifier = entityIdentifier,
                 capability = MeasureDataSize(
